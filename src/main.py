@@ -1,4 +1,5 @@
 #!/bin/env python
+# -*- coding: utf-8 -*-
 
 from adt import *
 from virt import *
@@ -11,9 +12,8 @@ if __name__ == "__main__":
     ]
 
     testsuite = Testsuite(name="simple", \
-                          profile=Profile(kernel_args="firstboot"), \
                           testcases=testcases)
-
+    profile=Profile(kernel_args="firstboot")
 
     with TestSession(cleanup=False) as session:
         image_specs = [
@@ -22,11 +22,18 @@ if __name__ == "__main__":
             ])
         ]
 
+#        iso="rhev-hypervisor6-6.3-20120509.1.auto323.el6.iso"
+        iso="ovirt-node-iso-2.3.0-1.builder.fc16.iso"
         host = VMHost(session=session, \
                     image_specs=image_specs, \
-                    isofilename="/home/fdeutsch/Downloads/rhev-hypervisor6-6.3-20120502.3.auto307.el6.iso")
+                    isofilename="/home/fdeutsch/Downloads/" + iso)
 
-        host.submit_testsuite(session, testsuite)
+        host.prepare_profile(profile)
+#        host.submit_testsuite(session, testsuite)
 
         logger.debug(session.artifacts())
 
+        c = Cobbler("http://127.0.0.1:25151/")
+        c.add_system(host._vm_name, host.get_first_mac_address(), "rhevh-6.3-ai22")
+
+        host.boot()

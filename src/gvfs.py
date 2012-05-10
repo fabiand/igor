@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 import os
 import logging
@@ -9,12 +10,14 @@ logger = logging.getLogger(__name__)
 def run(cmd):
     import subprocess
     logger.debug("Running: %s" % cmd)
-    (stdout, stderr) = subprocess.Popen(cmd, shell=True, \
+    proc = subprocess.Popen(cmd, shell=True, \
                             stdout=subprocess.PIPE, \
-                            stderr=subprocess.PIPE).communicate()
+                            stderr=subprocess.PIPE)
+    (stdout, stderr) = proc.communicate()
     if stderr:
         logger.warning(stderr)
-    return stdout.strip()
+    r = stdout.strip()
+    return r
 
 
 class MountedArchive:

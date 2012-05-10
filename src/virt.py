@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
 
 import logging
 import os
 import subprocess
 from string import Template
+from lxml import etree
+import libvirt
 
 from adt import *
 import gvfs
@@ -12,6 +15,12 @@ logger = logging.getLogger(__name__)
 
 GVFS_IS_STILL_BROKEN = True
 LOOP_IS_STILL_BROKEN = True
+
+def dict_to_args(d):
+    return " ".join(["--%s" % k if v is None else \
+                     "--%s=%s" % (k, v) \
+                     for k, v in d.items()])
+
 
 class VMImage(UpdateableObject):
     '''
@@ -39,7 +48,7 @@ class VMImage(UpdateableObject):
 
     def create(self, session_dir="/tmp"):
         if self.filename is None:
-            self.filename = run("mktemp --tmpdir='%s' 'vmimage-XXXX'" % \
+            self.filename = run("mktemp --tmpdir='%s' 'vmimage-XXXX.img'" % \
                                 session_dir)
         logger.debug("Creating VM image '%s'" % self.filename)
         self.truncate()
@@ -100,24 +109,36 @@ class Partition(UpdateableObject):
         return "mkpart %s %s %s %s" % (self.part_type, self.fs_type, \
                                        self.start, self.end)
 
+def virsh(cmd):
+    run("virsh --connect='qemu:///system' %s" % cmd)
 
 class VMHost(Host):
+    '''A host which is actually a virtual guest.
+
+    VMHosts are not much different from other hosts, besides that we can configure them.
+    '''
     session = None
     image_specs = None
-    isofilename = None
 
-    kernel_filename = None
-    kernel_args = ""
-    kernel_args_debug = "rdshell rdinitdebug"
-    initrd_filename = None
     disk_images = []
+
+    vm_prefix = "igor-vm-"
+    vm_defaults = {
+        "vcpus": "4",
+        "ram": "512",
+        "os-type": "linux",
+        "wait": "1"
+    }
+
+    connection_uri = "qemu:///system"
+    libvirt_vm_definition = None
 
     def prepare_profile(self, p):
         logger.debug("Preparing VMHost")
         assert (self.session is not None)
         self.prepare_images()
         self.prepare_vm()
-        self.start_vm_and_install_os()
+#        self.start_vm_and_install_os()
 
     def prepare_images(self):
         logger.debug("Preparing images")
@@ -129,85 +150,48 @@ class VMHost(Host):
 
     def prepare_vm(self):
         logger.debug("Preparing vm")
-        tmp_kernel, tmp_initrd = self.extract_kernel_and_initrd()
 
-        self.kernel_filename = os.path.join(self.session.dirname, "vmlinuz0")
-        self.initrd_filename = os.path.join(self.session.dirname, "initrd0+iso.img")
+        self._vm_name = "%s%s" % (self.vm_prefix, self.session.cookie)
 
-        build_new_initrd_cmd = Template("""
-{ cd $(dirname '${isofilename}') ; \
-  echo "$(basename '${isofilename}')" | cpio -H newc --quiet -L -o ; \
-} | gzip -9 | cat '${tmp_initrd}' - > "${initrd}"
-""").safe_substitute( \
-    isofilename=self.isofilename, \
-    tmp_initrd=tmp_initrd, \
-    initrd=self.initrd_filename)
-        run(build_new_initrd_cmd)
+        # Sane defaults
+        virtinstall_args = {
+            "connect": "'%s'" % self.connection_uri,
+            "name": "'%s'" % self._vm_name,
+            "vcpus": "2",
+            "cpu": "host",
+            "ram": "1024",
+            "boot": "network",
+            "os-type": "'linux'",
+            "noautoconsole": None,      # Prevents opening a window
+            "import": None,
+            "dry-run": None,
+            "print-xml": None
+        }
+
+        virtinstall_args.update(self.vm_defaults)
+
+        cmd = "virt-install "
+        cmd += dict_to_args(virtinstall_args)
+
+        for disk in self.disk_images:
+            cmd += " --disk path='%s',device=disk,bus=virtio,format=raw" % disk
+
+        self.libvirt_vm_definition = run(cmd)
+
+#        logger.debug(self.libvirt_vm_definition)
+
+        self.define()
+
+    def get_first_mac_address(self):
+        dom = etree.XML(self.libvirt_vm_definition)
+        mac = dom.xpath("/domain/devices/interface[@type='network'][1]/mac")[0]
+        return mac.attrib["address"]
 
     def start_vm_and_install_os(self):
-        kernel_args = self.kernel_args
-        kernel_args += " root=live:/%s rootfstype=auto ro liveimg check rootflags=loop" % os.path.basename(self.isofilename)
-        kernel_args += self.kernel_args_debug
+        # Never reboot, even if requested by guest
+        self.set_reboot_is_poweroff(True)
 
-        kernel_args = " ".join(set(kernel_args.split(" ")))
-
-        self.__qemukvm_start_vm_and_install_os(kernel_args)
-
-    def __qemukvm_start_vm_and_install_os(self, kernel_args):
-        cmd = Template("""
-qemu-kvm \
-    -name "${cookie}" \
-    -m 512 -net user -net nic \
-    -kernel "${kernel}" -initrd "${initrd}" -append "${kernel_args}" \
-""").substitute(
-    cookie=self.session.cookie, \
-    kernel=self.kernel_filename, \
-    initrd=self.initrd_filename, \
-    kernel_args=kernel_args)
-
-        for disk in self.disk_images:
-            cmd += "    -drive file='%s',if=none,format=raw \n" % disk
-
-        run(cmd)
-
-    def __libvirt_start_vm_and_install_os(self, kernel_args):
-        virtinstall = Template("""
-virt-install \
-    --name "vm-${cookie}" \
-    --ram 512 \
-    --boot kernel="${kernel}",initrd="${initrd}",kernel_args="${kernel_args}" \
-""").substitute(
-    cookie=self.session.cookie, \
-    kernel=self.kernel_filename, \
-    initrd=self.initrd_filename, \
-    kernel_args=kernel_args)
-
-        for disk in self.disk_images:
-            virtinstall += "    --disk path='%s' \n" % disk
-
-        run(virtinstall)
-
-    def extract_kernel_and_initrd(self):
-        files = []
-        assert (self.isofilename is not None)
-        if LOOP_IS_STILL_BROKEN and GVFS_IS_STILL_BROKEN:
-            for fn in ["isolinux/vmlinuz0", "isolinux/initrd0.img"]:
-                fn_dst = os.path.join(self.session.dirname, os.path.basename(fn))
-                run("iso-read --image='%s' --extract='%s' --output-file='%s'" \
-                    % (self.isofilename, fn, fn_dst))
-                files.append(fn_dst)
-
-        elif GVFS_IS_STILL_BROKEN is False:
-            assert(False)
-        elif LOOP_IS_STILL_BROKEN is False:
-            with gvfs.LosetupMountedArchive(self.isofilename) as iso:
-                logger.debug("Preparing libvirt machine (%s)" % iso.mountpoint)
-                run("cd '%s' && cp 'isolinux/vmlinuz0' " + \
-                    "'isolinux/initrd0.img' '%s'" % ( \
-                        iso.mountpoint, self.session.dirname))
-        else:
-            debug.error("No other method to extract iso contents.")
-        return files
+        self.boot()
 
     def remove_images(self):
         if self.image_specs is None or len(self.image_specs) is 0:
@@ -217,21 +201,103 @@ virt-install \
                 image_spec.remove()
 
     def remove_vm(self):
-        pass
+        self.shutdown()
+        self.undefine()
 
     def remove(self):
+        '''
+        Remove all files which were created during the VM creation.
+        '''
         self.remove_vm()
         self.remove_images()
 
     def submit_testsuite(self, session, testsuite):
-        self.prepare_profile(testsuite.profile)
+        self.add_testsuite_cb_kernelarg()
+        self.reboot()
 
-#( echo "rhev-hypervisor6-6.3-20120502.3.auto69.el6.devel.iso" \
-# | cpio -H newc --quiet -L -o ) |   gzip -9 \
-# | cat /home/fdeutsch/tmp/v/l/isolinux/initrd0.img - > ~/tmp/v/initrd0.img
+    def boot(self):
+        virsh("start %s" % self._vm_name)
 
-# qemu-kvm -net user -m 2048 -kernel vmlinuz0 -initrd initrd0.img \
-# -append "initrd=initrd0.img \
-# root=live:/rhev-hypervisor6-6.3-20120502.3.auto69.el6.devel.iso \
-# rootfstype=auto ro liveimg check rootflags=loop rdshell rdinitdebug \
-# console=tty0"
+    def reboot(self):
+        virsh("reboot %s" % self._vm_name)
+
+    def shutdown(self):
+        virsh("shutdown %s" % self._vm_name)
+
+    def define(self):
+        tmpfile = run("mktemp --tmpdir")
+        with open(tmpfile, "w") as f:
+            logger.debug(tmpfile)
+            f.write(self.libvirt_vm_definition)
+            f.flush()
+            virsh("define %s" % tmpfile)
+
+    def undefine(self):
+        virsh("undefine %s" % self._vm_name)
+
+
+#pydoc cobbler.remote
+class Cobbler(object):
+    server = None
+    credentials = None
+    token = None
+
+    def __init__(self, server_url, c=("cobbler", "cobbler")):
+        import xmlrpclib
+#        "http://cobbler-server.example.org/cobbler_api"
+        self.credentials = c
+        self.server = xmlrpclib.Server(server_url)
+
+    def cobbler(self, cmd):
+        if not run("cobbler %s && echo running" % cmd).endswith("running"):
+            raise Exception("Cobbler is having a problem")
+
+    def add_system(self, name, mac, profile):
+        args = {
+            "name": name,
+            "mac": mac,
+            "profile": profile,
+            "status": "testing",
+            "kernel_options": "BOOTIF=eth0 storage_init firstboot",
+            "modify_interface": {
+                "macaddress-eth0": mac
+            }
+        }
+
+        with Cobbler.CobblerToken(self) as (token, obj):
+            system_id = self.server.new_system(token)
+            for k, v in args.items():
+                logger.debug("Modifying system: %s %s" % (k, v))
+                self.server.modify_system(system_id, k, v, token)
+            self.server.save_system(system_id, token)
+
+    def set_netboot_enable(self, name, pxe):
+        args = {
+            "netboot-enabled": 1 if pxe else 0
+        }
+        with Cobbler.CobblerToken(self) as (token, obj):
+            system_handle = self.server.get_system_handle(name, token)
+            for k, v in args.items():
+                logger.debug("Modifying system: %s %s" % (k, v))
+                self.server.modify_system(system_handle, k, v, token)
+            self.server.save_system(system_handle, token)
+
+    def remove_system(self, name):
+        with Cobbler.CobblerToken(self) as (token, obj):
+            self.server.remove_system(name, token)
+
+    def find_system(self):
+        with Cobbler.CobblerToken(self) as (token, obj):
+            h = self.server.find_system(token)
+            print h
+
+    class CobblerToken:
+        token = None
+        cblr = None
+        def __init__(self, cblr):
+            self.cblr = cblr
+            self.token = cblr.server.login(*(cblr.credentials))
+        def __enter__(self):
+            return (self.token, self)
+        def __exit__(self, type, value, traceback):
+            self.cblr.server.sync(self.token)

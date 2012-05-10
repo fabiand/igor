@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 import unittest
 import logging
@@ -35,7 +36,6 @@ class Profile(UpdateableObject):
 
 class Testsuite(UpdateableObject):
     name = None
-    profile = None
     testcases = list()
 
 
@@ -52,9 +52,11 @@ class TestSession(UpdateableObject):
 
     def __init__(self, cleanup=True):
         self.do_cleanup = cleanup
-        self.cookie = run("date +%Y%m%d-%I%M%S")
+        self.cookie = run("date +%Y%m%d-%H%M%S")
+        logger.debug(self.cookie)
         self.dirname = run("mktemp -d '/tmp/test-session-%s-XXXX'" % \
                            self.cookie)
+        run("chmod a+X '%s'" % self.dirname)
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
 
     def remove(self):
