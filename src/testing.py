@@ -20,18 +20,28 @@ class UpdateableObject(object):
 
 
 class Host(UpdateableObject):
-    profile = None
-
     def prepare_profile(self, profile):
         raise Exception("Not implemented.")
 
     def submit_testsuite(self, session, testsuite):
         raise Exception("Not implemented.")
 
+    def get_name(self):
+        raise Exception("Not implemented.")
+
+    def get_mac_address(self):
+        raise Exception("Not implemented.")
+
+    def purge(self):
+        raise Exception("Not implemented.")
+
 
 class Profile(UpdateableObject):
-    install_kernel_args = None
-    kernels_args = None
+    def assign_to(self, host):
+        raise Exception("Not implemented.")
+
+    def revoke_from(self, host):
+        raise Exception("Not implemented.")
 
 
 class Testsuite(UpdateableObject):

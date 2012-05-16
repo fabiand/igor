@@ -2,25 +2,19 @@
 
 import logging
 import os
-import subprocess
 from string import Template
 from lxml import etree
+import tempfile
+
 import libvirt
 
-from adt import *
-import gvfs
-from gvfs import run
+from testing import *
+from utils import run, dict_to_args
 
 logger = logging.getLogger(__name__)
 
 GVFS_IS_STILL_BROKEN = True
 LOOP_IS_STILL_BROKEN = True
-
-def dict_to_args(d):
-    return " ".join(["--%s" % k if v is None else \
-                     "--%s=%s" % (k, v) \
-                     for k, v in d.items()])
-
 
 class VMImage(UpdateableObject):
     '''
@@ -133,12 +127,11 @@ class VMHost(Host):
     connection_uri = "qemu:///system"
     libvirt_vm_definition = None
 
-    def prepare_profile(self, p):
+    def prepare(self):
         logger.debug("Preparing VMHost")
         assert (self.session is not None)
         self.prepare_images()
         self.prepare_vm()
-#        self.start_vm_and_install_os()
 
     def prepare_images(self):
         logger.debug("Preparing images")
@@ -149,6 +142,8 @@ class VMHost(Host):
                 self.disk_images.append(image_spec.create(self.session.dirname))
 
     def prepare_vm(self):
+        """Define the VM within libvirt
+        """
         logger.debug("Preparing vm")
 
         self._vm_name = "%s%s" % (self.vm_prefix, self.session.cookie)
@@ -182,7 +177,10 @@ class VMHost(Host):
 
         self.define()
 
-    def get_first_mac_address(self):
+    def get_name(self):
+        return self._vm_name
+
+    def get_mac_address(self):
         dom = etree.XML(self.libvirt_vm_definition)
         mac = dom.xpath("/domain/devices/interface[@type='network'][1]/mac")[0]
         return mac.attrib["address"]
@@ -204,10 +202,14 @@ class VMHost(Host):
         self.shutdown()
         self.undefine()
 
+    def purge(self):
+        self.remove()
+
     def remove(self):
         '''
         Remove all files which were created during the VM creation.
         '''
+        logger.debug("Removing host %s" % self._vm_name)
         self.remove_vm()
         self.remove_images()
 
@@ -234,70 +236,3 @@ class VMHost(Host):
 
     def undefine(self):
         virsh("undefine %s" % self._vm_name)
-
-
-#pydoc cobbler.remote
-class Cobbler(object):
-    server = None
-    credentials = None
-    token = None
-
-    def __init__(self, server_url, c=("cobbler", "cobbler")):
-        import xmlrpclib
-#        "http://cobbler-server.example.org/cobbler_api"
-        self.credentials = c
-        self.server = xmlrpclib.Server(server_url)
-
-    def cobbler(self, cmd):
-        if not run("cobbler %s && echo running" % cmd).endswith("running"):
-            raise Exception("Cobbler is having a problem")
-
-    def add_system(self, name, mac, profile):
-        args = {
-            "name": name,
-            "mac": mac,
-            "profile": profile,
-            "status": "testing",
-            "kernel_options": "BOOTIF=eth0 storage_init firstboot",
-            "modify_interface": {
-                "macaddress-eth0": mac
-            }
-        }
-
-        with Cobbler.CobblerToken(self) as (token, obj):
-            system_id = self.server.new_system(token)
-            for k, v in args.items():
-                logger.debug("Modifying system: %s %s" % (k, v))
-                self.server.modify_system(system_id, k, v, token)
-            self.server.save_system(system_id, token)
-
-    def set_netboot_enable(self, name, pxe):
-        args = {
-            "netboot-enabled": 1 if pxe else 0
-        }
-        with Cobbler.CobblerToken(self) as (token, obj):
-            system_handle = self.server.get_system_handle(name, token)
-            for k, v in args.items():
-                logger.debug("Modifying system: %s %s" % (k, v))
-                self.server.modify_system(system_handle, k, v, token)
-            self.server.save_system(system_handle, token)
-
-    def remove_system(self, name):
-        with Cobbler.CobblerToken(self) as (token, obj):
-            self.server.remove_system(name, token)
-
-    def find_system(self):
-        with Cobbler.CobblerToken(self) as (token, obj):
-            h = self.server.find_system(token)
-            print h
-
-    class CobblerToken:
-        token = None
-        cblr = None
-        def __init__(self, cblr):
-            self.cblr = cblr
-            self.token = cblr.server.login(*(cblr.credentials))
-        def __enter__(self):
-            return (self.token, self)
-        def __exit__(self, type, value, traceback):
-            self.cblr.server.sync(self.token)

@@ -6,7 +6,7 @@ from bottle import route, run, request, abort
 import os
 import base64
 from string import Template
-import uuid, time, Queue
+import uuid, time
 import logging
 
 logging.basicConfig(level=logging.DEBUG)

@@ -12,71 +12,6 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-class Job(object):
-    id = None
-    testsuite = None
-    _current_step = 0
-    _results = None
-
-    def __init__(self, testsuite):
-        self._results = []
-        self.testsuite = testsuite
-
-    def current_step(self):
-        return self._current_step
-
-    def current_testcase(self):
-        return self.testsuite.flatten()[self._current_step]
-
-    def finish_step(self, n, is_success=True, note=None):
-        logger.debug("%s: Finishing step %d w/ %s and %s" % (repr(self), n, is_success, note))
-        if self._current_step is not n:
-            raise Exception("Expected a different step to finish.")
-        self._results.append({
-            "is_success": is_success, 
-            "note": note
-            })
-        self._current_step += 1
-        return self._current_step
-
-    def abort(self):
-        self.finish_step(self._current_step, is_success=False, note="aborted")
-
-    def is_done(self):
-        return self.completed_all_steps() or self.has_failed()
-
-    def completed_all_steps(self):
-        return len(self.testsuite.flatten()) is len(self._results)
-
-    def has_failed(self):
-        return not all(self._results) is True
-
-    def is_running(self):
-        return self._current_step < len(self.testsuite.flatten())
-
-    def state(self):
-        if "aborted" in [r["note"] for r in self._results]:
-            return "ABORTED"
-        if self.has_failed():
-            return "FAILED"
-        if self.completed_all_steps():
-            return "SUCCESS"
-        if self.is_running():
-            return "RUNNING"
-        return "FAILURE"
-
-    def __str__(self):
-        return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.id, 
-                self.state(), self.current_step(), self.testsuite)
-    def __json__(self):
-        return { \
-            "id": self.id,
-            "testsuite": self.testsuite.__json__(),
-            "state": self.state(),
-            "current_step": self.current_step(),
-            "_results": self._results
-            }
-
 class Testsuite(object):
     name = None
     testsets = None
@@ -128,6 +63,9 @@ class Testcase(object):
     def __json__(self):
         return self.__dict__
 
+
+def to_json(obj):
+    return json.dumps(obj, cls=StatemachineEncoder, sort_keys=True, indent=2)
 
 class StatemachineEncoder(json.JSONEncoder):
     def default(self, obj):

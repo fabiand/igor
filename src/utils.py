@@ -20,6 +20,12 @@ def run(cmd):
     return r
 
 
+def dict_to_args(d):
+    return " ".join(["--%s" % k if v is None else \
+                     "--%s=%s" % (k, v) \
+                     for k, v in d.items()])
+
+
 class MountedArchive:
     isofilename = None
     mountpoint = None
