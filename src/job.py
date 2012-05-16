@@ -3,6 +3,7 @@
 import logging
 from collections import deque
 import threading
+import time
 
 import testing
 import virt
@@ -12,7 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 class Job(object):
-    id = None
+    """Lifecycle
+    setup()
+    start()
+    finish_step(..), [...] | abort()
+    end()
+    """
+    cookie = None
+    session = None
 
     hosts = None
 
@@ -23,9 +31,12 @@ class Job(object):
     _results = None
 
 
-    def __init__(self, hosts, profile, testsuite):
+    def __init__(self, cookie, testsuite, profile, hosts):
         """Create a new job to run the testsuite on hosts prepared with profile
         """
+        self.cookie = cookie
+        self.session = testing.TestSession(cookie)
+
         self.hosts = hosts
         self.profile = profile
 
@@ -36,16 +47,18 @@ class Job(object):
     def setup(self):
         """Prepare a host to get started
         """
-        logger.debug("Setting up job %s" % self.id)
+        logger.debug("Setting up job %s" % self.cookie)
         for host in self.hosts:
-            host.prepare()
-            profile.assign_to(host)
+            host.prepare(self.session)
+            self.profile.assign_to(host)
 
     def start(self):
         """Start the actual test
+        We expecte the testsuite to be gathered by the host, thus the host 
+        calling in to fetch it
         """
         for host in self.hosts:
-            host.submit_testsuite(self.testsuite)
+            host.start()
 
     def finish_step(self, n, is_success=True, note=None):
         """Finish one test step
@@ -65,10 +78,10 @@ class Job(object):
         """
         self.finish_step(self._current_step, is_success=False, note="aborted")
 
-    def teardown(self):
+    def end(self):
         """Tear down this test, might clean up the host
         """
-        logger.debug("Tearing down job %s" % self.id)
+        logger.debug("Tearing down job %s" % self.cookie)
         for host in self.hosts:
             host.purge()
             self.profile.revoke_from(host)
@@ -106,11 +119,11 @@ class Job(object):
         return "UNKNOWN"
 
     def __str__(self):
-        return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.id, 
+        return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.cookie, 
                 self.state(), self.current_step(), self.testsuite)
     def __json__(self):
         return { \
-            "id": self.id,
+            "id": self.cookie,
             "testsuite": self.testsuite.__json__(),
             "state": self.state(),
             "current_step": self.current_step(),
@@ -133,30 +146,30 @@ class JobCenter(object):
 
     def get_jobs():
         return {
-            "open": open_jobs,
-            "closed": closed_jobs
+            "open": self.open_jobs,
+            "closed": self.closed_jobs
             }
 
-    def submit_test(testsuite, build):
+    def submit_testsuite(self, testsuite, profile, hosts):
         """Enqueue a testsuite to be run against a specififc build on 
         given hosts
         """
-        cookie = "%s-%d" % (time.strftime("%Y%m%d"), len(open_jobs)+len(closed_jobs))
+        cookie = "%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), \
+                            len(self.open_jobs) + len(self.closed_jobs))
 
-        j = Job(testsuite, build, hosts)
+        j = Job(cookie, testsuite, profile, hosts)
         j.created_at = time.time()
-        j.cookie = cookie
 
         self.open_jobs[cookie] = j
         self.open_jobs_queue.append(j)
 
-        logger.debug("Created job %s" % repr(j))
+        logger.debug("Created job %s with cookie %s" % (repr(j), cookie))
 
         return {"cookie": cookie, "job": j}
 
     def run_next_job(self):
         msg = None
-        with self.current_job_lock:
+        with self._current_job_lock:
             if self.current_job is not None:
                 if self.current_job.is_done():
                     self.closed_jobs.append(self.current_job)
@@ -173,17 +186,17 @@ class JobCenter(object):
                 msg = "Started job %s." % self.current_job
         return msg
 
-    def abort_test(cookie):
+    def abort_test(self, cookie):
         logger.debug("Aborting %s" % cookie)
-        if cookie in open_jobs:
-            j = open_jobs[cookie]
+        if cookie in self.open_jobs:
+            j = self.open_jobs[cookie]
             j.abort()
             closed_jobs.append(j)
-            del open_jobs[cookie]
+            del self.open_jobs[cookie]
             logger.debug("Aborted %s", repr(j))
 
-    def finish_test_step(cookie, step, is_success):
-        j = open_jobs[cookie]
+    def finish_test_step(self, cookie, step, is_success):
+        j = self.open_jobs[cookie]
         j.finish_step(step, is_success)
 
         return j

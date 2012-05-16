@@ -65,7 +65,7 @@ class Cobbler(object):
             system_id = self.server.new_system(self.token)
 
             for k, v in args.items():
-                logger.debug("Modifying system: %s %s" % (k, v))
+                logger.debug("Modifying system %s: %s=%s" % (name, k, v))
                 self.server.modify_system(system_id, k, v, self.token)
 
             self.server.save_system(system_id, self.token)
@@ -89,10 +89,10 @@ class Cobbler(object):
             self.server.remove_system(name, self.token)
 
         def get_profiles(self):
-            return [e["name"] for e in self.server.get_systems(s.token)]
+            return [e["name"] for e in self.server.get_profiles(self.token)]
 
         def get_systems(self):
-            return [e["name"] for e in self.server.get_profiles(s.token)]
+            return [e["name"] for e in self.server.get_systems(self.token)]
 
     class Profile(testing.Profile):
         session = None
@@ -105,7 +105,8 @@ class Cobbler(object):
         def assign_to(self, host):
             with self.session as session:
                 if self.name not in session.get_profiles():
-                    raise Exception("Profile '%s' unknown to server." % self.name)
+                    logger.info("Available profiles: %s" % session.get_profiles())
+                    raise Exception("Profile '%s' unknown to server" % (self.name))
                 session.add_system(host.get_name(), host.get_mac_address(), \
                                    self.name)
                 session.set_netboot_enable(host.get_name(), True)

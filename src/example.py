@@ -3,7 +3,8 @@
 
 from testing import *
 from virt import *
-import cobbler
+from cobbler import Cobbler
+from job import *
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -14,25 +15,19 @@ if __name__ == "__main__":
 
     testsuite = Testsuite(name="simple", \
                           testcases=testcases)
-    profile=Profile(kernel_args="firstboot")
 
-    with TestSession(cleanup=False) as session:
-        image_specs = [
-            VMImage("1G", [ \
-                Partition("pri", "1M", "1G")
-            ])
-        ]
+    cobbler = Cobbler("http://127.0.0.1:25151/")
+    profile = cobbler.new_profile("rhevh-6.3-ai22")
 
-        host = VMHost(session=session, \
-                    image_specs=image_specs)
+    host = VMHost(image_specs=[
+                      VMImage("1G", [ \
+                          Partition("pri", "1M", "1G")
+                      ])
+                  ])
 
-        host.prepare_profile(profile)
-#        host.submit_testsuite(session, testsuite)
+    hosts = [host]
 
-        logger.debug(session.artifacts())
+    js = JobCenter()
 
-        c = cobbler.Cobbler("http://127.0.0.1:25151/")
-        cs = c.new_session()
-        cs.add_system(host._vm_name, host.get_first_mac_address(), "rhevh-6.3-ai22")
-
-        host.boot()
+    js.submit_testsuite(testsuite, profile, hosts)
+    js.run_next_job()
