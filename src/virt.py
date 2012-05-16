@@ -23,6 +23,7 @@ class VMHost(Host):
 
     VMHosts are not much different from other hosts, besides that we can configure them.
     '''
+    name = None
     session = None
     image_specs = None
 
@@ -30,10 +31,6 @@ class VMHost(Host):
 
     vm_prefix = "igor-vm-"
     vm_defaults = {
-        "vcpus": "4",
-        "ram": "512",
-        "os-type": "linux",
-        "wait": "1"
     }
 
     connection_uri = "qemu:///system"
@@ -42,6 +39,7 @@ class VMHost(Host):
     def prepare(self, session):
         logger.debug("Preparing VMHost")
         self.session = session
+        self._vm_name = "%s%s-%s" % (self.vm_prefix, self.name, self.session.cookie)
         self.prepare_images()
         self.prepare_vm()
 
@@ -58,15 +56,13 @@ class VMHost(Host):
         """
         logger.debug("Preparing vm")
 
-        self._vm_name = "%s%s" % (self.vm_prefix, self.session.cookie)
-
         # Sane defaults
         virtinstall_args = {
             "connect": "'%s'" % self.connection_uri,
             "name": "'%s'" % self._vm_name,
             "vcpus": "2",
             "cpu": "host",
-            "ram": "1024",
+            "ram": "512",
             "boot": "network",
             "os-type": "'linux'",
             "noautoconsole": None,      # Prevents opening a window
@@ -117,7 +113,7 @@ class VMHost(Host):
                 image_spec.remove()
 
     def remove_vm(self):
-        self.shutdown()
+        self.destroy()
         self.undefine()
 
     def remove(self):
@@ -136,6 +132,9 @@ class VMHost(Host):
 
     def shutdown(self):
         virsh("shutdown %s" % self._vm_name)
+
+    def destroy(self):
+        virsh("destroy %s" % self._vm_name)
 
     def define(self):
         tmpfile = run("mktemp --tmpdir")

@@ -2,6 +2,7 @@
 
 import logging
 import xmlrpclib
+from string import Template
 
 import testing
 
@@ -27,8 +28,37 @@ class Cobbler(object):
     def new_session(self):
         return Cobbler.Session(self.server, self.credentials)
 
-    def new_profile(self, profile_name):
-        return Cobbler.Profile(self.new_session(), profile_name)
+    def new_profile(self, profile_name, kernel_args=None):
+        return Cobbler.Profile(self.new_session(), profile_name, \
+                               kernel_args)
+
+    class Profile(testing.Profile):
+        cobbler_session = None
+        name = None
+        kernel_args = None
+
+        def __init__(self, cobbler_session, profile_name, kernel_args):
+            self.cobbler_session = cobbler_session
+            self.name = profile_name
+            self.kernel_args = kernel_args
+
+        def assign_to(self, host):
+            with self.cobbler_session as session:
+                if self.name not in session.get_profiles():
+                    logger.info("Available profiles: %s" % session.get_profiles())
+                    raise Exception("Profile '%s' unknown to server" % (self.name))
+                fburl = Template(self.kernel_args).substitute(
+                        igor_cookie=host.session.cookie
+                    )
+                session.add_system(host.get_name(), host.get_mac_address(), \
+                                   self.name, fburl)
+                session.set_netboot_enable(host.get_name(), True)
+
+        def revoke_from(self, host):
+            with self.cobbler_session as session:
+                if host.get_name() not in session.get_systems():
+                    raise Exception("Host '%s' unknown to server." % self.name)
+                session.remove_system(host.get_name())
 
     class Session:
         """Helper to login and sync
@@ -48,7 +78,7 @@ class Cobbler(object):
         def __exit__(self, type, value, traceback):
             self.server.sync(self.token)
 
-        def add_system(self, name, mac, profile):
+        def add_system(self, name, mac, profile, kernel_args=None):
             """Add a new system.
             """
             args = {
@@ -56,11 +86,15 @@ class Cobbler(object):
                 "mac": mac,
                 "profile": profile,
                 "status": "testing",
-                "kernel_options": "BOOTIF=eth0 storage_init firstboot",
+                "kernel_options": "",
                 "modify_interface": {
                     "macaddress-eth0": mac
                 }
             }
+
+            if kernel_args is not None:
+                logger.debug("Adding additional kernel args: %s" % kernel_args)
+                args["kernel_options"] += " %s" % kernel_args
 
             system_id = self.server.new_system(self.token)
 
@@ -94,28 +128,6 @@ class Cobbler(object):
         def get_systems(self):
             return [e["name"] for e in self.server.get_systems(self.token)]
 
-    class Profile(testing.Profile):
-        session = None
-        name = None
-
-        def __init__(self, cobbler_session, profile_name):
-            self.session = cobbler_session
-            self.name = profile_name
-
-        def assign_to(self, host):
-            with self.session as session:
-                if self.name not in session.get_profiles():
-                    logger.info("Available profiles: %s" % session.get_profiles())
-                    raise Exception("Profile '%s' unknown to server" % (self.name))
-                session.add_system(host.get_name(), host.get_mac_address(), \
-                                   self.name)
-                session.set_netboot_enable(host.get_name(), True)
-
-        def revoke_from(self, host):
-            with self.session as session:
-                if host.get_name() not in session.get_systems():
-                    raise Exception("Host '%s' unknown to server." % self.name)
-                session.remove_system(host.get_name())
 
 if __name__ == '__main__':
     c = Cobbler("http://127.0.0.1:25151/")

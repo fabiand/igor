@@ -26,6 +26,8 @@ class UpdateableObject(object):
 
 
 class Host(UpdateableObject):
+    session = None
+
     def prepare(self, session):
         raise Exception("Not implemented.")
 
@@ -54,8 +56,9 @@ class Profile(UpdateableObject):
 class Testsuite(object):
     name = None
     testsets = None
-    def __init__(self, ts=[]):
-        self.testsets = ts
+    def __init__(self, name, testsets=[]):
+        self.name = name
+        self.testsets = testsets
     def flatten(self):
         cases = []
         for tset in self.testsets:
@@ -74,44 +77,42 @@ class Testsuite(object):
 
 
 class Testset(object):
+    name = None
     testcases = None
-    def __init__(self, tcases=[]):
+
+    def __init__(self, name, testcases):
         self.testcases = []
-        self.add(tcases)
+        self.add(testcases)
+
     def flatten(self):
         return self.testcases
+
     def timeout(self):
         return sum([c.timeout for c in self.testcases])
+
     def add(self, fn):
         for c in fn:
             self.testcases.append (c if isinstance(c, Testcase) else Testcase(c))
+
     def __str__(self):
         return str(self.flatten())
+
     def __json__(self):
         return {
             "testcases": [c.__json__() for c in self.testcases]
         }
 
 class Testcase(object):
+    name = None
     source = None
     filename = None
     timeout = 60
 
-    def __init__(self, filename = None):
+    def __init__(self, name, filename = None, source=None):
         self.filename = filename
+        self.source = source
     def __json__(self):
         return self.__dict__
-
-
-def to_json(obj):
-    return json.dumps(obj, cls=StatemachineEncoder, sort_keys=True, indent=2)
-
-class StatemachineEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Job) or isinstance(obj, Testsuite) or \
-           isinstance(obj, Testset) or isinstance(obj, Testcase):
-            return obj.__json__()
-        return json.JSONEncoder.default(self, obj)
 
 
 class TestSession(UpdateableObject):

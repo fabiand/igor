@@ -22,7 +22,7 @@ class Job(object):
     cookie = None
     session = None
 
-    hosts = None
+    host = None
 
     profile = None
 
@@ -31,13 +31,13 @@ class Job(object):
     _results = None
 
 
-    def __init__(self, cookie, testsuite, profile, hosts):
-        """Create a new job to run the testsuite on hosts prepared with profile
+    def __init__(self, cookie, testsuite, profile, host):
+        """Create a new job to run the testsuite on host prepared with profile
         """
         self.cookie = cookie
         self.session = testing.TestSession(cookie)
 
-        self.hosts = hosts
+        self.host = host
         self.profile = profile
 
         self.testsuite = testsuite
@@ -48,17 +48,15 @@ class Job(object):
         """Prepare a host to get started
         """
         logger.debug("Setting up job %s" % self.cookie)
-        for host in self.hosts:
-            host.prepare(self.session)
-            self.profile.assign_to(host)
+        self.host.prepare(self.session)
+        self.profile.assign_to(self.host)
 
     def start(self):
         """Start the actual test
         We expecte the testsuite to be gathered by the host, thus the host 
         calling in to fetch it
         """
-        for host in self.hosts:
-            host.start()
+        self.host.start()
 
     def finish_step(self, n, is_success=True, note=None):
         """Finish one test step
@@ -82,9 +80,8 @@ class Job(object):
         """Tear down this test, might clean up the host
         """
         logger.debug("Tearing down job %s" % self.cookie)
-        for host in self.hosts:
-            host.purge()
-            self.profile.revoke_from(host)
+        self.host.purge()
+        self.profile.revoke_from(host)
 
     def current_step(self):
         return self._current_step
@@ -144,20 +141,20 @@ class JobCenter(object):
     def __init__(self):
         pass
 
-    def get_jobs():
+    def get_jobs(self):
         return {
             "open": self.open_jobs,
             "closed": self.closed_jobs
             }
 
-    def submit_testsuite(self, testsuite, profile, hosts):
+    def submit_testsuite(self, testsuite, profile, host):
         """Enqueue a testsuite to be run against a specififc build on 
-        given hosts
+        given host
         """
         cookie = "%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), \
                             len(self.open_jobs) + len(self.closed_jobs))
 
-        j = Job(cookie, testsuite, profile, hosts)
+        j = Job(cookie, testsuite, profile, host)
         j.created_at = time.time()
 
         self.open_jobs[cookie] = j
@@ -173,18 +170,31 @@ class JobCenter(object):
             if self.current_job is not None:
                 if self.current_job.is_done():
                     self.closed_jobs.append(self.current_job)
-                    msg = "Finished job %s." % self.current_job
+                    msg = "Finished job %s." % repr(self.current_job)
                     self.current_job = None
                 else:
-                    msg = "Running job %s." % self.current_job
+                    msg = "Running job %s." % repr(self.current_job)
             else:
                 msg = "No job queued."
+
             if self.current_job is None:
-                self.current_job = self.open_jobs_queue.pop()
-                self.current_job.setup()
-                self.current_job.start()
-                msg = "Started job %s." % self.current_job
+                if len(self.open_jobs) is 0:
+                    msg = "No jobs."
+                else:
+                    self.current_job = self.open_jobs_queue.pop()
+                    self.current_job.setup()
+                    self.current_job.start()
+                    msg = "Started job %s." % repr(self.current_job)
         return msg
+
+    def end_current_job(self):
+        msg = None
+        with self._current_job_lock:
+            if self.current_job is not None:
+                self.current_job.end()
+                self.closed_jobs.append(self.current_job)
+                msg = "Ended job %s." % repr(self.current_job)
+                self.current_job = None
 
     def abort_test(self, cookie):
         logger.debug("Aborting %s" % cookie)
@@ -196,9 +206,10 @@ class JobCenter(object):
             logger.debug("Aborted %s", repr(j))
 
     def finish_test_step(self, cookie, step, is_success):
-        j = self.open_jobs[cookie]
-        j.finish_step(step, is_success)
-
+        j = "Unknown job"
+        if cookie in self.open_jobs:
+            j = self.open_jobs[cookie]
+            j.finish_step(step, is_success)
         return j
 
 if __name__ == '__main__':
