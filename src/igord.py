@@ -80,7 +80,7 @@ def disable_pxe_cb(cookie):
         bottle.abort("Unknown firstboot job")
     # Only for cobbler
     j = jc.open_jobs[cookie]
-    m = j.profile.session.set_netboot_enable(j.host.get_name(), False)
+    m = j.profile.cobbler_session.set_netboot_enable(j.host.get_name(), False)
     return to_json(m)
 
 
@@ -123,4 +123,17 @@ exit 0
     return r
 
 bottle.run(host='0.0.0.0', port=8080, reloader=True)
+
+
+def surl(number):
+    import math
+    codes = "abcdefghjkmnpqrstuvwxyz23456789ABCDEFGHJKMNPQRSTUVWXYZ"
+    r = ""
+    while True:
+        key = number % 54
+        r += codes[key]
+        if number < 53:
+            break
+        number = int(number / 54) - 1
+    return r
 

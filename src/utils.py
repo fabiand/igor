@@ -14,6 +14,7 @@ def run(cmd):
                             stdout=subprocess.PIPE, \
                             stderr=subprocess.PIPE)
     (stdout, stderr) = proc.communicate()
+    proc.wait()
     if stderr:
         logger.warning(stderr)
     r = stdout.strip()
