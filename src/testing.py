@@ -4,6 +4,7 @@ import json
 import bottle
 from bottle import route, run, request, abort
 import os
+import glob
 import base64
 from string import Template
 import time
@@ -66,6 +67,14 @@ class Factory:
         return objlist
 
     @staticmethod
+    def testsuites_from_path(path, suffix=".suite"):
+        suites = {}
+        for f in glob.glob(os.path.join(path, "*%s" % suffix)):
+            suite = Factory.testsuite_from_file(f)
+            suites[suite.name] = suite
+        return suites
+
+    @staticmethod
     def testsuite_from_file(filename, suffix=".suite"):
         name = os.path.basename(filename).replace(suffix, "")
         sets = Factory.from_file(filename, Factory.testset_from_file)
@@ -84,15 +93,14 @@ class Testsuite(object):
         self.name = name
         self.testsets = testsets
 
-    def flatten(self):
+    def testcases(self):
         cases = []
         for tset in self.testsets:
-            cases += tset.flatten()
+            cases += tset.testcases()
         return cases
-    def testcases(self):
-        return self.flatten()
+
     def timeout(self):
-        return sum([c.timeout for c in self.flatten()])
+        return sum([c.timeout for c in self.testcases()])
     def __str__(self):
         testsets_str = "\n".join([str(ts) for ts in self.testsets])
         return "Suite: %s\nTestsets:\n%s" % (self.name, testsets_str)
@@ -101,15 +109,16 @@ class Testsuite(object):
             "name": self.name,
             "testsets": [t.__json__() for t in self.testsets]
             }
-    def get_archive(self, subdir="testcase.d"):
+    def get_archive(self, subdir="testcases"):
         r = StringIO.StringIO()
+        logger.debug("Preparing archive for testsuite %s" % self.name)
         with tarfile.open(fileobj=r,mode="w:bz2") as archive:
             stepn = 0
             for testcase in self.testcases():
+                logger.debug("Adding testcase #%s: %s" % (stepn, testcase.name))
                 if testcase.filename is None:
                     logger.warning("Empty testcase: %s" % testcase.name)
                 else:
-                    logger.debug("Adding testcase %s" % testcase.name)
                     name = os.path.join(subdir, "%d-%s" % (stepn, os.path.basename(testcase.filename)))
                     srcobj = StringIO.StringIO(testcase.source())
                     info = tarfile.TarInfo(name=name)
@@ -120,31 +129,31 @@ class Testsuite(object):
 
 class Testset(object):
     name = None
-    testcases = None
+    _testcases = None
 
     def __init__(self, name, testcases=[]):
         self.name = name
-        self.testcases = []
+        self._testcases = []
         self.add(testcases)
 
-    def flatten(self):
-        return self.testcases
+    def testcases(self):
+        return self._testcases
 
     def timeout(self):
-        return sum([c.timeout for c in self.testcases])
+        return sum([c.timeout for c in self.testcases()])
 
     def add(self, cs):
         for c in cs:
             if not isinstance(c, Testcase):
                 c = Testcase(c)
-            self.testcases.append(c)
+            self._testcases.append(c)
 
     def __str__(self):
-        return "%s: %s" % (self.name, str(["%s: %s" % (n, c) for n, c in enumerate(self.flatten())]))
+        return "%s: %s" % (self.name, str(["%s: %s" % (n, c) for n, c in enumerate(self.testcases())]))
 
     def __json__(self):
         return {
-            "testcases": [c.__json__() for c in self.testcases]
+            "testcases": [c.__json__() for c in self.testcases()]
         }
 
 class Testcase(object):
@@ -214,7 +223,9 @@ if __name__ == "__main__":
 
     suite = Factory.testsuite_from_file("testcases/example.suite")
     print suite
-    print suite.get_archive().getvalue()
+    #print suite.get_archive().getvalue()
+    suites = Factory.testsuites_from_path("testcases")
+    print suites["example"] == suite
 
 
     a_testsuite = Testsuite("pri", [

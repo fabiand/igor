@@ -13,7 +13,14 @@
 
 SESSION=${igor_cookie}
 CURRENT_STEP=${igor_current_step}
+TESTSUITE=${igor_testsuite}
 
+env | sort
+
+debug()
+{
+  echo $@ >&2
+}
 put_file()
 {
   DST=$1
@@ -30,10 +37,10 @@ api_call()
 {
   P=$1
   COOKIE=$2
-  ARGS="--silent \"${TESTJOBBASEURL%/}/${P#/}\""
-  [[ "x$COOKIE" != "x" ]] && ARGS="--header \"X-Igord-Session: $SESSION\" $ARGS"
-  echo curl $ARGS
-  curl $ARGS
+  URL="${TESTJOBBASEURL%/}/${P#/}"
+  debug "Calling $P ($URL)"
+  curl --silent "$URL"
+#  [[ "x$COOKIE" != "x" ]] && ARGS="--header \"X-Igord-Session: $SESSION\" $ARGS"
 }
 
 get_kernelarg()
@@ -43,18 +50,30 @@ get_kernelarg()
   return ${VALUE#$KEY=}
 }
 
+{
+  set -v
+  TMPDIR=$(mktemp -d /tmp/oat-XXXXX)
+  cd $TMPDIR
+  api_call testsuite/$TESTSUITE | tar xj
 
-#api_call /jobs
-api_call "/job/step/$SESSION/0/success"
+  for TESTCASE in testcases/*
+  do
+    chmod a+x $TESTCASE
+    ./$TESTCASE
+    RETVAL=$?
 
-#echo Args: $@
-echo Provided: $SESSION $CURRENT_STEP
-#echo $TESTJOB $TESTJOBURL $TESTJOBBASEURL $TESTJOBSCRIPT
-#put_file passwd /etc/passwd
+    # FIXME upload log
 
-#unmount_config /etc/passwd /etc/shadow
-#echo -n "123123" | passwd --stdin admin
-
+    if [[ $RETVAL = 0 ]];
+    then
+      api_call job/step/$SESSION/$CURRENT_STEP/success
+    else
+      api_call job/step/$SESSION/$CURRENT_STEP/failed
+      exit 1
+    fi
+    CURRENT_STEP=$(($CURRENT_STEP + 1))
+  done
+}
 
 exit 0
 

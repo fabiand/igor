@@ -15,13 +15,12 @@ from cobbler import Cobbler
 from job import *
 import utils
 import example
-import testsuites
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 jc = JobCenter(filename="jc.data", autosave=False)
-
+testsuites = Factory.testsuites_from_path("testcases")
 
 class StatemachineEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -54,12 +53,16 @@ def get_jobs():
 
 @bottle.route('/job/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
-    resp = jc.submit_testsuite(testsuites.simple, example.profile, \
+    if testsuite not in testsuites:
+        abort(412, "Unknown testsuite")
+    resp = jc.submit_testsuite(testsuites[testsuite], example.profile, \
                                example.host, cookiereq)
     return to_json(resp)
 
 @bottle.route('/job/start/<cookie>', method='GET')
 def start_job(cookie):
+    if cookie not in jc.jobs:
+        abort(404, "Unknown job")
     m = jc.start_job(cookie)
     return to_json(m)
 
@@ -105,7 +108,8 @@ def get_bootstrap_script(cookie):
 
     r = Template(script).safe_substitute(
         igor_cookie=cookie,
-        igor_current_step=jc.jobs[cookie].current_step
+        igor_current_step=jc.jobs[cookie].current_step,
+        igor_testsuite=jc.jobs[cookie].testsuite.name
     )
 
     if not r:
@@ -113,7 +117,7 @@ def get_bootstrap_script(cookie):
 
     return r
 
-@bottle.route('/job/testsuite/<name>', method='GET')
+@bottle.route('/testsuite/<name>', method='GET')
 def get_testsuite_archive(name):
     t = testsuites[name]
     r = t.get_archive()

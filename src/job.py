@@ -96,6 +96,7 @@ class Job(object):
             raise Exception("Expected a different step to finish.")
 
         self.results.append({
+            "created_at": time.time(),
             "is_success": is_success, 
             "note": note
             })
@@ -139,7 +140,7 @@ class Job(object):
         return self.testcases()[self.current_step]
 
     def testcases(self):
-        return self.testsuite.flatten()
+        return self.testsuite.testcases()
 
     def is_done(self):
         m_val = self.completed_all_steps() and not self.has_failed()
@@ -149,8 +150,6 @@ class Job(object):
 
     def completed_all_steps(self):
         m_val = len(self.testcases()) == len(self.results)
-        e_val = self.state in [s_running, s_done, s_failed, s_aborted]
-        assert m_val == e_val, "%s %s %s" % (m_val, e_val, self.state)
         return m_val
 
     def has_failed(self):
@@ -160,7 +159,7 @@ class Job(object):
         return m_val
 
     def is_running(self):
-        m_val = self.current_step < len(self.testsuite.flatten())
+        m_val = self.current_step < len(self.testsuite.testcases())
         e_val = self.state == s_running
         assert(m_val == e_val)
         return m_val
