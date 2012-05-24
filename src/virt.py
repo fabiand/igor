@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 def virsh(cmd):
     run("virsh --connect='qemu:///system' %s" % cmd)
 
+class VMImage(Layout):
+    pass
+
 class VMHost(Host):
     '''A host which is actually a virtual guest.
 
@@ -63,7 +66,7 @@ class VMHost(Host):
             "name": "'%s'" % self._vm_name,
             "vcpus": "2",
             "cpu": "host",
-            "ram": "1024",
+            "ram": "768",
             "boot": "network",
             "os-type": "'linux'",
             "noautoconsole": None,      # Prevents opening a window

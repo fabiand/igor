@@ -30,8 +30,14 @@ host = VMHost(name="8g-gpt-1g", image_specs=[
               ])
 
 cobbler = Cobbler("http://127.0.0.1:25151/")
-kargs = "BOOTIF=eth0 storage_init firstboot local_boot_trigger=http://192.168.122.1:8080/firstboot/${igor_cookie} adminpw=%s" % run("openssl passwd -salt OMG 123123")
-profile = cobbler.new_profile("ovirt-ating", kargs)
+kargs_install = " BOOTIF=eth0 storage_init firstboot"
+kargs = " local_boot_trigger=192.168.122.1:8080/testjob/${igor_cookie}"
+#kargs += " adminpw=%s" % run("openssl passwd -salt OMG 123123")
+
+profile = cobbler.new_profile("ovirt-ating", {
+    "kernel_options": kargs + kargs_install,
+    "kernel_options_post": kargs,
+    })
 
 if __name__ == "__main__":
     jc = JobCenter()

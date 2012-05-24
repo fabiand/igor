@@ -9,9 +9,6 @@ from utils import run
 from partition import *
 
 
-class VMImage(Layout):
-    pass
-
 class Layout(UpdateableObject):
     '''
     An image specififcation for a VMHost.

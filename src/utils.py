@@ -73,3 +73,34 @@ class LosetupMountedArchive(MountedArchive):
     def umount(self):
         run("sleep 3 ; umount '%s'" % self.mountpoint)
         os.removedirs(self.mountpoint)
+
+
+def surl(number):
+    import math, string
+    codes = string.digits[2:] + string.lowercase + string.uppercase
+    r = ""
+    number = int(number)
+    while True:
+        key = number % len(codes)
+        r += codes[key]
+        if number < len(codes)-1:
+            break
+        number = int(number / len(codes)) - 1
+    return r
+
+
+class State(object):
+    name = None
+    map = None
+    def __init__(self, n):
+        self.name = n
+    def transition(self, input):
+        next_states = [ s for f, s in self.map if f(input)  ]
+        assert len(next_states) >= 1, "faulty transition rule"
+        return next_states[0]
+    def __str__(self):
+        return "<state name='%s'/>" % (self.name)
+    def __eq__(self, other):
+        return str(self) == str(other)
+    def __ne__(self, other):
+        return not (self == other)
