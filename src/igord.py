@@ -67,9 +67,9 @@ def job_status(cookie):
     m = jc.jobs[cookie]
     return to_json(m)
 
-@bottle.route('/job/step/<cookie>/<n>/<note>', method='GET')
-def finish_step(cookie, n, note=None):
-    m = jc.finish_test_step(cookie, n, note)
+@bottle.route('/job/step/<cookie>/<n:int>/<r:re:success|failed>', method='GET')
+def finish_step(cookie, n, r, note=None):
+    m = jc.finish_test_step(cookie, n, r is "success", note)
     return to_json(m)
 
 @bottle.route('/job/abort/<cookie>/<clean>', method='GET')

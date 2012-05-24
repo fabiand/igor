@@ -129,7 +129,7 @@ class TestSession(UpdateableObject):
         run("chmod a+X '%s'" % self.dirname)
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
 
-    def close(self):
+    def remove(self):
         logger.debug("Removing testdir '%s'" % self.dirname)
         for artifact in self.artifacts():
             logger.debug("Removing artifact '%s'" % artifact)

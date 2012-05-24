@@ -53,7 +53,7 @@ class Job(object):
 
         self.testsuite = testsuite
 
-        self._results = []
+        self.results = []
 
         self.state = s_open
 
@@ -85,7 +85,7 @@ class Job(object):
     def finish_step(self, n, is_success, note=None):
         """Finish one test step
         """
-        logger.debug("%s: Finishing step %d w/ %s and %s" % (repr(self), n, 
+        logger.debug("%s: Finishing step %s: %s (%s)" % (self.cookie, n, 
                                                              is_success, note))
         if self.state is not s_running:
             raise Exception(("Can not finish step %s of job %s, it is not" + \
@@ -94,7 +94,8 @@ class Job(object):
 
         if self._current_step is not n:
             raise Exception("Expected a different step to finish.")
-        self._results.append({
+
+        self.results.append({
             "is_success": is_success, 
             "note": note
             })
@@ -120,7 +121,7 @@ class Job(object):
         self.finish_step(self._current_step, is_success=False, note="aborted")
         self.state = s_aborted
 
-    def end(self, do_clean=False):
+    def end(self, do_cleanup=False):
         """Tear down this test, might clean up the host
         """
         logger.debug("Tearing down job %s" % self.cookie)
@@ -149,13 +150,13 @@ class Job(object):
         return m_val
 
     def completed_all_steps(self):
-        m_val = len(self.testcases) is len(self._results)
+        m_val = len(self.testcases()) is len(self.results)
         e_val = self.state in [s_done, s_failed, s_aborted]
-        assert(m_val is e_val)
+        assert(m_val is e_val, (m_val, e_val))
         return m_val
 
     def has_failed(self):
-        m_val = not all(self._results) is True
+        m_val = not all(self.results) is True
         e_val = self.state is s_failed
         assert(m_val is e_val)
         return m_val
@@ -167,7 +168,7 @@ class Job(object):
         return m_val
 
     def is_aborted(self):
-        m_val = "aborted" in [r["note"] for r in self._results]
+        m_val = "aborted" in [r["note"] for r in self.results]
         e_val = self.state is s_aborted
         assert(m_val is e_val)
         return m_val
@@ -181,7 +182,7 @@ class Job(object):
             "testsuite": self.testsuite.__json__(),
             "state": self.state,
             "current_step": self.current_step(),
-            "_results": self._results
+            "results": self.results
             }
 
 
@@ -254,9 +255,9 @@ class JobCenter(object):
         job.start()
         return "Started job %s (%s)." % (cookie, repr(job))
 
-    def end_job(self, cookie):
+    def end_job(self, cookie, remove=False):
         job = self.jobs[cookie]
-        job.end()
+        job.end(remove)
         self.closed_jobs.append(job)
         return "Ended job %s." % cookie
 
@@ -267,9 +268,9 @@ class JobCenter(object):
         self.closed_jobs.append(j)
         return "Aborted job %s" % cookie
 
-    def finish_test_step(self, cookie, step, is_success):
+    def finish_test_step(self, cookie, step, is_success,note=None):
         j = self.jobs[cookie]
-        j.finish_step(step, is_success)
+        j.finish_step(step, is_success, note)
         return j
 
     def clean(self):

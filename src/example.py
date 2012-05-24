@@ -42,10 +42,17 @@ profile = cobbler.new_profile("ovirt-ating", {
 if __name__ == "__main__":
     jc = JobCenter()
 
-    resp = jc.submit_testsuite(testsuite, profile, host)
-    jc.run_next_job()
+    cookie_req="abc"
+    resp = jc.submit_testsuite(testsuite, profile, host, cookie_req)
+    jc.start_job(cookie_req)
 
     logger.info("Giving some time to do something ...")
-    time.sleep(30)
+    time.sleep(10)
+
+    print jc.finish_test_step(cookie_req, 0, True, "some note")
+
+#    jc.abort_job(cookie_req)
+
+    jc.end_job(cookie_req, True)
 
 #    jc.end_current_job()
