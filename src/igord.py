@@ -15,6 +15,7 @@ from cobbler import Cobbler
 from job import *
 import utils
 import example
+import testsuites
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -53,7 +54,7 @@ def get_jobs():
 
 @bottle.route('/job/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
-    resp = jc.submit_testsuite(example.testsuite, example.profile, \
+    resp = jc.submit_testsuite(testsuites.simple, example.profile, \
                                example.host, cookiereq)
     return to_json(resp)
 
@@ -67,14 +68,18 @@ def job_status(cookie):
     m = jc.jobs[cookie]
     return to_json(m)
 
-@bottle.route('/job/step/<cookie>/<n:int>/<r:re:success|failed>', method='GET')
-def finish_step(cookie, n, r, note=None):
-    m = jc.finish_test_step(cookie, n, r is "success", note)
+@bottle.route('/job/step/<cookie>/<n:int>/<result:re:success|failed>', method='GET')
+def finish_step(cookie, n, result):
+    note = None
+    m = jc.finish_test_step(cookie, n, result == "success", note)
     return to_json(m)
 
 @bottle.route('/job/abort/<cookie>/<clean>', method='GET')
 def abort_test(cookie, clean=False):
-    m = jc.abort_job(cookie)
+    try:
+        m = jc.abort_job(cookie)
+    except Exception as e:
+        m = e.message
     if clean:
         jc.end_job(cookie)
     return to_json(m)
@@ -90,7 +95,7 @@ def disable_pxe_cb(cookie):
 
 
 @bottle.route('/testjob/<cookie>', method='GET')
-def get_testsuite(cookie):
+def get_bootstrap_script(cookie):
     disable_pxe_cb(cookie)
 
     script = None
@@ -98,12 +103,26 @@ def get_testsuite(cookie):
     with open("testsuite-client.sh", "r") as f:
         script = f.read()
 
-    r = Template(script).safe_substitute(igor_cookie=cookie)
+    r = Template(script).safe_substitute(
+        igor_cookie=cookie,
+        igor_current_step=jc.jobs[cookie].current_step
+    )
 
     if not r:
         bottle.abort(404, 'No testsuite for %s' % (cookie))
 
     return r
+
+@bottle.route('/job/testsuite/<name>', method='GET')
+def get_testsuite_archive(name):
+    t = testsuites[name]
+    r = t.get_archive()
+    if not r:
+        bottle.abort(404, 'No testsuite for %s' % (cookie))
+
+    return r.getvalue()
+
+
 
 try:
     bottle.run(host='0.0.0.0', port=8080, reloader=True)

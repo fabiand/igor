@@ -9,6 +9,8 @@ from string import Template
 import time
 import logging
 import unittest
+import tempfile, tarfile
+import StringIO
 
 from utils import run
 
@@ -52,6 +54,28 @@ class Profile(UpdateableObject):
         raise Exception("Not implemented.")
 
 
+class Factory:
+    @staticmethod
+    def from_file(filename, per_line_cb):
+        fdir = os.path.dirname(filename)
+        objlist = []
+        with open(filename, "r") as f:
+            for setfilename in f:
+                setfilename = setfilename.strip()
+                objlist.append(per_line_cb(os.path.join(fdir, setfilename)))
+        return objlist
+
+    @staticmethod
+    def testsuite_from_file(filename, suffix=".suite"):
+        name = os.path.basename(filename).replace(suffix, "")
+        sets = Factory.from_file(filename, Factory.testset_from_file)
+        return Testsuite(name=name, testsets=sets)
+
+    @staticmethod
+    def testset_from_file(filename, suffix=".set"):
+        name = os.path.basename(filename).replace(suffix, "")
+        cases = Factory.from_file(filename, Testcase)
+        return Testset(name=name, testcases=cases)
 
 class Testsuite(object):
     name = None
@@ -59,28 +83,47 @@ class Testsuite(object):
     def __init__(self, name, testsets=[]):
         self.name = name
         self.testsets = testsets
+
     def flatten(self):
         cases = []
         for tset in self.testsets:
             cases += tset.flatten()
         return cases
+    def testcases(self):
+        return self.flatten()
     def timeout(self):
         return sum([c.timeout for c in self.flatten()])
     def __str__(self):
         testsets_str = "\n".join([str(ts) for ts in self.testsets])
-        return "Name: %s\nTestsets:\n%s" % (self.name, testsets_str)
+        return "Suite: %s\nTestsets:\n%s" % (self.name, testsets_str)
     def __json__(self):
         return { \
             "name": self.name,
             "testsets": [t.__json__() for t in self.testsets]
             }
-
+    def get_archive(self, subdir="testcase.d"):
+        r = StringIO.StringIO()
+        with tarfile.open(fileobj=r,mode="w:bz2") as archive:
+            stepn = 0
+            for testcase in self.testcases():
+                if testcase.filename is None:
+                    logger.warning("Empty testcase: %s" % testcase.name)
+                else:
+                    logger.debug("Adding testcase %s" % testcase.name)
+                    name = os.path.join(subdir, "%d-%s" % (stepn, os.path.basename(testcase.filename)))
+                    srcobj = StringIO.StringIO(testcase.source())
+                    info = tarfile.TarInfo(name=name)
+                    info.size = len(srcobj.buf)
+                    archive.addfile(tarinfo=info, fileobj=srcobj)
+                    stepn += 1
+        return r
 
 class Testset(object):
     name = None
     testcases = None
 
-    def __init__(self, name, testcases):
+    def __init__(self, name, testcases=[]):
+        self.name = name
         self.testcases = []
         self.add(testcases)
 
@@ -90,12 +133,14 @@ class Testset(object):
     def timeout(self):
         return sum([c.timeout for c in self.testcases])
 
-    def add(self, fn):
-        for c in fn:
-            self.testcases.append (c if isinstance(c, Testcase) else Testcase(c))
+    def add(self, cs):
+        for c in cs:
+            if not isinstance(c, Testcase):
+                c = Testcase(c)
+            self.testcases.append(c)
 
     def __str__(self):
-        return str(self.flatten())
+        return "%s: %s" % (self.name, str(["%s: %s" % (n, c) for n, c in enumerate(self.flatten())]))
 
     def __json__(self):
         return {
@@ -104,13 +149,25 @@ class Testset(object):
 
 class Testcase(object):
     name = None
-    source = None
     filename = None
+    source = None
     timeout = 60
 
-    def __init__(self, name, filename = None, source=None):
+    def __init__(self, filename=None, name=None):
+        if name is None and filename is None:
+            raise Exception("At least a filename must be given")
+        if name is None:
+            self.name = os.path.basename(filename)
+        else:
+            self.name = name
         self.filename = filename
-        self.source = source
+    def source(self):
+        src = None
+        with open(self.filename, "r") as f:
+            src = f.read()
+        return src
+    def __str__(self):
+        return "%s (%s)" % (self.name, self.filename)
     def __json__(self):
         return self.__dict__
 
@@ -154,17 +211,16 @@ class TestSession(UpdateableObject):
         logger.info("Session '%s' ended." % self.cookie)
 
 if __name__ == "__main__":
-    a_testsuite = Testsuite([
-        Testset([ "case_a", "case_b", "case_c" ]),
-        Testset([ "case_d", "case_e", Testcase(filename="case_f") ])
+
+    suite = Factory.testsuite_from_file("testcases/example.suite")
+    print suite
+    print suite.get_archive().getvalue()
+
+
+    a_testsuite = Testsuite("pri", [
+        Testset("one", [ "case_a", "case_b", "case_c" ]),
+        Testset("two", [ "case_d", "case_e", Testcase("case_f") ])
     ])
 
     print (a_testsuite)
 
-    a_job = Job(a_testsuite)
-    cur_step = 0
-    while not a_job.is_done():
-        print ("Working on", a_job.current_testcase())
-        a_job.finish_step(cur_step, True)
-        cur_step += 1
-    print (a_job)

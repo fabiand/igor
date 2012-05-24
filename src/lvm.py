@@ -140,7 +140,7 @@ def parse_lvm(text, separator="|", options=None):
     lst = []
     for line in text.split("\n"):
         line = line.strip()
-        if line is "":
+        if line == "":
             continue
         tokens = line.split(separator)
         if options is None:

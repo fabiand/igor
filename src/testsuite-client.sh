@@ -12,6 +12,7 @@
 }
 
 SESSION=${igor_cookie}
+CURRENT_STEP=${igor_current_step}
 
 put_file()
 {
@@ -47,6 +48,7 @@ get_kernelarg()
 api_call "/job/step/$SESSION/0/success"
 
 #echo Args: $@
+echo Provided: $SESSION $CURRENT_STEP
 #echo $TESTJOB $TESTJOBURL $TESTJOBBASEURL $TESTJOBSCRIPT
 #put_file passwd /etc/passwd
 
