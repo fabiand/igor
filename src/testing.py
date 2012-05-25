@@ -61,9 +61,11 @@ class Factory:
         fdir = os.path.dirname(filename)
         objlist = []
         with open(filename, "r") as f:
-            for setfilename in f:
-                setfilename = setfilename.strip()
-                objlist.append(per_line_cb(os.path.join(fdir, setfilename)))
+            for line in f:
+                line = line.strip()
+                if line.startswith("#") or line == "":
+                    continue
+                objlist.append(per_line_cb(os.path.join(fdir, line)))
         return objlist
 
     @staticmethod
@@ -89,6 +91,7 @@ class Factory:
 class Testsuite(object):
     name = None
     testsets = None
+
     def __init__(self, name, testsets=[]):
         self.name = name
         self.testsets = testsets
@@ -201,6 +204,13 @@ class TestSession(UpdateableObject):
             logger.debug("Removing artifact '%s'" % artifact)
             os.remove(os.path.join(self.dirname, artifact))
         os.removedirs(self.dirname)
+
+    def add_artifact(self, name, data):
+        assert("/" not in name and "\\" not in name)
+        afilename = os.path.join(self.dirname, name)
+        # fixme collsisions
+        with open(afilename, "w") as afile:
+            afile.write(data)
 
     def artifacts(self, use_abs = False):
         fns = os.listdir(self.dirname)

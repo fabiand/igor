@@ -31,14 +31,18 @@ class VMHost(Host):
     session = None
     image_specs = None
 
-    disk_images = []
+    disk_images = None
 
     vm_prefix = "igor-vm-"
-    vm_defaults = {
-    }
+    vm_defaults = None
 
     connection_uri = "qemu:///system"
     libvirt_vm_definition = None
+
+    def __init__(self, *args, **kwargs):
+        self.disk_images = []
+        self.vm_defaults = {}
+        Host.__init__(self, *args, **kwargs)
 
     def prepare(self, session):
         logger.debug("Preparing VMHost")
@@ -150,3 +154,13 @@ class VMHost(Host):
 
     def undefine(self):
         virsh("undefine %s" % self._vm_name)
+
+
+class VMHostFactory:
+    @staticmethod
+    def create_default_host():
+        return VMHost(name="8g-gpt-1g", image_specs=[ \
+                 VMImage("8G", [ \
+                   Partition("pri", "1M", "1G") \
+                 ]) \
+               ])

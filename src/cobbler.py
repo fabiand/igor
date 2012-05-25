@@ -29,34 +29,35 @@ class Cobbler(object):
         return Cobbler.Session(self.server, self.credentials)
 
     def new_profile(self, profile_name, additional_args=None):
-        return Cobbler.Profile(self.new_session(), profile_name, \
+        return Cobbler.Profile(self.new_session, profile_name, \
                                additional_args)
 
     class Profile(testing.Profile):
-        cobbler_session = None
+        cobbler_session_cb = None
         name = None
         additional_args = None
 
-        def __init__(self, cobbler_session, profile_name, additional_args):
-            self.cobbler_session = cobbler_session
+        def __init__(self, cobbler_session_cb, profile_name, additional_args):
+            self.cobbler_session_cb = cobbler_session_cb
             self.name = profile_name
             self.additional_args = additional_args
 
         def assign_to(self, host):
-            with self.cobbler_session as session:
+            with self.cobbler_session_cb() as session:
                 if self.name not in session.get_profiles():
                     logger.info("Available profiles: %s" % session.get_profiles())
                     raise Exception("Profile '%s' unknown to server" % (self.name))
+                additional_args = {}
                 for k, v in self.additional_args.items():
-                    self.additional_args[k] = Template(v).substitute(
+                    additional_args[k] = Template(v).substitute(
                             igor_cookie=host.session.cookie
                         )
                 session.add_system(host.get_name(), host.get_mac_address(), \
-                                   self.name, self.additional_args)
+                                   self.name, additional_args)
                 session.set_netboot_enable(host.get_name(), True)
 
         def revoke_from(self, host):
-            with self.cobbler_session as session:
+            with self.cobbler_session_cb() as session:
                 if host.get_name() not in session.get_systems():
                     raise Exception("Host '%s' unknown to server." % self.name)
                 session.remove_system(host.get_name())

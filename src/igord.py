@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 jc = JobCenter(filename="jc.data", autosave=False)
-testsuites = Factory.testsuites_from_path("testcases")
+load_testsuites = lambda: Factory.testsuites_from_path("testcases")
 
 class StatemachineEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -53,10 +53,12 @@ def get_jobs():
 
 @bottle.route('/job/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
+    testsuites = load_testsuites()
+    host = VMHostFactory.create_default_host()
     if testsuite not in testsuites:
         abort(412, "Unknown testsuite")
     resp = jc.submit_testsuite(testsuites[testsuite], example.profile, \
-                               example.host, cookiereq)
+                               host, cookiereq)
     return to_json(resp)
 
 @bottle.route('/job/start/<cookie>', method='GET')
@@ -87,13 +89,32 @@ def abort_test(cookie, clean=False):
         jc.end_job(cookie)
     return to_json(m)
 
+@bottle.route('/job/testsuite/for/<cookie>', method='GET')
+def get_testsuite_archive(cookie):
+    t = jc.jobs[cookie].testsuite
+    r = t.get_archive()
+    if not r:
+        bottle.abort(404, 'No testsuite for %s' % (cookie))
+
+    return r.getvalue()
+
+@bottle.route('/job/artifact/for/<cookie>/<name>', method='PUT')
+def add_artifact(cookie, name):
+    if cookie not in jc.jobs:
+        abort(404, "Unknown job for artifact")
+    if "/" in name:
+        abort(412, "Name may not contain slashes")
+    j = jc.jobs[cookie]
+    j.add_artifact(name, bottle.request.body.read())
+
+
 @bottle.route('/firstboot/<cookie>', method='GET')
 def disable_pxe_cb(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job %s" % cookie)
     # Only for cobbler
     j = jc.jobs[cookie]
-    m = j.profile.cobbler_session.set_netboot_enable(j.host.get_name(), False)
+    m = j.profile.cobbler_session_cb().set_netboot_enable(j.host.get_name(), False)
     return to_json(m)
 
 
@@ -119,6 +140,7 @@ def get_bootstrap_script(cookie):
 
 @bottle.route('/testsuite/<name>', method='GET')
 def get_testsuite_archive(name):
+    testsuites = load_testsuites()
     t = testsuites[name]
     r = t.get_archive()
     if not r:

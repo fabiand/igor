@@ -37,10 +37,10 @@ class Job(object):
     profile = None
 
     testsuite = None
+
     current_step = 0
     results = None
-
-    state = None
+    _state = None
 
     def __init__(self, cookie, testsuite, profile, host):
         """Create a new job to run the testsuite on host prepared with profile
@@ -55,31 +55,31 @@ class Job(object):
 
         self.results = []
 
-        self.state = s_open
+        self.state(s_open)
 
     def setup(self):
         """Prepare a host to get started
         """
-        if self.state != s_open:
+        if self.state() != s_open:
             raise Exception(("Can not setup job %s: %s") % (self.cookie, \
-                                                           self.state))
+                                                           self.state()))
 
         logger.debug("Setting up job %s" % self.cookie)
-        self.state = s_preparing
+        self.state(s_preparing)
         self.host.prepare(self.session)
         self.profile.assign_to(self.host)
-        self.state = s_prepared
+        self.state(s_prepared)
 
     def start(self):
         """Start the actual test
         We expecte the testsuite to be gathered by the host, thus the host 
         calling in to fetch it
         """
-        if self.state != s_prepared:
+        if self.state() != s_prepared:
             raise Exception(("Can not start job %s: %s") % (self.cookie, \
-                                                            self.state))
-
-        self.state = s_running
+                                                            self.state()))
+        logger.debug("Starting job %s" % (self.cookie))
+        self.state(s_running)
         self.host.start()
 
     def finish_step(self, n, is_success, note=None):
@@ -87,10 +87,10 @@ class Job(object):
         """
         logger.debug("%s: Finishing step %s: %s (%s)" % (self.cookie, n, 
                                                              is_success, note))
-        if self.state != s_running:
+        if self.state() != s_running:
             raise Exception(("Can not finish step %s of job %s, it is not" + \
                              "running anymore: %s") % (n, self.cookie, \
-                                                       self.state))
+                                                       self.state()))
 
         if self.current_step != n:
             raise Exception("Expected a different step to finish.")
@@ -102,39 +102,56 @@ class Job(object):
             })
         self.current_step += 1
         if is_success is True:
-            logger.debug("Finished step %s sucssesfully" % n)
+            logger.debug("Finished step %s succesfully" % n)
             if self.completed_all_steps():
                 logger.debug("Finished job %s" % (self.cookie))
-                self.state = s_done
+                self.state(s_done)
         elif is_success is False:
-            logger.debug("Finished step %s unsucsessfull" % n)
-            self.state = s_failed
+            logger.info("Finished step %s unsucsessfull" % n)
+            self.state(s_failed)
         return self.current_step
+
+    def add_artifact(self, name, data):
+        aname = "%s-%s" % (self.current_step, name)
+        self.session.add_artifact(aname, data)
 
     def abort(self):
         """Abort the test
         """
-        if self.state != s_running:
+        if self.state() != s_running:
             raise Exception(("Can not abort step %s of job %s, it is not" + \
                              "running anymore: %s") % (self.current_step, \
                                                        self.cookie, \
-                                                       self.state))
+                                                       self.state()))
 
         self.finish_step(self.current_step, is_success=False, note="aborted")
-        self.state = s_aborted
+        self.state(s_aborted)
+
+    def reopen(self):
+        if self.is_running(): #fixm prepare part
+            raise Exception("Can not reopen job %s, it is: %s" % self.state())
+
+        self.current_step = 0
+        self.results = []
+        self.state(s_running)
 
     def end(self, do_cleanup=False):
         """Tear down this test, might clean up the host
         """
         logger.debug("Tearing down job %s" % self.cookie)
-        if self.state not in [s_aborted, s_failed, s_done]:
+        if self.state() not in [s_aborted, s_failed, s_done]:
             raise Exception("Job %s can not yet be torn down: %s" % ( \
-                                                      self.cookie, self.state))
+                                                    self.cookie, self.state()))
         else:
             self.host.purge()
             self.profile.revoke_from(self.host)
             if do_cleanup:
                 self.session.remove()
+
+    def state(self, new_state=None):
+        if new_state is not None:
+            self._state = new_state
+        return self._state
 
     def current_testcase(self):
         return self.testcases()[self.current_step]
@@ -144,7 +161,7 @@ class Job(object):
 
     def is_done(self):
         m_val = self.completed_all_steps() and not self.has_failed()
-        e_val = self.state == s_done
+        e_val = self.state() == s_done
         assert(m_val == e_val)
         return m_val
 
@@ -154,30 +171,30 @@ class Job(object):
 
     def has_failed(self):
         m_val = not all(self.results) is True
-        e_val = self.state == s_failed
+        e_val = self.state() == s_failed
         assert(m_val == e_val)
         return m_val
 
     def is_running(self):
         m_val = self.current_step < len(self.testsuite.testcases())
-        e_val = self.state == s_running
+        e_val = self.state() == s_running
         assert(m_val == e_val)
         return m_val
 
     def is_aborted(self):
         m_val = "aborted" in [r["note"] for r in self.results]
-        e_val = self.state == s_aborted
+        e_val = self.state() == s_aborted
         assert(m_val == e_val)
         return m_val
 
     def __str__(self):
         return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.cookie, 
-                self.state, self.current_step, self.testsuite)
+                self.state(), self.current_step, self.testsuite)
     def __json__(self):
         return { \
             "id": self.cookie,
             "testsuite": self.testsuite.__json__(),
-            "state": self.state,
+            "state": self.state(),
             "current_step": self.current_step,
             "results": self.results
             }

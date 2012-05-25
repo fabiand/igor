@@ -23,9 +23,9 @@ class Layout(UpdateableObject):
     partitions : Array of Partitions
     '''
     filename = None
-    size = 4
-    label = "gpt"
-    partitions = [{}]
+    size = None
+    label = None
+    partitions = None
 
     def __init__(self, size, partitions, label="gpt", filename=None):
         if not any(size.lower().endswith(s) for s in ["m", "g"]):
@@ -33,11 +33,11 @@ class Layout(UpdateableObject):
         if label not in ["gpt", "mbr"]:
             raise Exception("Disk label must be gpt or mbr")
         self.filename = filename
-        self.size = size
-        self.partitions = partitions
+        self.size = size or 4
+        self.partitions = partitions or [{}]
         self.label = label
 
-    def create(self, session_dir="/tmp"):
+    def create(self, session_dir):
         if self.filename is None:
             self.filename = run("mktemp --tmpdir='%s' 'vmimage-XXXX.img'" % \
                                 session_dir)
@@ -87,7 +87,7 @@ class Partition(UpdateableObject):
     part_type = None
     start = None
     end = None
-    fs_type = ""
+    fs_type = None
 
     def __init__(self, pt, start, end, fst=""):
         self.part_type = pt
