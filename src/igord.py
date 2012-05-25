@@ -14,15 +14,27 @@ from virt import *
 from cobbler import Cobbler
 from job import *
 import utils
-import example
+
+from config import *
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 jc = JobCenter(filename="jc.data", autosave=False)
-load_testsuites = lambda: Factory.testsuites_from_path("testcases")
 
-class StatemachineEncoder(json.JSONEncoder):
+def load_testsuites():
+    return Factory.testsuites_from_path(TESTCASES_PATH)
+
+def create_cobbler_profile(pname="ovirt-ating"):
+    logger.warning("JUST USING PROFILE ovirt-ating CURRENTLY")
+    pname="ovirt-ating"
+    cobbler = Cobbler(COBBLER_URL)
+    return cobbler.new_profile(pname, {
+      "kernel_options": COBBLER_KARGS + COBBLER_KARGS_INSTALL,
+      "kernel_options_post": COBBLER_KARGS,
+      })
+
+class TestingJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Job) or isinstance(obj, Testsuite) or \
            isinstance(obj, Testset) or isinstance(obj, Testcase):
@@ -33,7 +45,7 @@ class StatemachineEncoder(json.JSONEncoder):
 
 def to_json(obj):
     bottle.response.content_type = "application/json"
-    return json.dumps(obj, cls=StatemachineEncoder, sort_keys=True, indent=2)
+    return json.dumps(obj, cls=TestingJSONEncoder, sort_keys=True, indent=2)
 
 def _req_cookie():
     cookie_key = "x-igor-cookie"
@@ -57,7 +69,8 @@ def submit_testsuite(testsuite, profile, host, cookiereq=None):
     host = VMHostFactory.create_default_host()
     if testsuite not in testsuites:
         abort(412, "Unknown testsuite")
-    resp = jc.submit_testsuite(testsuites[testsuite], example.profile, \
+    resp = jc.submit_testsuite(testsuites[testsuite], \
+                               create_cobbler_profile(profile), \
                                host, cookiereq)
     return to_json(resp)
 
