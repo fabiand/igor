@@ -58,21 +58,24 @@ def _req_cookie():
 
 #
 # bottles
-#
-@bottle.route('/jobs', method='GET')
-def get_jobs():
-    return to_json(jc.get_jobs())
 
-@bottle.route('/job/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
+@bottle.route('/submit/<testsuite>/with/<profile>/on/<host>', method='GET')#
+@bottle.route('/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
     testsuites = load_testsuites()
     host = VMHostFactory.create_default_host()
+    logger.warning("We are currently using a default host")
     if testsuite not in testsuites:
         abort(412, "Unknown testsuite")
     resp = jc.submit_testsuite(testsuites[testsuite], \
                                create_cobbler_profile(profile), \
                                host, cookiereq)
     return to_json(resp)
+
+@bottle.route('/jobs', method='GET')
+def get_jobs():
+    return to_json(jc.get_jobs())
+
 
 @bottle.route('/job/start/<cookie>', method='GET')
 def start_job(cookie):
