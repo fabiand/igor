@@ -1,0 +1,20 @@
+
+Ingredients
+-----------
+- Working cobbler environment
+- libvirt
+- python
+-- python-bottle (bottlepy)
+-- libvirt-python
+
+Overview
+--------
+Basically a daemon prepares hosts and tells cobbler what profile to assign to 
+them.
+Afterwards it is expected that a client script is run by the host to run a 
+number of testcases (structured into testsuites, testsets and testcases).
+
+Getting started
+---------------
+$ sudo yum install -y python-bottle libvirt-python
+
