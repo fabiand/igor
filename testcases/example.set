@@ -2,4 +2,4 @@ installation_completed.sh
 helloworld.sh
 initiate_reboot.sh
 reboot_completed.sh
-resetpassword.sh
+set_admin_password.sh
