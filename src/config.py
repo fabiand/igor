@@ -1,4 +1,4 @@
-TESTCASES_PATH = "testcases"
+TESTCASES_PATH = "../testcases"
 COBBLER_URL = "http://127.0.0.1:25151/"
 
 COBBLER_KARGS_INSTALL = " BOOTIF=eth0 storage_init firstboot"

@@ -71,7 +71,9 @@ class Factory:
     @staticmethod
     def testsuites_from_path(path, suffix=".suite"):
         suites = {}
-        for f in glob.glob(os.path.join(path, "*%s" % suffix)):
+        pat = os.path.join(path, "*%s" % suffix)
+        logger.debug("Trying to load from %s" % pat)
+        for f in glob.glob(pat):
             suite = Factory.testsuite_from_file(f)
             suites[suite.name] = suite
         return suites

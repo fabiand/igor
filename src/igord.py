@@ -63,10 +63,11 @@ def _req_cookie():
 @bottle.route('/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
     testsuites = load_testsuites()
+    logger.debug("Loaded testsuites: %s" % testsuites)
     host = VMHostFactory.create_default_host()
     logger.warning("We are currently using a default host")
     if testsuite not in testsuites:
-        abort(412, "Unknown testsuite")
+        abort(412, "Unknown testsuite '%s'" % testsuite)
     resp = jc.submit_testsuite(testsuites[testsuite], \
                                create_cobbler_profile(profile), \
                                host, cookiereq)
