@@ -1,6 +1,6 @@
 
 Ingredients
------------
+===========
 - Working cobbler environment
 - libvirt
 - python
@@ -9,7 +9,7 @@ Ingredients
 
 
 Overview
---------
+========
 Basically a daemon prepares hosts and tells cobbler what profile to assign to 
 them.
 Afterwards it is expected that a client script is run by the host to run a 
@@ -17,7 +17,7 @@ number of testcases (structured into testsuites, testsets and testcases).
 
 
 Pitfalls & Requirements
------------------------
+=======================
 - It is currently expected that the images are on the host where VMs are 
   spawned.
 - A working cobbler environment is expected
@@ -25,20 +25,27 @@ Pitfalls & Requirements
 
 Getting started
 using Fedora 16 and libvirt
----------------------------
+===========================
 Ensure to install some common components:
 $ sudo yum -y groupinstall virtualization
 $ sudo yum -y install python-bottle libvirt-python
 
 Now run igord:
-
 $ cd src
 $ edit config.py
 $ sudo python igord.py
 
+Firewall and Cobbler API
+------------------------
 Considder opening the appropriate firewall port, e.g.:
 $ sudo iptables -I INPUT -m tcp -p tcp --dport 8080 -j ACCEPT
 
+Also note that Cobbler's API is just allowing local connections, you might
+want to tunnel the daemons calls:
+$ ssh $COBBLERSERVER -L25151:127.0.0.1:25151
+
+Simple client
+-------------
 If the daemon is running you can use a small tool which can be found in data/ 
 to submit new jobs:
 $ ./igorclient.sh help
