@@ -133,7 +133,7 @@ class Cobbler(object):
 
 
 if __name__ == '__main__':
-    c = Cobbler("http://127.0.0.1:25151/")
+    c = Cobbler("http://127.0.0.1/cobbler_api")
     s = c.new_session()
     print (s.get_systems())
     print (s.get_profiles())
