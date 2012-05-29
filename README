@@ -57,4 +57,5 @@ $ ./igorclient.sh status    # Show the job status (running)
 $ ./igorclient.sh abort     # Eventually
 $ ./igorclient.sh uncookie  # To remove the cookie aquired with "submit"
 
-to be continued.
+
+                                ~ To be continued ~
