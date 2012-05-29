@@ -28,7 +28,7 @@ def load_testsuites():
 def create_cobbler_profile(pname="ovirt-ating"):
     logger.warning("JUST USING PROFILE ovirt-ating CURRENTLY")
     pname="ovirt-ating"
-    cobbler = Cobbler(COBBLER_URL)
+    cobbler = Cobbler(COBBLER_URL, COBBLER_CREDENTIALS)
     return cobbler.new_profile(pname, {
       "kernel_options": COBBLER_KARGS + COBBLER_KARGS_INSTALL,
       "kernel_options_post": COBBLER_KARGS,

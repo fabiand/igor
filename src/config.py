@@ -4,6 +4,7 @@ TESTCASES_PATH = "../testcases"
 
 # The URL of Cobblers API
 COBBLER_URL = "http://127.0.0.1:25151/"
+COBBLER_CREDENTIALS = ("cobbler", "cobbler")
 
 # Kernel arguments to be used for installation/pxe and default boot
 COBBLER_KARGS_INSTALL = " BOOTIF=eth0 storage_init firstboot"
