@@ -120,17 +120,28 @@ class Testsuite(object):
         with tarfile.open(fileobj=r,mode="w:bz2") as archive:
             stepn = 0
             for testcase in self.testcases():
-                logger.debug("Adding testcase #%s: %s" % (stepn, testcase.name))
+                logger.debug("Adding testcase #%s: %s" % (stepn, \
+                                                          testcase.name))
                 if testcase.filename is None:
                     logger.warning("Empty testcase: %s" % testcase.name)
-                else:
-                    name = os.path.join(subdir, "%d-%s" % (stepn, os.path.basename(testcase.filename)))
-                    srcobj = StringIO.StringIO(testcase.source())
-                    info = tarfile.TarInfo(name=name)
-                    info.size = len(srcobj.buf)
-                    archive.addfile(tarinfo=info, fileobj=srcobj)
-                    stepn += 1
+                    continue
+
+                arcname = os.path.join(subdir, "%d-%s" % (stepn, \
+                                          os.path.basename(testcase.filename)))
+                self.__add_testcase_to_archive(archive, arcname, testcase)
+                stepn += 1
         return r
+
+    def __add_testcase_to_archive(self, archive, arcname, testcase):
+        srcobj = StringIO.StringIO(testcase.source())
+        info = tarfile.TarInfo(name=arcname)
+        info.size = len(srcobj.buf)
+        archive.addfile(tarinfo=info, fileobj=srcobj)
+        testcaseextradir = testcase.filename + ".d"
+        if os.path.exists(testcaseextradir):
+            logger.debug("Adding extra dir: %s" % testcaseextradir)
+            archive.add(testcaseextradir, arcname=arcname + ".d", \
+                        recursive=True)
 
 class Testset(object):
     name = None

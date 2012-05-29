@@ -34,7 +34,7 @@ def create_cobbler_profile(pname="ovirt-ating"):
       "kernel_options_post": COBBLER_KARGS,
       })
 
-class TestingJSONEncoder(json.JSONEncoder):
+class IgordJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Job) or isinstance(obj, Testsuite) or \
            isinstance(obj, Testset) or isinstance(obj, Testcase):
@@ -45,7 +45,7 @@ class TestingJSONEncoder(json.JSONEncoder):
 
 def to_json(obj):
     bottle.response.content_type = "application/json"
-    return json.dumps(obj, cls=TestingJSONEncoder, sort_keys=True, indent=2)
+    return json.dumps(obj, cls=IgordJSONEncoder, sort_keys=True, indent=2)
 
 def _req_cookie():
     cookie_key = "x-igor-cookie"
@@ -124,14 +124,24 @@ def add_artifact(cookie, name):
     j = jc.jobs[cookie]
     j.add_artifact(name, bottle.request.body.read())
 
-
 @bottle.route('/firstboot/<cookie>', method='GET')
-def disable_pxe_cb(cookie):
+@bottle.route('/job/<cookie>/set/enable_pxe/<enable_pxe>', method='GET')
+def disable_pxe_cb(cookie, enable_pxe=False):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job %s" % cookie)
-    # Only for cobbler
+    # FIXME Only for cobbler
     j = jc.jobs[cookie]
-    m = j.profile.cobbler_session_cb().set_netboot_enable(j.host.get_name(), False)
+    m = j.profile.cobbler_session_cb().set_netboot_enable(j.host.get_name(), enable_pxe)
+    return to_json(m)
+
+@bottle.route('/job/<cookie>/set/kernelargs/<kernelargs>', method='GET')
+def set_kernelargs_cb(cookie, kernelargs):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job %s" % cookie)
+    raise Exception("Not implemented yet, but needed for updates")
+    # FIXME Only for cobbler
+#    j = jc.jobs[cookie]
+#    m = j.profile.cobbler_session_cb().set_netboot_enable(j.host.get_name(), enable_pxe)
     return to_json(m)
 
 
@@ -168,6 +178,8 @@ def get_testsuite_archive(name):
 
 
 try:
+#    logger.info("Starting igord")
+#    logger.debug("Currentt testsuites:\n%s" % load_testsuites())
     bottle.run(host='0.0.0.0', port=8080, reloader=True)
 except KeyboardInterrupt:
     logger.debug("Cleaning")

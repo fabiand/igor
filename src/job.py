@@ -45,9 +45,12 @@ class Job(object):
     def __init__(self, cookie, testsuite, profile, host):
         """Create a new job to run the testsuite on host prepared with profile
         """
+        assert cookie is not None, "Cookie can not be None"
         self.cookie = cookie
         self.session = testing.TestSession(cookie)
 
+        assert host is not None, "host can not be None"
+        assert profile is not None, "profile can not be None"
         self.host = host
         self.profile = profile
 
@@ -153,13 +156,26 @@ class Job(object):
             self._state = new_state
         return self._state
 
+    def result(self):
+        msg = None
+        if self.has_succeeded():
+            msg = "success"
+        elif self.has_failed():
+            msg = "failed"
+        elif self.is_aborted():
+            msg = "aborted"
+        elif self.is_running():
+            msg = "(no result, running)"
+        assert msg is not None, "Unknown job result"
+        return msg
+
     def current_testcase(self):
         return self.testcases()[self.current_step]
 
     def testcases(self):
         return self.testsuite.testcases()
 
-    def is_done(self):
+    def has_succeeded(self):
         m_val = self.completed_all_steps() and not self.has_failed()
         e_val = self.state() == s_done
         assert(m_val == e_val)
@@ -242,10 +258,11 @@ class JobCenter(object):
     def _generate_cookie(self, cookie_req=None):
         cookie = cookie_req
         self._cookie_lock.acquire()
-        while cookie is None and cookie in self.jobs.keys():
+        while cookie is None or cookie in self.jobs.keys():
             cookie = "%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), len(self.jobs.items()))
             cookie = utils.surl(eval(cookie))
         self._cookie_lock.release()
+        assert cookie is not None, "Cookie creation failed: %s -> %s" % (cookie_req, cookie)
         return cookie
 
     def submit_testsuite(self, testsuite, profile, host, cookie_req=None):

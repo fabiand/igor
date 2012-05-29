@@ -40,9 +40,13 @@ api_call()
 
 add_artifact()
 {
-  debug "Adding artifact '$DST': '$FILENAME'"
   DST=$1
   FILENAME=$2
+  [[ -z $DST || -z $FILENAME ]] && {
+    debug "Adding artifact: Destination '$DST' or filename '$FILENAME' missing."
+    return 1
+  }
+  debug "Adding artifact '$DST': '$FILENAME'"
   URL=$(api_url "job/artifact/for/$SESSION/$DST")
   curl --silent --request PUT --upload-file "$FILENAME" "$URL"
 }
