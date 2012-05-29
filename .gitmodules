@@ -1,0 +1,3 @@
+[submodule "testcases/uinput.py.d/uinputpy"]
+	path = testcases/uinput.py.d/uinputpy
+	url = https://github.com/tuomasjjrasanen/python-uinput.git
