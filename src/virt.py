@@ -120,7 +120,7 @@ class VMHost(Host):
 
     def get_mac_address(self):
         dom = etree.XML(self.libvirt_vm_definition)
-        mac = dom.xpath("/domain/devices/interface[@type='network'][1]/mac")[0]
+        mac = dom.xpath("/domain/devices/interface[1]/mac")[0]
         return mac.attrib["address"]
 
     def start(self):
