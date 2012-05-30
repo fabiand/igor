@@ -81,6 +81,8 @@ class VMHost(Host):
             "os-type": "'linux'",
             "boot": "network",
             "network": self.network_configuration,
+            "graphics": "spice",
+            "video": "cirrus",
             "noautoconsole": None,      # Prevents opening a window
             "import": None,
             "dry-run": None,
