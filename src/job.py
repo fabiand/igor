@@ -146,14 +146,14 @@ class Job(object):
         """Tear down this test, might clean up the host
         """
         logger.debug("Tearing down job %s" % self.cookie)
-        if self.state() not in [s_aborted, s_failed, s_done]:
-            raise Exception("Job %s can not yet be torn down: %s" % ( \
-                                                    self.cookie, self.state()))
-        else:
-            self.host.purge()
-            self.profile.revoke_from(self.host)
-            if do_cleanup:
-                self.session.remove()
+#        if self.state() not in [s_aborted, s_failed, s_done]:
+#            raise Exception("Job %s can not yet be torn down: %s" % ( \
+#                                                    self.cookie, self.state()))
+#        else:
+        self.host.purge()
+        self.profile.revoke_from(self.host)
+        if do_cleanup:
+            self.session.remove()
 
     def state(self, new_state=None):
         if new_state is not None:

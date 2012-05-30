@@ -109,13 +109,21 @@ def finish_step(cookie, n, result):
     return to_json(m)
 
 @bottle.route('/job/abort/<cookie>/<clean>', method='GET')
-def abort_test(cookie, clean=False):
+def abort_job(cookie, clean=False):
     try:
         m = jc.abort_job(cookie)
     except Exception as e:
         m = e.message
     if clean:
         jc.end_job(cookie)
+    return to_json(m)
+
+@bottle.route('/job/end/<cookie>', method='GET')
+def end_job(cookie):
+    try:
+        m = jc.end_job(cookie)
+    except Exception as e:
+        m = e.message
     return to_json(m)
 
 @bottle.route('/job/testsuite/for/<cookie>', method='GET')

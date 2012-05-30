@@ -79,7 +79,14 @@ uncookie() # Remove current cookie
 abort() # Abort the current job
 {
   has_cookie
-  api job/abort/$IGORCOOKIE/True
+  api job/abort/$IGORCOOKIE
+  uncookie
+}
+
+end() # End the current job and remove it's artifacts
+{
+  has_cookie
+  api job/end/$IGORCOOKIE
   uncookie
 }
 
