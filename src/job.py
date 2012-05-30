@@ -20,7 +20,10 @@ s_prepared = utils.State("prepared")
 s_running = utils.State("running")
 s_aborted = utils.State("aborted")
 s_failed = utils.State("failed")
+s_timedout = utils.State("timedout")
 s_done = utils.State("done")
+
+_state_lock = threading.Lock()
 
 class Job(object):
     """Lifecycle
@@ -42,7 +45,11 @@ class Job(object):
 
     current_step = 0
     results = None
+
     _state = None
+    _state_history = None
+
+    _watchdog = None
 
     def __init__(self, cookie, testsuite, profile, host, session_path="/tmp"):
         """Create a new job to run the testsuite on host prepared with profile
@@ -62,7 +69,33 @@ class Job(object):
 
         self.results = []
 
+        self._state_history = []
         self.state(s_open)
+
+        self.watchdog = self.__init_watchdog()
+
+    def __init_watchdog(self):
+        class JobWatchdog(threading.Thread):
+            job = None
+            interval = 1
+            _stop_event = None
+
+            def __init__(self, job):
+                self.job = job
+                self._stop_event = threading.Event()
+                threading.Thread.__init__(self)
+
+            def run(self):
+                while not self.job.is_timedout():
+                    self._stop_event.wait(self.interval)
+                logger.debug("Job %s timed out." % self.job.cookie)
+                self.job.state(s_timedout)
+
+            def stop(self):
+                self._stop_event.set()
+        watchdog = JobWatchdog(self)
+        watchdog.start()
+        return watchdog
 
     def setup(self):
         """Prepare a host to get started
@@ -112,9 +145,11 @@ class Job(object):
             logger.debug("Finished step %s succesfully" % n)
             if self.completed_all_steps():
                 logger.debug("Finished job %s" % (self.cookie))
+                self.watchdog.stop()
                 self.state(s_done)
         elif is_success is False:
             logger.info("Finished step %s unsucsessfull" % n)
+            self.watchdog.stop()
             self.state(s_failed)
         return self.current_step
 
@@ -132,6 +167,7 @@ class Job(object):
                                                        self.state()))
 
         self.finish_step(self.current_step, is_success=False, note="aborted")
+        self.watchdog.stop()
         self.state(s_aborted)
 
     def reopen(self):
@@ -155,8 +191,13 @@ class Job(object):
         if do_cleanup:
             self.session.remove()
 
+    @utils.synchronized(_state_lock)
     def state(self, new_state=None):
         if new_state is not None:
+            self._state_history.append({
+                "created_at": time.time(),
+                "state": new_state
+            })
             self._state = new_state
         return self._state
 
@@ -168,6 +209,8 @@ class Job(object):
             msg = "failed"
         elif self.is_aborted():
             msg = "aborted"
+        elif self.is_timedout():
+            msg = "timedout"
         elif self.is_running():
             msg = "(no result, running)"
         assert msg is not None, "Unknown job result"
@@ -207,6 +250,21 @@ class Job(object):
         assert(m_val == e_val)
         return m_val
 
+    def timeout(self):
+        return self.testsuite.timeout()
+
+    def runtime(self):
+        time_started = self._state_history[0]["created_at"]
+        now = time.time()
+        return now - time_started
+
+    def is_timedout(self):
+        is_timeout = False
+        if self.runtime() > self.timeout():
+            is_timeout = True
+        # FIXME we need to check each testcase
+        return is_timeout
+
     def __str__(self):
         return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.cookie, 
                 self.state(), self.current_step, self.testsuite)
@@ -218,7 +276,9 @@ class Job(object):
             "testsuite": self.testsuite.__json__(),
             "state": self.state(),
             "current_step": self.current_step,
-            "results": self.results
+            "results": self.results,
+            "timeout": self.timeout(),
+            "runtime": self.runtime()
             }
 
 

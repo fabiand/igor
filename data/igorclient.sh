@@ -79,7 +79,7 @@ uncookie() # Remove current cookie
 abort() # Abort the current job
 {
   has_cookie
-  api job/abort/$IGORCOOKIE
+  api job/abort/$IGORCOOKIE/True
   uncookie
 }
 
@@ -100,6 +100,15 @@ status() # Get the status of the current job
 {
   has_cookie
   api job/status/$IGORCOOKIE
+}
+
+#
+# Convenience functions
+#
+state() # Just get the value of the status key
+{
+  has_cookie
+  api job/status/$IGORCOOKIE | _filter_key state
 }
 
 abort_all() # Abort all jobs

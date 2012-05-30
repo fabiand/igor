@@ -97,6 +97,18 @@ def scanf(pat, txt):
     r = re.search(regex, txt)
     return r.groups()
 
+def synchronized(lock):
+    """ Synchronization decorator. """
+    def wrap(f):
+        def newFunction(*args, **kw):
+            lock.acquire()
+            try:
+                return f(*args, **kw)
+            finally:
+                lock.release()
+        return newFunction
+    return wrap
+
 class State(object):
     name = None
     map = None

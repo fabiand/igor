@@ -180,7 +180,7 @@ class Testcase(object):
     name = None
     filename = None
     source = None
-    timeout = 60
+    timeout = 5
 
     def __init__(self, filename=None, name=None):
         if name is None and filename is None:
@@ -212,7 +212,7 @@ class TestSession(UpdateableObject):
 
         self.do_cleanup = cleanup
         self.cookie = cookie
-        self.dirname = run("mktemp -d '%s/test-session-XXXX-%s'" % \
+        self.dirname = run("mktemp -d '%s/test-session-XXXXX-%s'" % \
                            (session_path, self.cookie))
         run("chmod a+X '%s'" % self.dirname)
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
