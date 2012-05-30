@@ -76,6 +76,7 @@ def submit_testsuite(testsuite, profile, host, cookiereq=None):
         if profile not in cblr_sess.get_profiles():
             abort(412, "Unknown profile '%s'" % profile)
 
+    logger.debug("Checks done, submitting testsuite")
     resp = jc.submit_testsuite(testsuites[testsuite], \
                                create_cobbler_profile(profile), \
                                host, cookiereq)

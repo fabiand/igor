@@ -17,12 +17,14 @@ class Cobbler(object):
     distributed with all the other stuff. This small wrapper can be used
     as long as the bindigs are not split from the rest.
     """
+    server_url = None
     server = None
     credentials = None
 
     def __init__(self, server_url, c=("cobbler", "cobbler")):
 #        "http://cobbler-server.example.org/cobbler_api"
         self.credentials = c
+        self.server_url = server_url
         self.server = xmlrpclib.Server(server_url)
 
     def new_session(self):
@@ -79,14 +81,21 @@ class Cobbler(object):
             return self
 
         def __exit__(self, type, value, traceback):
-            self.server.sync(self.token)
+            pass
 
         def login(self):
+            logger.debug("Logging into cobbler")
             self.token = self.server.login(*(self.credentials))
+
+        def sync(self):
+            logger.debug("Syncing")
+            self.server.sync(self.token)
 
         def add_system(self, name, mac, profile, additional_args=None):
             """Add a new system.
             """
+            logger.debug("Adding system %s" % name)
+
             args = {
                 "name": name,
                 "mac": mac,
