@@ -101,7 +101,7 @@ class VMHost(Host):
 
         self.define()
 
-    def _virsh(cmd):
+    def _virsh(self, cmd):
         run("virsh --connect='%s' %s" % (self.connection_uri, cmd))
 
     def _upload_image(self, image_spec):
