@@ -70,7 +70,9 @@ def submit_testsuite(testsuite, profile, host, cookiereq=None):
     if testsuite not in testsuites:
         abort(412, "Unknown testsuite '%s'" % testsuite)
 
+    logger.debug("Starting cobbler session")
     with cobbler.new_session() as cblr_sess:
+        logger.debug("Checking profile %s" % profile)
         if profile not in cblr_sess.get_profiles():
             abort(412, "Unknown profile '%s'" % profile)
 
