@@ -30,7 +30,7 @@ def create_cobbler_profile(pname):
     """This is actually creating a cobbler system, in cobbler terms
     """
     return cobbler.new_profile(pname, {
-      "kernel_options": COBBLER_KARGS + COBBLER_KARGS_INSTALL,
+      "kernel_options": " ".join(COBBLER_KARGS, COBBLER_KARGS_INSTALL),
       "kernel_options_post": COBBLER_KARGS,
       })
 
