@@ -62,7 +62,7 @@ def _req_cookie():
 @bottle.route('/submit/<testsuite>/with/<profile>/on/<host>', method='GET')#
 @bottle.route('/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
-    host = VMHostFactory.create_default_host()
+    host = VMHostFactory.create_default_host(connection_uri=LIBVIRT_CONNECTION_URI)
     logger.warning("We are currently using a default host")
 
     testsuites = load_testsuites()

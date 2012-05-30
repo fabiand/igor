@@ -158,9 +158,12 @@ class VMHost(Host):
 
 class VMHostFactory:
     @staticmethod
-    def create_default_host():
-        return VMHost(name="8g-gpt-1g", image_specs=[ \
+    def create_default_host(connection_uri=None):
+        host = VMHost(name="8g-gpt-1g", image_specs=[ \
                  VMImage("8G", [ \
                    Partition("pri", "1M", "1G") \
                  ]) \
                ])
+        if connection_uri:
+            host.connection_uri = connection_uri
+        return host
