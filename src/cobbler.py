@@ -72,13 +72,17 @@ class Cobbler(object):
         def __init__(self, server, credentials):
             self.server = server
             self.credentials = credentials
-            self.token = server.login(*(credentials))
+            self.login()
 
         def __enter__(self):
+            self.login()
             return self
 
         def __exit__(self, type, value, traceback):
             self.server.sync(self.token)
+
+        def login(self):
+            self.token = self.server.login(*(self.credentials))
 
         def add_system(self, name, mac, profile, additional_args=None):
             """Add a new system.

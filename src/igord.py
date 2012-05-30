@@ -21,14 +21,14 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 jc = JobCenter(session_path=SESSION_PATH)
+cobbler = Cobbler(COBBLER_URL, COBBLER_CREDENTIALS)
 
 def load_testsuites():
     return Factory.testsuites_from_path(TESTCASES_PATH)
 
-def create_cobbler_profile(pname="ovirt-ating"):
-    logger.warning("JUST USING PROFILE ovirt-ating CURRENTLY")
-    pname="ovirt-ating"
-    cobbler = Cobbler(COBBLER_URL, COBBLER_CREDENTIALS)
+def create_cobbler_profile(pname):
+    """This is actually creating a cobbler system, in cobbler terms
+    """
     return cobbler.new_profile(pname, {
       "kernel_options": COBBLER_KARGS + COBBLER_KARGS_INSTALL,
       "kernel_options_post": COBBLER_KARGS,
@@ -62,12 +62,18 @@ def _req_cookie():
 @bottle.route('/submit/<testsuite>/with/<profile>/on/<host>', method='GET')#
 @bottle.route('/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
-    testsuites = load_testsuites()
-    logger.debug("Loaded testsuites: %s" % testsuites)
     host = VMHostFactory.create_default_host()
     logger.warning("We are currently using a default host")
+
+    testsuites = load_testsuites()
+    logger.debug("Loaded testsuites: %s" % testsuites)
     if testsuite not in testsuites:
         abort(412, "Unknown testsuite '%s'" % testsuite)
+
+    with cobbler.new_session() as cblr_sess:
+        if profile not in cblr_sess.get_profiles():
+            abort(412, "Unknown profile '%s'" % profile)
+
     resp = jc.submit_testsuite(testsuites[testsuite], \
                                create_cobbler_profile(profile), \
                                host, cookiereq)

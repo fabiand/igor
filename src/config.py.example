@@ -3,7 +3,7 @@
 TESTCASES_PATH = "../testcases"
 
 # Path to store the sessions in
-SESSION_PATH="/tmp"
+SESSION_PATH = "/tmp"
 
 # The URL of Cobblers API
 COBBLER_URL = "http://127.0.0.1/cobbler_api"
