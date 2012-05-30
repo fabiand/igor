@@ -77,7 +77,7 @@ class VMHost(Host):
             "name": "'%s'" % self._vm_name,
             "vcpus": "2",
             "cpu": "host",
-            "ram": "768",
+            "ram": "1024",
             "os-type": "'linux'",
             "boot": "network",
             "network": self.network_configuration,
