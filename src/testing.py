@@ -203,11 +203,13 @@ class TestSession(UpdateableObject):
 
     do_cleanup = False
 
-    def __init__(self, cookie, cleanup=True):
+    def __init__(self, cookie, session_path, cleanup=True):
+        assert session_path is not None, "session path can not be None"
+
         self.do_cleanup = cleanup
         self.cookie = cookie
-        self.dirname = run("mktemp -d '/tmp/test-session-%s-XXXX'" % \
-                           self.cookie)
+        self.dirname = run("mktemp -d '%s/test-session-XXXX-%s'" % \
+                           (session_path, self.cookie))
         run("chmod a+X '%s'" % self.dirname)
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
 

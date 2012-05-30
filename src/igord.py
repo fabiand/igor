@@ -20,7 +20,7 @@ from config import *
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
-jc = JobCenter(filename="jc.data", autosave=False)
+jc = JobCenter(session_path=SESSION_PATH)
 
 def load_testsuites():
     return Factory.testsuites_from_path(TESTCASES_PATH)

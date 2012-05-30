@@ -29,6 +29,8 @@ class Job(object):
     finish_step(..), [...] | abort()
     end()
     """
+    session_path = None
+
     cookie = None
     session = None
 
@@ -42,12 +44,14 @@ class Job(object):
     results = None
     _state = None
 
-    def __init__(self, cookie, testsuite, profile, host):
+    def __init__(self, cookie, testsuite, profile, host, session_path="/tmp"):
         """Create a new job to run the testsuite on host prepared with profile
         """
+        self.session_path = session_path
+
         assert cookie is not None, "Cookie can not be None"
         self.cookie = cookie
-        self.session = testing.TestSession(cookie)
+        self.session = testing.TestSession(cookie, self.session_path)
 
         assert host is not None, "host can not be None"
         assert profile is not None, "profile can not be None"
@@ -219,35 +223,19 @@ class Job(object):
 class JobCenter(object):
     """Manage jobs
     """
+    session_path = None
+
     jobs = {}
     closed_jobs = []
 
     _cookie_lock = threading.Lock()
 
-    def __init__(self, filename=None, autosave=False):
-        pass
+    def __init__(self, session_path):
+        self.session_path = session_path
+        logger.debug("JobCenter opened in %s" % self.session_path)
 
     def __delete__(self):
         logger.debug("JobCenter is gone.")
-
-    def load(self, pfilename="jobcenter_data.pickle"):
-        try:
-            obj = None
-            with open(pfilename, "r") as p:
-                obj = pickle.load(p)
-            self.jobs = obj["oj"]
-            self.closed_jobs = obj["cj"]
-        except Exception as e:
-            logger.warning("Couldn't load file %s: %s" % (pfilename, \
-                                                          e.message))
-
-    def save(self, pfilename="jobcenter_data.pickle"):
-        obj = {
-            "oj": self.jobs,
-            "cj": self.closed_jobs,
-        }
-        with open(pfilename, "w") as p:
-            pickle.dump(obj, p)
 
     def get_jobs(self):
         return {
@@ -271,7 +259,7 @@ class JobCenter(object):
         """
         cookie = self._generate_cookie(cookie_req)
 
-        j = Job(cookie, testsuite, profile, host)
+        j = Job(cookie, testsuite, profile, host, session_path=self.session_path)
         j.created_at = time.time()
 
         self.jobs[cookie] = j

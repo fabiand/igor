@@ -3,6 +3,7 @@
 import os
 import logging
 import urllib
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,13 @@ def surl(number):
         number = int(number / len(codes)) - 1
     return r
 
+def scanf(pat, txt):
+    #http://docs.python.org/library/re.html#simulating-scanf
+    regex = pat
+    for (a, b) in [ ("%s", "(\S+)"), ("%d", "([-+]?\d+)") ]:
+        regex = regex.replace(a, b)
+    r = re.search(regex, txt)
+    return r.groups()
 
 class State(object):
     name = None
