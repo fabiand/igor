@@ -15,10 +15,6 @@ from partition import *
 
 logger = logging.getLogger(__name__)
 
-
-def virsh(cmd):
-    run("virsh --connect='qemu:///system' %s" % cmd)
-
 class VMImage(Layout):
     def compress(self, dst_fmt="qcow2"):
         '''Convert the raw image into a qemu image.
@@ -105,14 +101,17 @@ class VMHost(Host):
 
         self.define()
 
+    def _virsh(cmd):
+        run("virsh --connect='%s' %s" % (self.connection_uri, cmd))
+
     def _upload_image(self, image_spec):
         image_spec.compress()
         disk = image_spec.filename
         volname = os.path.basename(disk)
         poolvol = "%s/%s" % (self.poolname, volname)
         logger.debug("Uploading disk image '%s' to '%s'" % (disk, poolvol))
-        virsh("vol-create-as --name '%s' --capacity '%s' --format %s --pool '%s'" % (volname, image_spec.size, image_spec.format, self.poolname))
-        virsh("vol-upload --vol '%s' --file '%s' --pool '%s'" % (volname, disk, self.poolname))
+        self._virsh("vol-create-as --name '%s' --capacity '%s' --format %s --pool '%s'" % (volname, image_spec.size, image_spec.format, self.poolname))
+        self._virsh("vol-upload --vol '%s' --file '%s' --pool '%s'" % (volname, disk, self.poolname))
         return poolvol
 
     def get_name(self):
@@ -142,7 +141,7 @@ class VMHost(Host):
             for image_spec in self.image_specs:
                 image_spec.remove()
                 volname = os.path.basename(image_spec.filename)
-                virsh("vol-delete --vol '%s' --pool '%s'" % (volname, self.poolname))
+                self._virsh("vol-delete --vol '%s' --pool '%s'" % (volname, self.poolname))
 
     def remove_vm(self):
         self.destroy()
@@ -157,16 +156,16 @@ class VMHost(Host):
         self.remove_images()
 
     def boot(self):
-        virsh("start %s" % self._vm_name)
+        self._virsh("start %s" % self._vm_name)
 
     def reboot(self):
-        virsh("reboot %s" % self._vm_name)
+        self._virsh("reboot %s" % self._vm_name)
 
     def shutdown(self):
-        virsh("shutdown %s" % self._vm_name)
+        self._virsh("shutdown %s" % self._vm_name)
 
     def destroy(self):
-        virsh("destroy %s" % self._vm_name)
+        self._virsh("destroy %s" % self._vm_name)
 
     def define(self):
         tmpfile = run("mktemp --tmpdir")
@@ -174,10 +173,10 @@ class VMHost(Host):
             logger.debug(tmpfile)
             f.write(self.libvirt_vm_definition)
             f.flush()
-            virsh("define %s" % tmpfile)
+            self._virsh("define %s" % tmpfile)
 
     def undefine(self):
-        virsh("undefine %s" % self._vm_name)
+        self._virsh("undefine %s" % self._vm_name)
 
 
 class VMHostFactory:
