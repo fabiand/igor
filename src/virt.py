@@ -43,12 +43,14 @@ class VMHost(Host):
 
     vm_prefix = "igor-vm-"
     vm_defaults = None
+    _vm_name = None
 
     connection_uri = "qemu:///system"
     libvirt_vm_definition = None
 
     def __init__(self, *args, **kwargs):
         self.vm_defaults = {}
+        self._vm_name = "(not yet created)"
         Host.__init__(self, *args, **kwargs)
 
     def prepare(self, session):
