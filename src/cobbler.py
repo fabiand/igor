@@ -44,6 +44,9 @@ class Cobbler(object):
             self.name = profile_name
             self.additional_args = additional_args
 
+        def get_name(self):
+            return self.name
+
         def assign_to(self, host):
             with self.cobbler_session_cb() as session:
                 if self.name not in session.get_profiles():

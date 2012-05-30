@@ -213,6 +213,8 @@ class Job(object):
     def __json__(self):
         return { \
             "id": self.cookie,
+            "profile": self.profile.get_name(),
+            "host": self.host.get_name(),
             "testsuite": self.testsuite.__json__(),
             "state": self.state(),
             "current_step": self.current_step,

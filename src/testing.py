@@ -48,6 +48,10 @@ class Host(UpdateableObject):
 
 
 class Profile(UpdateableObject):
+
+    def get_name(self):
+        raise Exception("Not implemented.")
+
     def assign_to(self, host):
         raise Exception("Not implemented.")
 

@@ -78,7 +78,7 @@ class VMHost(Host):
             "vcpus": "2",
             "cpu": "host",
             "ram": "1024",
-            "os-type": "'linux'",
+            "os-type": "linux",
             "boot": "network",
             "network": self.network_configuration,
             "graphics": "spice",
@@ -188,7 +188,7 @@ class VMHostFactory:
                             storage_pool="default", \
                             network_configuration="network=default"):
         host = VMHost(name="8g-gpt-1g", image_specs=[ \
-                 VMImage("2G", [ \
+                 VMImage("8G", [ \
                    Partition("pri", "1M", "1G") \
                  ]) \
                ])
