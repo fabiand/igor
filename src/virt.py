@@ -39,7 +39,7 @@ class VMHost(Host):
     image_specs = None
 
     poolname = "default"
-    translate_definition_disk_path_cb = None
+    network_configuration = "network=default"
 
     vm_prefix = "igor-vm-"
     vm_defaults = None
@@ -78,8 +78,9 @@ class VMHost(Host):
             "vcpus": "2",
             "cpu": "host",
             "ram": "768",
-            "boot": "network",
             "os-type": "'linux'",
+            "boot": "network",
+            "network": self.network_configuration,
             "noautoconsole": None,      # Prevents opening a window
             "import": None,
             "dry-run": None,
@@ -181,12 +182,15 @@ class VMHost(Host):
 
 class VMHostFactory:
     @staticmethod
-    def create_default_host(connection_uri=None, storage_pool="default"):
+    def create_default_host(connection_uri="qemu:///system", \
+                            storage_pool="default", \
+                            network_configuration="network=default"):
         host = VMHost(name="8g-gpt-1g", image_specs=[ \
                  VMImage("2G", [ \
                    Partition("pri", "1M", "1G") \
                  ]) \
                ])
-        host.connection_uri = connection_uri    or "qemu:///system"
-        host.storage_pool = storage_pool        or "default"
+        host.connection_uri = connection_uri
+        host.storage_pool = storage_pool
+        host.network_configuration = network_configuration
         return host
