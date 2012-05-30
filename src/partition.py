@@ -26,6 +26,7 @@ class Layout(UpdateableObject):
     size = None
     label = None
     partitions = None
+    format = None
 
     def __init__(self, size, partitions, label="gpt", filename=None):
         if not any(size.lower().endswith(s) for s in ["m", "g"]):
@@ -36,6 +37,7 @@ class Layout(UpdateableObject):
         self.size = size or 4
         self.partitions = partitions or [{}]
         self.label = label
+        self.format = "raw"
 
     def create(self, session_dir):
         if self.filename is None:

@@ -20,7 +20,18 @@ def virsh(cmd):
     run("virsh --connect='qemu:///system' %s" % cmd)
 
 class VMImage(Layout):
-    pass
+    def compress(self, dst_fmt="qcow2"):
+        '''Convert the raw image into a qemu image.
+        '''
+        assert dst_fmt in ["raw", "qcow2"], "Only qcow2 and raw allowed"
+
+        dst_filename = "%s.%s" % (self.filename, dst_fmt)
+        cmd = "nice time qemu-img convert -c -O %s '%s' '%s'" % (dst_fmt, self.filename, dst_filename)
+        run(cmd)
+        cmd = "mv '%s' '%s'" % (dst_filename, self.filename)
+        run(cmd)
+        self.format = dst_fmt
+
 
 class VMHost(Host):
     '''A host which is actually a virtual guest.
@@ -31,7 +42,7 @@ class VMHost(Host):
     session = None
     image_specs = None
 
-    disk_images = None
+    poolname = "default"
     translate_definition_disk_path_cb = None
 
     vm_prefix = "igor-vm-"
@@ -41,7 +52,6 @@ class VMHost(Host):
     libvirt_vm_definition = None
 
     def __init__(self, *args, **kwargs):
-        self.disk_images = []
         self.vm_defaults = {}
         Host.__init__(self, *args, **kwargs)
 
@@ -58,7 +68,7 @@ class VMHost(Host):
             logger.info("No image spec given.")
         else:
             for image_spec in self.image_specs:
-                self.disk_images.append(image_spec.create(self.session.dirname))
+                image_spec.create(self.session.dirname)
 
     def prepare_vm(self):
         """Define the VM within libvirt
@@ -85,18 +95,25 @@ class VMHost(Host):
         cmd = "virt-install "
         cmd += dict_to_args(virtinstall_args)
 
-        for disk in self.disk_images:
-            if self.translate_definition_disk_path_cb is not None:
-                predisk = disk
-                logger.debug("Translated diskpath '%s' to '%s'" % (predisk, disk))
-                disk = self.translate_definition_disk_path_cb(disk)
-            cmd += " --disk path='%s',device=disk,bus=virtio,format=raw" % disk
+        for image_spec in self.image_specs:
+            poolvol = self._upload_image(image_spec)
+            cmd += " --disk vol=%s,device=disk,bus=virtio,format=raw" % poolvol
 
         self.libvirt_vm_definition = run(cmd)
 
 #        logger.debug(self.libvirt_vm_definition)
 
         self.define()
+
+    def _upload_image(self, image_spec):
+        image_spec.compress()
+        disk = image_spec.filename
+        volname = os.path.basename(disk)
+        poolvol = "%s/%s" % (self.poolname, volname)
+        logger.debug("Uploading disk image '%s' to '%s'" % (disk, poolvol))
+        virsh("vol-create-as --name '%s' --capacity '%s' --format %s --pool '%s'" % (volname, image_spec.size, image_spec.format, self.poolname))
+        virsh("vol-upload --vol '%s' --file '%s' --pool '%s'" % (volname, disk, self.poolname))
+        return poolvol
 
     def get_name(self):
         return self._vm_name
@@ -124,6 +141,8 @@ class VMHost(Host):
         else:
             for image_spec in self.image_specs:
                 image_spec.remove()
+                volname = os.path.basename(image_spec.filename)
+                virsh("vol-delete --vol '%s' --pool '%s'" % (volname, self.poolname))
 
     def remove_vm(self):
         self.destroy()
@@ -163,13 +182,12 @@ class VMHost(Host):
 
 class VMHostFactory:
     @staticmethod
-    def create_default_host(connection_uri=None, translate_definition_disk_path_cb=None):
+    def create_default_host(connection_uri=None, storage_pool="default"):
         host = VMHost(name="8g-gpt-1g", image_specs=[ \
-                 VMImage("8G", [ \
+                 VMImage("2G", [ \
                    Partition("pri", "1M", "1G") \
                  ]) \
                ])
-        if connection_uri:
-            host.connection_uri = connection_uri
-        host.translate_definition_disk_path_cb = translate_definition_disk_path_cb
+        host.connection_uri = connection_uri    or "qemu:///system"
+        host.storage_pool = storage_pool        or "default"
         return host

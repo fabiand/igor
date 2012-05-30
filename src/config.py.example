@@ -15,11 +15,4 @@ COBBLER_KARGS           = "local_boot_trigger=192.168.122.1:8080/testjob/${igor_
 #COBBLER_KARGS           += " adminpw=%s" % run("openssl passwd -salt OMG 123123")
 
 LIBVIRT_CONNECTION_URI  = "qemu:///system"
-
-# If a remote libvirt is used, the path might be different, use the following to translate:
-#LIBVIRT_VOLUME_PATH_PREFIX  = "/var/lib/libvirt/images/"
-#LIBVIRT_TRANSLATE_DEFINITION_PATH_CB   = lambda p: re.sub("^" + SESSION_PATH, LIBVIRT_VOLUME_PATH_PREFIX, p)
-# ... or a dummy:
-#LIBVIRT_TRANSLATE_DEFINITION_PATH_CB = lambda p: p
-# ... or none:
-LIBVIRT_TRANSLATE_DEFINITION_PATH_CB = None
+LIBVIRT_POOL            = "default"

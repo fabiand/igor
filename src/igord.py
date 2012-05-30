@@ -64,7 +64,7 @@ def _req_cookie():
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
     host = VMHostFactory.create_default_host( \
         connection_uri=LIBVIRT_CONNECTION_URI, \
-        translate_definition_disk_path_cb=LIBVIRT_TRANSLATE_DEFINITION_PATH_CB)
+        storage_pool=LIBVIRT_STORAGE_POOL)
     logger.warning("We are currently using a default host")
 
     testsuites = load_testsuites()
