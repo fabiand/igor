@@ -32,7 +32,7 @@ class VMHost(Host):
     image_specs = None
 
     disk_images = None
-    disk_path_translate_cb = None
+    translate_definition_disk_path_cb = None
 
     vm_prefix = "igor-vm-"
     vm_defaults = None
@@ -86,7 +86,7 @@ class VMHost(Host):
         cmd += dict_to_args(virtinstall_args)
 
         for disk in self.disk_images:
-            if self.disk_path_translate_cb is not None:
+            if self.translate_definition_disk_path_cb is not None:
                 predisk = disk
                 logger.debug("Translated diskpath '%s' to '%s'" % (predisk, disk))
                 disk = self.translate_definition_disk_path_cb(disk)
