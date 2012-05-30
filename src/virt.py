@@ -40,6 +40,7 @@ class VMHost(Host):
 
     poolname = "default"
     network_configuration = "network=default"
+    disk_bus_type = "virtio"
 
     vm_prefix = "igor-vm-"
     vm_defaults = None
@@ -98,7 +99,7 @@ class VMHost(Host):
 
         for image_spec in self.image_specs:
             poolvol = self._upload_image(image_spec)
-            cmd += " --disk vol=%s,device=disk,bus=virtio,format=raw" % poolvol
+            cmd += " --disk vol=%s,device=disk,bus=%s,format=%s" % (poolvol, self.disk_bus_type, image_spec.format)
 
         self.libvirt_vm_definition = run(cmd)
 
