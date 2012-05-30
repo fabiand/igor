@@ -32,6 +32,7 @@ class VMHost(Host):
     image_specs = None
 
     disk_images = None
+    disk_path_translate_cb = None
 
     vm_prefix = "igor-vm-"
     vm_defaults = None
@@ -85,6 +86,10 @@ class VMHost(Host):
         cmd += dict_to_args(virtinstall_args)
 
         for disk in self.disk_images:
+            if self.disk_path_translate_cb is not None:
+                predisk = disk
+                logger.debug("Translated diskpath '%s' to '%s'" % (predisk, disk))
+                disk = self.translate_definition_disk_path_cb(disk)
             cmd += " --disk path='%s',device=disk,bus=virtio,format=raw" % disk
 
         self.libvirt_vm_definition = run(cmd)
@@ -158,7 +163,7 @@ class VMHost(Host):
 
 class VMHostFactory:
     @staticmethod
-    def create_default_host(connection_uri=None):
+    def create_default_host(connection_uri=None, translate_definition_disk_path_cb=None):
         host = VMHost(name="8g-gpt-1g", image_specs=[ \
                  VMImage("8G", [ \
                    Partition("pri", "1M", "1G") \
@@ -166,4 +171,5 @@ class VMHostFactory:
                ])
         if connection_uri:
             host.connection_uri = connection_uri
+        host.translate_definition_disk_path_cb = translate_definition_disk_path_cb
         return host

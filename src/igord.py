@@ -5,7 +5,7 @@ import os
 import base64
 import logging
 import time
-import bottle
+import re
 import bottle
 from string import Template
 
@@ -62,7 +62,9 @@ def _req_cookie():
 @bottle.route('/submit/<testsuite>/with/<profile>/on/<host>', method='GET')#
 @bottle.route('/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
-    host = VMHostFactory.create_default_host(connection_uri=LIBVIRT_CONNECTION_URI)
+    host = VMHostFactory.create_default_host( \
+        connection_uri=LIBVIRT_CONNECTION_URI, \
+        translate_definition_disk_path_cb=LIBVIRT_TRANSLATE_DEFINITION_PATH_CB)
     logger.warning("We are currently using a default host")
 
     testsuites = load_testsuites()
