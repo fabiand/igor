@@ -84,6 +84,7 @@ class Job(object):
                 self.job = job
                 self._stop_event = threading.Event()
                 threading.Thread.__init__(self)
+                self.daemon = True
 
             def run(self):
                 while not self.job.is_timedout():
