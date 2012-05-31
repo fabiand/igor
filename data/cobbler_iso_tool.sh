@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 emph() { 
 echo -e "\033[1m$@\033[0m" ;
 #echo -e "\E[34;47m$@" ; tput sgr0

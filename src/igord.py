@@ -200,14 +200,15 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
     logger.info("Enabling remote ISO management for cobbler")
     @bottle.route('/extra/profile/add/<pname>/iso/<isoname>/remote', method='GET')
     def add_iso_profile_remote(pname, isoname):
-        retval = True
+        retval = 0
         with utils.TemporaryDirectory() as tmpdir:
             cmd = """
-    set -e
-    wget "{baseurl}/{isoname}"
+    wget --quiet "{baseurl}/{isoname}"
     [[ -e {isoname} ]] && (
     bash "{igorddir}/../data/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}"
+    RETVAL=$?
     rm -f "{isoname}"
+    exit $RETVAL
     ) || exit 1
     """.format( \
             igorddir=sys.path[0], \
@@ -216,18 +217,14 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
             sshuri=REMOTE_COBBLER_PROFILE_CREATION_SSH_URI, \
             profilename=pname, \
             isoname=isoname)
-            try:
-                run(cmd)
-            except Exception as e:
-                retval = e.message
-        return retval
+            retval, stdout = run(cmd, with_retval=True)
+        return to_json(retval)
 
     @bottle.route('/extra/profile/remove/<pname>/remote', method='GET')
     def remove_iso_profile_remote(pname):
-        retval = True
+        retval = 0
         with utils.TemporaryDirectory() as tmpdir:
             cmd = """
-    set -e
     bash "{igorddir}/../data/cobbler_iso_tool.sh" remote_remove "{sshuri}" "{profilename}"
     exit 0
     """.format( \
@@ -235,11 +232,8 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
             tmpdir=tmpdir, \
             sshuri=REMOTE_COBBLER_PROFILE_CREATION_SSH_URI, \
             profilename=pname)
-            try:
-                run(cmd)
-            except Exception as e:
-                retval = e.message
-        return retval
+            retval, stdout = run(cmd, with_retval=True)
+        return to_json(retval)
 
 
 try:

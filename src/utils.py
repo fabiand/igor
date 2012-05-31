@@ -9,7 +9,7 @@ import tempfile
 logger = logging.getLogger(__name__)
 
 
-def run(cmd):
+def run(cmd, with_retval=False):
     import subprocess
     logger.debug("Running: %s" % cmd)
     proc = subprocess.Popen(cmd, shell=True, \
@@ -17,11 +17,11 @@ def run(cmd):
                             stderr=subprocess.PIPE)
     (stdout, stderr) = proc.communicate()
     proc.wait()
-    if proc.returncode != 0:
-        raise Exception(proc.returncode, stderr)
     if stderr:
         logger.warning(stderr)
     r = stdout.strip()
+    if with_retval:
+        r = (proc.returncode, stdout.strip())
     return r
 
 
