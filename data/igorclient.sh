@@ -1,11 +1,12 @@
 #!/bin/bash
 
 IGORCOOKIEFILE=~/.igorcookie
+DEBUG=${DEBUG:-true}
 
 #
 # Common functions
 #
-debug() { echo "${IGORCOOKIE:-(no session)} $(date) - $@" >&2 ; }
+debug() { [[ -z $DEBUG ]] || echo "${IGORCOOKIE:-(no session)} $(date) - $@" >&2 ; }
 error() { echo -e "\n$@\n" >&2 ; }
 die() { error $@ ; exit 1 ; }
 
@@ -131,6 +132,26 @@ state() # Just get the value of the status key
 {
   has_cookie
   api job/status/$IGORCOOKIE | _filter_key state
+}
+
+wait_state() # Wait until a specific state is reached (regex)
+{
+  EXPR=$1
+  INTERVAL=${2:-10}
+  STATE=""
+  has_cookie
+  echo -n "Waiting "
+  export DEBUG=""
+  while true
+  do
+    STATE=$(state)
+    echo $STATE | egrep -q "$EXPR" && break
+    sleep $INTERVAL
+    echo -n "."
+  done
+  echo ""
+  echo "Reached state '$(state)' ($STATE)"
+  exit 0
 }
 
 abort_all() # Abort all jobs
