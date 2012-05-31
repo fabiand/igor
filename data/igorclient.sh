@@ -7,6 +7,7 @@ IGORCOOKIEFILE=~/.igorcookie
 #
 debug() { echo "${IGORCOOKIE:-(no session)} $(date) - $@" >&2 ; }
 error() { echo -e "\n$@\n" >&2 ; }
+die() { error $@ ; exit 1 ; }
 
 help() # This help
 {
@@ -101,6 +102,25 @@ status() # Get the status of the current job
   has_cookie
   api job/status/$IGORCOOKIE
 }
+
+#
+# Extra
+#
+extra_profile_add() # Add a profile to a remote cobbler server, EXTRA
+{
+  PNAME=$1
+  ISONAME=$2
+  [[ -z $PNAME ]] && die "Profile name is mandatory."
+  [[ -z $ISONAME ]] && die "ISO name is mandatory."
+  api extra/profile/add/$PNAME/iso/$ISONAME/remote
+}
+extra_profile_remove() # Remove a profile from a remote cobbler server, EXTRA
+{
+  PNAME=$1
+  [[ -z $PNAME ]] && die "Profile name is mandatory."
+  api extra/profile/remove/$PNAME/remote
+}
+
 
 #
 # Convenience functions
