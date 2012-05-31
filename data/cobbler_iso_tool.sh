@@ -5,8 +5,9 @@ echo -e "\033[1m$@\033[0m" ;
 #echo -e "\E[34;47m$@" ; tput sgr0
 }
 
-debug() { emph "$(date) $@" >&2 ; }
-die() { debug $@ ; exit 1 ; }
+debug() { echo "$(date) $@" >&2 ; }
+warning() { emph "$(date) WARNING $@" >&2 ; }
+die() { warning $@ ; exit 1 ; }
 
 run() {
   debug "Running $@"
@@ -91,20 +92,21 @@ remove()
 
   [ -z $BNAME ] && die "<bname> needs to be given."
 
-  [[ -e $TMPDIR ]] || die "Tmpdir $TMPDIR does not exists. Already imported?"
-
-  _object_exists profile $PROFILENAME || die "Profile '$PROFILENAME' does not exist"
-  _object_exists distro $DISTRONAME || die "Distro '$DISTRONAME' does not exist"
-
-  cobbler profile remove --name=$PROFILENAME
-  cobbler distro remove --name=$DISTRONAME
+  _object_exists profile $PROFILENAME && {
+    cobbler profile remove --name=$PROFILENAME 
+  } || warning "Profile '$PROFILENAME' does not exist"
+  _object_exists distro $DISTRONAME {
+    cobbler distro remove --name=$DISTRONAME
+  } || warning "Distro '$DISTRONAME' does not exist"
   [[ -z $FORCE_SYNC ]] || run cobbler sync
 
-  run rm $TFTPBOOTDIR/pxelinux.cfg/*
-  run rmdir $TFTPBOOTDIR/pxelinux.cfg
-  run rm $TFTPBOOTDIR/*
-  run rmdir $TFTPBOOTDIR
-  run rmdir $TMPDIR
+  [[ -e $TMPDIR ]] && {
+    run rm $TFTPBOOTDIR/pxelinux.cfg/*
+    run rmdir $TFTPBOOTDIR/pxelinux.cfg
+    run rm $TFTPBOOTDIR/*
+    run rmdir $TFTPBOOTDIR
+    run rmdir $TMPDIR
+  } || warning "Tmpdir $TMPDIR does not exists. Already imported?"
 
   exit 0
 }
