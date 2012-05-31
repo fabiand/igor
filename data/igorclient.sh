@@ -58,7 +58,9 @@ submit() # Submit a new job, e.g. submit <testsuite> <profile> <host>
 cookie() # Get/Set the current job cookie
 {
   [[ -z $1 ]] && {
-    cat $IGORCOOKIEFILE
+    [[ -e $IGORCOOKIEFILE ]] && {
+      cat $IGORCOOKIEFILE
+    } || exit 1
   } || {
     IGORCOOKIE=$1
     echo IGORCOOKIE=$IGORCOOKIE > $IGORCOOKIEFILE
