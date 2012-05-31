@@ -4,6 +4,7 @@ import os
 import logging
 import urllib
 import re
+import tempfile
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,14 @@ def surl(number):
             break
         number = int(number / len(codes)) - 1
     return r
+
+class TemporaryDirectory:
+    tmpdir = None
+    def __enter__(self):
+        self.tmpdir = tempfile.mkdtemp()
+        return self.tmpdir
+    def __exit__(self, type, value, traceback):
+        os.rmdir(self.tmpdir)
 
 def scanf(pat, txt):
     #http://docs.python.org/library/re.html#simulating-scanf

@@ -2,6 +2,7 @@
 
 import json
 import os
+import sys
 import base64
 import logging
 import time
@@ -88,7 +89,6 @@ def submit_testsuite(testsuite, profile, host, cookiereq=None):
 @bottle.route('/jobs', method='GET')
 def get_jobs():
     return to_json(jc.get_jobs())
-
 
 @bottle.route('/job/start/<cookie>', method='GET')
 def start_job(cookie):
@@ -196,11 +196,54 @@ def get_testsuite_archive(name):
 
     return r.getvalue()
 
+if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
+    logger.info("Enabling remote ISO management for cobbler")
+    @bottle.route('/extra/profile/add/<pname>/iso/<isoname>/remote', method='GET')
+    def add_iso_profile_remote(pname, isoname):
+        retval = True
+        with utils.TemporaryDirectory() as tmpdir:
+            cmd = """
+    set -e
+    wget "{baseurl}/{isoname}"
+    [[ -e {isoname} ]] && (
+    bash "{igorddir}/../data/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}"
+    rm -f "{isoname}"
+    ) || exit 1
+    """.format( \
+            igorddir=sys.path[0], \
+            tmpdir=tmpdir, \
+            baseurl=REMOTE_COBBLER_PROFILE_CREATION_BASE_URL, \
+            sshuri=REMOTE_COBBLER_PROFILE_CREATION_SSH_URI, \
+            profilename=pname, \
+            isoname=isoname)
+            try:
+                run(cmd)
+            except Exception as e:
+                retval = e.message
+        return retval
+
+    @bottle.route('/extra/profile/remove/<pname>/remote', method='GET')
+    def remove_iso_profile_remote(pname):
+        retval = True
+        with utils.TemporaryDirectory() as tmpdir:
+            cmd = """
+    set -e
+    bash "{igorddir}/../data/cobbler_iso_tool.sh" remote_remove "{sshuri}" "{profilename}"
+    exit 0
+    """.format( \
+            igorddir=sys.path[0], \
+            tmpdir=tmpdir, \
+            sshuri=REMOTE_COBBLER_PROFILE_CREATION_SSH_URI, \
+            profilename=pname)
+            try:
+                run(cmd)
+            except Exception as e:
+                retval = e.message
+        return retval
 
 
 try:
 #    logger.info("Starting igord")
-#    logger.debug("Currentt testsuites:\n%s" % load_testsuites())
     bottle.run(host='0.0.0.0', port=8080, reloader=True)
 except KeyboardInterrupt:
     logger.debug("Cleaning")

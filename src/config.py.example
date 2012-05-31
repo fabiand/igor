@@ -19,3 +19,7 @@ LIBVIRT_STORAGE_POOL            = "default"
 # As used by man virt-install
 LIBVIRT_NETWORK_CONFIGURATION   = "network=default"
 
+
+REMOTE_COBBLER_PROFILE_CREATION_ENABLED = False
+REMOTE_COBBLER_PROFILE_CREATION_BASE_URL = "http://jenkins.example.com/artifacts/"
+REMOTE_COBBLER_PROFILE_CREATION_SSH_URI  = "cobbler.example.com"
