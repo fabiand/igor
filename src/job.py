@@ -165,7 +165,6 @@ class Job(object):
         aname = "%s-%s" % (self.current_step, name)
         self.session.add_artifact(aname, data)
 
-    @utils.synchronized(_high_state_change_lock)
     def abort(self):
         """Abort the test
         """
