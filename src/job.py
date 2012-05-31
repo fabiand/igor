@@ -22,8 +22,11 @@ s_aborted = utils.State("aborted")
 s_failed = utils.State("failed")
 s_timedout = utils.State("timedout")
 s_done = utils.State("done")
+endstates = [s_aborted, s_failed, s_timedout, s_done]
 
-_state_change = threading.Lock()
+
+_high_state_change_lock = threading.Lock()
+_state_change_lock = threading.Lock()
 
 class Job(object):
     """Lifecycle
@@ -89,8 +92,9 @@ class Job(object):
             def run(self):
                 while not self.job.is_timedout():
                     self._stop_event.wait(self.interval)
-                logger.debug("Job %s timed out." % self.job.cookie)
-                self.job.state(s_timedout)
+                with _high_state_change_lock:
+                    logger.debug("Watchdog: Job %s timed out." % self.job.cookie)
+                    self.job.state(s_timedout)
 
             def stop(self):
                 self._stop_event.set()
@@ -98,7 +102,7 @@ class Job(object):
         watchdog.start()
         return watchdog
 
-    @utils.synchronized(_state_change)
+    @utils.synchronized(_high_state_change_lock)
     def setup(self):
         """Prepare a host to get started
         """
@@ -112,7 +116,7 @@ class Job(object):
         self.profile.assign_to(self.host)
         self.state(s_prepared)
 
-    @utils.synchronized(_state_change)
+    @utils.synchronized(_high_state_change_lock)
     def start(self):
         """Start the actual test
         We expecte the testsuite to be gathered by the host, thus the host 
@@ -125,7 +129,7 @@ class Job(object):
         self.state(s_running)
         self.host.start()
 
-    @utils.synchronized(_state_change)
+    @utils.synchronized(_high_state_change_lock)
     def finish_step(self, n, is_success, note=None):
         """Finish one test step
         """
@@ -161,7 +165,7 @@ class Job(object):
         aname = "%s-%s" % (self.current_step, name)
         self.session.add_artifact(aname, data)
 
-    @utils.synchronized(_state_change)
+    @utils.synchronized(_high_state_change_lock)
     def abort(self):
         """Abort the test
         """
@@ -175,7 +179,7 @@ class Job(object):
         self.watchdog.stop()
         self.state(s_aborted)
 
-    @utils.synchronized(_state_change)
+    @utils.synchronized(_high_state_change_lock)
     def reopen(self):
         if self.is_running(): #fixm prepare part
             raise Exception("Can not reopen job %s, it is: %s" % self.state())
@@ -184,20 +188,20 @@ class Job(object):
         self.results = []
         self.state(s_running)
 
-    @utils.synchronized(_state_change)
+    @utils.synchronized(_high_state_change_lock)
     def end(self, do_cleanup=False):
         """Tear down this test, might clean up the host
         """
         logger.debug("Tearing down job %s" % self.cookie)
-        if self.state() not in [s_aborted, s_failed, s_done]:
+        if self.state() not in [s_running, s_aborted, s_failed, s_done, s_timedout]:
             raise Exception("Job %s can not yet be torn down: %s" % ( \
                                                     self.cookie, self.state()))
-        else:
-            self.host.purge()
-            self.profile.revoke_from(self.host)
-            if do_cleanup:
-                self.session.remove()
+        self.host.purge()
+        self.profile.revoke_from(self.host)
+        if do_cleanup:
+            self.session.remove()
 
+    @utils.synchronized(_state_change_lock)
     def state(self, new_state=None):
         if new_state is not None:
             self._state_history.append({
@@ -260,9 +264,24 @@ class Job(object):
         return self.testsuite.timeout()
 
     def runtime(self):
-        time_started = self._state_history[0]["created_at"]
+        runtime = 0
         now = time.time()
-        return now - time_started
+        get_first_state_change = lambda q: [s for s in self._state_history if s["state"] == q][0]
+        if self.state() == s_running:
+            time_started = get_first_state_change(s_running)["created_at"]
+            runtime = now - time_started
+        elif self.state() == s_timedout:
+            time_started = get_first_state_change(s_running)["created_at"]
+            time_ended = get_first_state_change(s_timedout)["created_at"]
+            runtime = time_ended - time_started
+        elif self.state() == s_aborted:
+            time_started = get_first_state_change(s_running)["created_at"]
+            time_ended = get_first_state_change(s_aborted)["created_at"]
+            runtime = time_ended - time_started
+        elif self.state() in endstates:
+            time_ended = self.results[-1]["created_at"]
+            runtime = time_ended - time_started
+        return runtime
 
     def is_timedout(self):
         is_timeout = False
