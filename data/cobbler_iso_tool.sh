@@ -74,7 +74,7 @@ add()
     --kopts="$(grep APPEND $(pwd)/tftpboot/pxelinux.cfg/default | sed -r 's/^[ \t]+APPEND // ; s/initrd=[^[:space:]]+//g')" \
     --arch=x86_64
   run cobbler profile add --name=$PROFILENAME --distro=$DISTRONAME
-  run cobbler sync
+  [[ -z $FORCE_SYNC ]] || run cobbler sync
 
   run rm $TFTPBOOTDIR/pxelinux.cfg/*
   run rmdir $TFTPBOOTDIR/pxelinux.cfg
@@ -98,7 +98,7 @@ remove()
 
   cobbler profile remove --name=$PROFILENAME
   cobbler distro remove --name=$DISTRONAME
-  run cobbler sync
+  [[ -z $FORCE_SYNC ]] || run cobbler sync
 
   exit 0
 }
@@ -111,7 +111,7 @@ readd()
   add $BNAME $ISO
 }
 
-RTMPDIR="/tmp/ovirt_temporary_cobler_import"
+RTMPDIR="/tmp/ovirt_cobbler_temporary_folder_for_remote_import"
 pre_remote()
 {
   DSTHOST=$1
