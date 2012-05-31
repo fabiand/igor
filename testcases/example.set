@@ -1,5 +1,16 @@
+# First token must be the filename of the script to be run, relative to this
+# file.
+# Additionally you can specify a timeout argument to specify a timeout in
+# seconds (default 60).
+# Any line starting with a # and the rest of a line after a hash are treated
+# as a comments
+# Empty lines are ignored.
+
 installation_completed.sh
-helloworld.sh
-initiate_reboot.sh
-reboot_completed.sh
+
+helloworld.sh               timeout=10
+
+initiate_reboot.sh          timeout=10
+reboot_completed.sh         timeout=180         # Rebooting takes a while
+
 set_admin_password.sh

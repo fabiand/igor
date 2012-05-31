@@ -5,6 +5,7 @@ import logging
 import urllib
 import re
 import tempfile
+import shlex
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,20 @@ def dict_to_args(d):
                      "--%s=%s" % (k, v) \
                      for k, v in d.items()])
 
+def cmdline_to_dict(cmdline):
+    """Simple cmdline parsing.
+    Expects key=value pairs.
+
+    Examples:
+    >>> cmdline_to_dict("foo=bar")
+    { "foo": "bar" }
+    """
+    #http://stackoverflow.com/questions/156873/customized-command-line-parsing-in-python
+    args = {}
+    for arg in shlex.split(cmdline):
+        key, value = arg.split('=', 1)
+        args[key] = value
+    return args
 
 class MountedArchive:
     isofilename = None

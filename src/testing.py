@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import json
-import bottle
-from bottle import route, run, request, abort
 import os
 import glob
 import base64
@@ -12,7 +10,9 @@ import logging
 import unittest
 import tempfile, tarfile
 import StringIO
+import re
 
+import utils
 from utils import run
 
 logger = logging.getLogger(__name__)
@@ -66,8 +66,8 @@ class Factory:
         objlist = []
         with open(filename, "r") as f:
             for line in f:
-                line = line.strip()
-                if line.startswith("#") or line == "":
+                line = re.sub("\s*#.*$", "", line).strip()
+                if line == "":
                     continue
                 objlist.append(per_line_cb(os.path.join(fdir, line)))
         return objlist
@@ -91,7 +91,7 @@ class Factory:
     @staticmethod
     def testset_from_file(filename, suffix=".set"):
         name = os.path.basename(filename).replace(suffix, "")
-        cases = Factory.from_file(filename, Testcase)
+        cases = Factory.from_file(filename, Testcase.from_line)
         return Testset(name=name, testcases=cases)
 
 class Testsuite(object):
@@ -109,7 +109,7 @@ class Testsuite(object):
         return cases
 
     def timeout(self):
-        return sum([c.timeout for c in self.testcases()])
+        return sum([int(c.timeout) for c in self.testcases()])
     def __str__(self):
         testsets_str = "\n".join([str(ts) for ts in self.testsets])
         return "Suite: %s\nTestsets:\n%s" % (self.name, testsets_str)
@@ -160,7 +160,7 @@ class Testset(object):
         return self._testcases
 
     def timeout(self):
-        return sum([c.timeout for c in self.testcases()])
+        return sum([int(c.timeout) for c in self.testcases()])
 
     def add(self, cs):
         for c in cs:
@@ -180,7 +180,7 @@ class Testcase(object):
     name = None
     filename = None
     source = None
-    timeout = 5
+    timeout = 60
 
     def __init__(self, filename=None, name=None):
         if name is None and filename is None:
@@ -190,13 +190,28 @@ class Testcase(object):
         else:
             self.name = name
         self.filename = filename
+
+    @staticmethod
+    def from_line(line):
+        token = line.split()
+        token.reverse()
+        logger.debug(line)
+        logger.debug(token)
+        assert len(token) > 0, "Testcase filename is mandatory"
+        filename = token.pop()
+        c = Testcase(filename)
+        for k, v in utils.cmdline_to_dict(" ".join(token)).items():
+            if k == "timeout":
+                c.timeout = int(v)
+        return c
+
     def source(self):
         src = None
         with open(self.filename, "r") as f:
             src = f.read()
         return src
     def __str__(self):
-        return "%s (%s)" % (self.name, self.filename)
+        return "%s (%s, %s)" % (self.name, self.filename, self.timeout)
     def __json__(self):
         return self.__dict__
 
@@ -249,18 +264,5 @@ class TestSession(UpdateableObject):
         logger.info("Session '%s' ended." % self.cookie)
 
 if __name__ == "__main__":
-
-    suite = Factory.testsuite_from_file("testcases/example.suite")
-    print suite
-    #print suite.get_archive().getvalue()
-    suites = Factory.testsuites_from_path("testcases")
-    print suites["example"] == suite
-
-
-    a_testsuite = Testsuite("pri", [
-        Testset("one", [ "case_a", "case_b", "case_c" ]),
-        Testset("two", [ "case_d", "case_e", Testcase("case_f") ])
-    ])
-
-    print (a_testsuite)
-
+    suites = Factory.testsuites_from_path("../testcases/")
+    print suites
