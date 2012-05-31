@@ -5,8 +5,8 @@ echo -e "\033[1m$@\033[0m" ;
 #echo -e "\E[34;47m$@" ; tput sgr0
 }
 
-debug() { echo "$(date) $@" >&2 ; }
-warning() { emph "$(date) WARNING $@" >&2 ; }
+debug() { echo "$(date) $(hostname) $@" >&2 ; }
+warning() { emph "$(date) $(hostname) WARNING $@" >&2 ; }
 die() { warning $@ ; exit 1 ; }
 
 run() {
@@ -74,7 +74,7 @@ add()
     --name=$DISTRONAME \
     --kernel=$(ls $(pwd)/tftpboot/vmlinuz*) \
     --initrd=$(ls $(pwd)/tftpboot/initrd*) \
-    --kopts="\"$(grep APPEND $(pwd)/tftpboot/pxelinux.cfg/default | sed -r 's/^[ \t]+APPEND // ; s/initrd=[^[:space:]]+//g')\"" \
+    --kopts="$(grep APPEND $(pwd)/tftpboot/pxelinux.cfg/default | sed -r 's/^[ \t]+APPEND // ; s/initrd=[^[:space:]]+//g ; s/[[:space:]]$//')" \
     --arch=x86_64
   run cobbler profile add --name=$PROFILENAME --distro=$DISTRONAME
   [[ -z $FORCE_SYNC ]] || run cobbler sync
@@ -95,7 +95,7 @@ remove()
   _object_exists profile $PROFILENAME && {
     cobbler profile remove --name=$PROFILENAME 
   } || warning "Profile '$PROFILENAME' does not exist"
-  _object_exists distro $DISTRONAME {
+  _object_exists distro $DISTRONAME && {
     cobbler distro remove --name=$DISTRONAME
   } || warning "Distro '$DISTRONAME' does not exist"
   [[ -z $FORCE_SYNC ]] || run cobbler sync
@@ -106,7 +106,7 @@ remove()
     run rm $TFTPBOOTDIR/*
     run rmdir $TFTPBOOTDIR
     run rmdir $TMPDIR
-  } || warning "Tmpdir $TMPDIR does not exists. Already imported?"
+  } || warning "Tmpdir '$TMPDIR' does not exists. Already imported?"
 
   exit 0
 }

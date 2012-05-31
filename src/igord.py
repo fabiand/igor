@@ -204,7 +204,7 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
         with utils.TemporaryDirectory() as tmpdir:
             cmd = """
     wget --quiet "{baseurl}/{isoname}"
-    [[ -e {isoname} ]] && (
+    [[ -e "{isoname}" ]] && (
     bash "{igorddir}/../data/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}"
     RETVAL=$?
     rm -f "{isoname}"
