@@ -115,7 +115,7 @@ class VMHost(Host):
         disk = image_spec.filename
         volname = os.path.basename(disk)
         poolvol = "%s/%s" % (self.poolname, volname)
-        logger.debug("Uploading disk image '%s' to '%s'" % (disk, poolvol))
+        logger.debug("Uploading disk image '%s' to new volume '%s'" % (disk, poolvol))
         self._virsh("vol-create-as --name '%s' --capacity '%s' --format %s --pool '%s'" % (volname, image_spec.size, image_spec.format, self.poolname))
         self._virsh("vol-upload --vol '%s' --file '%s' --pool '%s'" % (volname, disk, self.poolname))
         return poolvol
