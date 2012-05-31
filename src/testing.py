@@ -195,8 +195,6 @@ class Testcase(object):
     def from_line(line):
         token = line.split()
         token.reverse()
-        logger.debug(line)
-        logger.debug(token)
         assert len(token) > 0, "Testcase filename is mandatory"
         filename = token.pop()
         c = Testcase(filename)
