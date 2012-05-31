@@ -108,6 +108,7 @@ def finish_step(cookie, n, result):
     m = jc.finish_test_step(cookie, n, result == "success", note)
     return to_json(m)
 
+@bottle.route('/job/abort/<cookie>', method='GET')
 @bottle.route('/job/abort/<cookie>/<clean>', method='GET')
 def abort_job(cookie, clean=False):
     try:
