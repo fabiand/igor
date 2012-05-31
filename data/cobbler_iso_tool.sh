@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 emph() { 
 echo -e "\033[1m$@\033[0m" ;
@@ -8,16 +8,6 @@ echo -e "\033[1m$@\033[0m" ;
 debug() { echo "$(date) $(hostname) $@" >&2 ; }
 warning() { emph "$(date) $(hostname) WARNING $@" >&2 ; }
 die() { warning $@ ; exit 1 ; }
-
-run() {
-  debug "Running $@"
-  $@
-}
-sshrun()
-{
-  debug "Running $2 on $1"
-  ssh $1 "$2"
-}
 
 usage()
 {
@@ -66,18 +56,18 @@ add()
   mkdir $TMPDIR
   cd $TMPDIR
 
-  run livecd-iso-to-pxeboot "$ISO"
+  livecd-iso-to-pxeboot "$ISO"
   TFTPBOOTDIR="$TMPDIR/tftpboot"
   [ -e $TFTPBOOTDIR ] || die "tftpboot wasn't created"
 
-  run cobbler distro add \
+  cobbler distro add \
     --name=$DISTRONAME \
     --kernel=$(ls $(pwd)/tftpboot/vmlinuz*) \
     --initrd=$(ls $(pwd)/tftpboot/initrd*) \
     --kopts="$(grep APPEND $(pwd)/tftpboot/pxelinux.cfg/default | sed -r 's/^[ \t]+APPEND // ; s/initrd=[^[:space:]]+//g ; s/[[:space:]]$//')" \
     --arch=x86_64
-  run cobbler profile add --name=$PROFILENAME --distro=$DISTRONAME
-  [[ -z $FORCE_SYNC ]] || run cobbler sync
+  cobbler profile add --name=$PROFILENAME --distro=$DISTRONAME
+  [[ -z $FORCE_SYNC ]] || cobbler sync
 
   exit 0
 }
@@ -98,14 +88,14 @@ remove()
   _object_exists distro $DISTRONAME && {
     cobbler distro remove --name=$DISTRONAME
   } || warning "Distro '$DISTRONAME' does not exist"
-  [[ -z $FORCE_SYNC ]] || run cobbler sync
+  [[ -z $FORCE_SYNC ]] || cobbler sync
 
   [[ -e $TMPDIR ]] && {
-    run rm $TFTPBOOTDIR/pxelinux.cfg/*
-    run rmdir $TFTPBOOTDIR/pxelinux.cfg
-    run rm $TFTPBOOTDIR/*
-    run rmdir $TFTPBOOTDIR
-    run rmdir $TMPDIR
+    rm $TFTPBOOTDIR/pxelinux.cfg/*
+    rmdir $TFTPBOOTDIR/pxelinux.cfg
+    rm $TFTPBOOTDIR/*
+    rmdir $TFTPBOOTDIR
+    rmdir $TMPDIR
   } || warning "Tmpdir '$TMPDIR' does not exists. Already imported?"
 
   exit 0
@@ -125,16 +115,16 @@ pre_remote()
   DSTHOST=$1
 
   debug "Preparing remote temp dir: $RTMPDIR"
-  sshrun $DSTHOST "[[ -e $RTMPDIR ]] && exit 1 ; mkdir $RTMPDIR" || die "Something wrong with remote dir."
+  ssh $DSTHOST "[[ -e $RTMPDIR ]] && exit 1 ; mkdir $RTMPDIR" || die "Something wrong with remote dir."
 
   debug "Copying this script"
-  run scp $0 $DSTHOST:$RTMPDIR/
+  scp $0 $DSTHOST:$RTMPDIR/
 }
 post_remote()
 {
   DSTHOST=$1
   debug "Cleaning remote"
-  sshrun $DSTHOST "cd $RTMPDIR && { rm -vrf tftpboot ; rm -vf * ; cd ~ && rmdir -v $RTMPDIR ; }"
+  ssh $DSTHOST "cd $RTMPDIR && { rm -vrf tftpboot ; rm -vf * ; cd ~ && rmdir -v $RTMPDIR ; }"
 }
 remote_add()
 {
@@ -145,9 +135,9 @@ remote_add()
   pre_remote $DSTHOST
 
   debug "Copying ISO $ISO to remote"
-  run scp -C $ISO $DSTHOST:$RTMPDIR/$(basename $ISO)
+  scp -C $ISO $DSTHOST:$RTMPDIR/$(basename $ISO)
   debug "Running remote"
-  sshrun $DSTHOST "cd $RTMPDIR && bash $(basename $0) add $BNAME $RTMPDIR/$(basename $ISO)"
+  ssh $DSTHOST "cd $RTMPDIR && bash $(basename $0) add $BNAME $RTMPDIR/$(basename $ISO)"
 
   post_remote $DSTHOST
 }
@@ -158,7 +148,7 @@ remote_remove()
 
   pre_remote $DSTHOST
 
-  sshrun $DSTHOST "cd $RTMPDIR && bash $(basename $0) remove $BNAME"
+  ssh $DSTHOST "cd $RTMPDIR && bash $(basename $0) remove $BNAME"
 
   post_remote $DSTHOST
 }
@@ -170,7 +160,7 @@ remote_readd()
 
   pre_remote $DSTHOST
 
-  sshrun $DSTHOST "cd $RTMPDIR && bash $(basename $0) readd $BNAME $RTMPDIR/$(basename $ISO)"
+  ssh $DSTHOST "cd $RTMPDIR && bash $(basename $0) readd $BNAME $RTMPDIR/$(basename $ISO)"
 
   post_remote $DSTHOST
 }
