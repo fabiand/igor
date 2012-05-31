@@ -23,7 +23,7 @@ s_failed = utils.State("failed")
 s_timedout = utils.State("timedout")
 s_done = utils.State("done")
 
-_state_lock = threading.Lock()
+_state_change = threading.Lock()
 
 class Job(object):
     """Lifecycle
@@ -98,6 +98,7 @@ class Job(object):
         watchdog.start()
         return watchdog
 
+    @utils.synchronized(_state_change)
     def setup(self):
         """Prepare a host to get started
         """
@@ -111,6 +112,7 @@ class Job(object):
         self.profile.assign_to(self.host)
         self.state(s_prepared)
 
+    @utils.synchronized(_state_change)
     def start(self):
         """Start the actual test
         We expecte the testsuite to be gathered by the host, thus the host 
@@ -123,6 +125,7 @@ class Job(object):
         self.state(s_running)
         self.host.start()
 
+    @utils.synchronized(_state_change)
     def finish_step(self, n, is_success, note=None):
         """Finish one test step
         """
@@ -158,6 +161,7 @@ class Job(object):
         aname = "%s-%s" % (self.current_step, name)
         self.session.add_artifact(aname, data)
 
+    @utils.synchronized(_state_change)
     def abort(self):
         """Abort the test
         """
@@ -171,6 +175,7 @@ class Job(object):
         self.watchdog.stop()
         self.state(s_aborted)
 
+    @utils.synchronized(_state_change)
     def reopen(self):
         if self.is_running(): #fixm prepare part
             raise Exception("Can not reopen job %s, it is: %s" % self.state())
@@ -179,20 +184,20 @@ class Job(object):
         self.results = []
         self.state(s_running)
 
+    @utils.synchronized(_state_change)
     def end(self, do_cleanup=False):
         """Tear down this test, might clean up the host
         """
         logger.debug("Tearing down job %s" % self.cookie)
-#        if self.state() not in [s_aborted, s_failed, s_done]:
-#            raise Exception("Job %s can not yet be torn down: %s" % ( \
-#                                                    self.cookie, self.state()))
-#        else:
-        self.host.purge()
-        self.profile.revoke_from(self.host)
-        if do_cleanup:
-            self.session.remove()
+        if self.state() not in [s_aborted, s_failed, s_done]:
+            raise Exception("Job %s can not yet be torn down: %s" % ( \
+                                                    self.cookie, self.state()))
+        else:
+            self.host.purge()
+            self.profile.revoke_from(self.host)
+            if do_cleanup:
+                self.session.remove()
 
-    @utils.synchronized(_state_lock)
     def state(self, new_state=None):
         if new_state is not None:
             self._state_history.append({
