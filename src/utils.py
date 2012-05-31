@@ -16,6 +16,8 @@ def run(cmd):
                             stderr=subprocess.PIPE)
     (stdout, stderr) = proc.communicate()
     proc.wait()
+    if proc.returncode != 0:
+        raise Exception(proc.returncode, stderr)
     if stderr:
         logger.warning(stderr)
     r = stdout.strip()
