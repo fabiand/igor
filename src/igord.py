@@ -145,6 +145,13 @@ def add_artifact(cookie, name):
     j = jc.jobs[cookie]
     j.add_artifact(name, bottle.request.body.read())
 
+@bottle.route('/job/artifact/from/<cookie>', method='GET')
+def get_artifacts(cookie):
+    if cookie not in jc.jobs:
+        abort(404, "Unknown job for artifact")
+    j = jc.jobs[cookie]
+    return j.get_artifacts_archive().getvalue()
+
 @bottle.route('/firstboot/<cookie>', method='GET')
 @bottle.route('/job/<cookie>/set/enable_pxe/<enable_pxe>', method='GET')
 def disable_pxe_cb(cookie, enable_pxe=False):

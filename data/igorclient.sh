@@ -106,6 +106,13 @@ status() # Get the status of the current job
   api job/status/$IGORCOOKIE
 }
 
+artifacts() # Get all artifacts for the current job
+{
+  ARCHIVE=${1:-artifacts.tar.bz2}
+  has_cookie
+  api job/artifact/from/$IGORCOOKIE > $ARCHIVE
+}
+
 #
 # Extra
 #

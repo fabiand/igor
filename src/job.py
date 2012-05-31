@@ -165,6 +165,9 @@ class Job(object):
         aname = "%s-%s" % (self.current_step, name)
         self.session.add_artifact(aname, data)
 
+    def get_artifacts_archive(self):
+        return self.session.get_artifacts_archive()
+
     def abort(self):
         """Abort the test
         """
