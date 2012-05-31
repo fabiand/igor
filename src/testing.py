@@ -251,13 +251,16 @@ class TestSession(UpdateableObject):
                    for fn in fns]
         return fns
 
-    def get_artifacts_archive(self):
+    def get_artifacts_archive(self, selection=None):
+        selection = selection or self.artifacts()
         r = StringIO.StringIO()
         logger.debug("Preparing artifacts archive for session %s" % self.cookie)
         with tarfile.open(fileobj=r,mode="w:bz2") as archive:
-            for artifact in self.artifacts(use_abs=True):
+            for artifact in selection:
+                if artifact not in self.artifacts():
+                    logger.debug("Artifact not here: %s" % artifact)
                 logger.debug("Adding artifact %s" % artifact)
-                archive.add(artifact, arcname=os.path.basename(artifact))
+                archive.add(os.path.join(self.dirname, artifact), artifact)
         return r
 
     def __enter__(self):

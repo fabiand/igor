@@ -48,6 +48,7 @@ class Job(object):
 
     current_step = 0
     results = None
+    _artifacts = None
 
     _state = None
     _state_history = None
@@ -71,6 +72,7 @@ class Job(object):
         self.testsuite = testsuite
 
         self.results = []
+        self._artifacts = []
 
         self._state_history = []
         self.state(s_open)
@@ -163,10 +165,11 @@ class Job(object):
 
     def add_artifact(self, name, data):
         aname = "%s-%s" % (self.current_step, name)
+        self._artifacts.append(aname)
         self.session.add_artifact(aname, data)
 
     def get_artifacts_archive(self):
-        return self.session.get_artifacts_archive()
+        return self.session.get_artifacts_archive(self._artifacts)
 
     def abort(self):
         """Abort the test
