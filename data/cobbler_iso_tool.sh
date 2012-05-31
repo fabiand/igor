@@ -44,6 +44,8 @@ _object_exists()
   return 1
 }
 
+TMPDIRPREFIX="/tmp/cobbler-import"
+
 add()
 {
   BNAME=$1
@@ -51,6 +53,7 @@ add()
   TMPDIR=""
   DISTRONAME=$BNAME-distro
   PROFILENAME=$BNAME-profile
+  TMPDIR=""
   TFTPBOOTDIR=""
 
   # Check some basic things
@@ -58,30 +61,25 @@ add()
   _object_exists profile $PROFILENAME && die "Profile '$PROFILENAME' already exists"
   _object_exists distro $DISTRONAME && die "Distro '$DISTRONAME' already exists"
 
-  pushd .
-  TMPDIR=$(mktemp -d)
-  TFTPBOOTDIR="$TMPDIR/tftpboot"
+  TMPDIR="$TMPDIRPREFIX-$BNAME"
+  [[ -e $TMPDIR ]] && die "Tmpdir $TMPDIR already exists. Already imported?"
   debug "Using tmpdir $TMPDIR"
+  mkdir $TMPDIR
   cd $TMPDIR
 
   run livecd-iso-to-pxeboot "$ISO"
+  TFTPBOOTDIR="$TMPDIR/tftpboot"
   [ -e $TFTPBOOTDIR ] || die "tftpboot wasn't created"
 
   run cobbler distro add \
     --name=$DISTRONAME \
     --kernel=$(ls $(pwd)/tftpboot/vmlinuz*) \
     --initrd=$(ls $(pwd)/tftpboot/initrd*) \
-    --kopts="$(grep APPEND $(pwd)/tftpboot/pxelinux.cfg/default | sed -r 's/^[ \t]+APPEND // ; s/initrd=[^[:space:]]+//g')" \
+    --kopts="\"$(grep APPEND $(pwd)/tftpboot/pxelinux.cfg/default | sed -r 's/^[ \t]+APPEND // ; s/initrd=[^[:space:]]+//g')\"" \
     --arch=x86_64
   run cobbler profile add --name=$PROFILENAME --distro=$DISTRONAME
   [[ -z $FORCE_SYNC ]] || run cobbler sync
 
-  run rm $TFTPBOOTDIR/pxelinux.cfg/*
-  run rmdir $TFTPBOOTDIR/pxelinux.cfg
-  run rm $TFTPBOOTDIR/*
-  run rmdir $TFTPBOOTDIR
-  popd
-  run rmdir $TMPDIR
   exit 0
 }
 
@@ -90,8 +88,12 @@ remove()
   BNAME=$1
   DISTRONAME=$BNAME-distro
   PROFILENAME=$BNAME-profile
+  TMPDIR="$TMPDIRPREFIX-$BNAME"
+  TFTPBOOTDIR="$TMPDIR/tftpboot"
 
   [ -z $BNAME ] && die "<bname> needs to be given."
+
+  [[ -e $TMPDIR ]] || die "Tmpdir $TMPDIR does not exists. Already imported?"
 
   _object_exists profile $PROFILENAME || die "Profile '$PROFILENAME' does not exist"
   _object_exists distro $DISTRONAME || die "Distro '$DISTRONAME' does not exist"
@@ -99,6 +101,12 @@ remove()
   cobbler profile remove --name=$PROFILENAME
   cobbler distro remove --name=$DISTRONAME
   [[ -z $FORCE_SYNC ]] || run cobbler sync
+
+  run rm $TFTPBOOTDIR/pxelinux.cfg/*
+  run rmdir $TFTPBOOTDIR/pxelinux.cfg
+  run rm $TFTPBOOTDIR/*
+  run rmdir $TFTPBOOTDIR
+  run rmdir $TMPDIR
 
   exit 0
 }
