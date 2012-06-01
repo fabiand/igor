@@ -233,6 +233,7 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
     wget "{baseurl}/{isoname}"
     [[ -e "{isoname}" ]] || ( echo NO {isoname} ; exit 1; )
 
+    export KOPTS="{kopts}" # To reduce the number of opts
     bash "{igorddir}/../data/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}"
     RETVAL=$?
     rm -f "{isoname}"
@@ -243,7 +244,8 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
             baseurl=REMOTE_COBBLER_PROFILE_CREATION_BASE_URL, \
             sshuri=REMOTE_COBBLER_PROFILE_CREATION_SSH_URI, \
             profilename=pname, \
-            isoname=isoname)
+            isoname=isoname,
+            kopts=REMOTE_COBBLER_PROFILE_KOPTS)
             retval, stdout = run(cmd, with_retval=True)
         return to_json((retval, stdout))
 

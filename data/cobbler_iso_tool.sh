@@ -60,11 +60,18 @@ add()
   TFTPBOOTDIR="$TMPDIR/tftpboot"
   [ -e $TFTPBOOTDIR ] || die "tftpboot wasn't created"
 
+  PARSED_KOPTS="$(grep APPEND $(pwd)/tftpboot/pxelinux.cfg/default | sed -r 's/^[ \t]+APPEND // ; s/initrd=[^[:space:]]+//g ; s/[[:space:]]$//')"
+  KOPTS=${KOPTS:-$PARSED_KOPTS}
+  ISOBASE=$(basename $ISO)
+  KOPTS=$(echo "$KOPTS" | sed -r "s/\{isoname\}/$ISOBASE/g")
+
+  debug "Using KOPTS '$KOPTS'"
+
   cobbler distro add \
     --name=$DISTRONAME \
     --kernel=$(ls $(pwd)/tftpboot/vmlinuz*) \
     --initrd=$(ls $(pwd)/tftpboot/initrd*) \
-    --kopts="$(grep APPEND $(pwd)/tftpboot/pxelinux.cfg/default | sed -r 's/^[ \t]+APPEND // ; s/initrd=[^[:space:]]+//g ; s/[[:space:]]$//')" \
+    --kopts=$KOPTS \
     --arch=x86_64
   cobbler profile add --name=$PROFILENAME --distro=$DISTRONAME
   [[ -z $FORCE_SYNC ]] || cobbler sync
