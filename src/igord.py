@@ -19,11 +19,10 @@ import utils
 
 from config import *
 
-logging.config.fileConfig("logconf.ini")
-#logging.basicConfig( \
-#    filename="igord.log", \
-#    format='%(levelname)s - %(module)s - %(asctime)s - %(message)s', \
-#    level=logging.DEBUG)
+#logging.config.fileConfig("logconf.ini")
+logging.basicConfig( \
+    format='%(levelname)s - %(module)s - %(asctime)s - %(message)s', \
+    level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 IGORDDIR=sys.path[0]
