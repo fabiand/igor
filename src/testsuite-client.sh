@@ -101,6 +101,11 @@ main()
     fi
     CURRENT_STEP=$(($CURRENT_STEP + 1))
   done
+
+  # Add a summary
+  api_call job/status/$SESSION > "/tmp/job_status.json"
+  add_artifact "job_status.json.txt" "/tmp/job_status.json"
+
   debug "Finished testcases"
   debug "Finished testsuite $TESTSUITE"
 }
