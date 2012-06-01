@@ -105,6 +105,6 @@ main()
   debug "Finished testsuite $TESTSUITE"
 }
 
-main
+main &
 
 # vim: sw=2:
