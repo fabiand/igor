@@ -225,7 +225,7 @@ class TestSession(UpdateableObject):
 
         self.do_cleanup = cleanup
         self.cookie = cookie
-        self.dirname = run("mktemp -d '%s/test-session-XXXXX-%s'" % \
+        self.dirname = run("mktemp -d '%s/test-session-%s-XXXXXX'" % \
                            (session_path, self.cookie))
         run("chmod a+X '%s'" % self.dirname)
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
