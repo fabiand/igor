@@ -284,6 +284,7 @@ class Job(object):
             time_ended = get_first_state_change(s_aborted)["created_at"]
             runtime = time_ended - time_started
         elif self.state() in endstates:
+            time_started = get_first_state_change(s_running)["created_at"]
             time_ended = self.results[-1]["created_at"]
             runtime = time_ended - time_started
         return runtime
