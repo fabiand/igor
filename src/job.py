@@ -147,6 +147,7 @@ class Job(object):
 
         self.results.append({
             "created_at": time.time(),
+            "testcase_name": self.testsuite.testcases()[n].name,
             "is_success": is_success, 
             "note": note
             })

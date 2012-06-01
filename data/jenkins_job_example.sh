@@ -48,6 +48,6 @@ bash ./igorclient.sh end
 # remove cobbler distro/profile
 bash ./igorclient.sh extra_profile_remove "$BASENAME"
 
-[[ "x$LAST_STATE_SUCCESS" == "xdone" ]] || exit 1
+[[ "x$LAST_STATE" == "xdone" ]] && exit 0
 
-exit 0
+exit 1
