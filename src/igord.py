@@ -21,6 +21,8 @@ from config import *
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
+IGORDDIR=sys.path[0]
+
 jc = JobCenter(session_path=SESSION_PATH)
 cobbler = Cobbler(COBBLER_URL, COBBLER_CREDENTIALS)
 
@@ -193,6 +195,10 @@ def get_bootstrap_script(cookie):
 
     return r
 
+@bottle.route('/static/data/<filename>')
+def static_data(filename):
+    return bottle.static_file(filename, root=os.path.join(IGORDDIR, "..", "data"))
+
 @bottle.route('/testsuite/<name>', method='GET')
 def get_testsuite_archive(name):
     testsuites = load_testsuites()
@@ -235,7 +241,7 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
     bash "{igorddir}/../data/cobbler_iso_tool.sh" remote_remove "{sshuri}" "{profilename}"
     exit 0
     """.format( \
-            igorddir=sys.path[0], \
+            igorddir=IGORDDIR, \
             tmpdir=tmpdir, \
             sshuri=REMOTE_COBBLER_PROFILE_CREATION_SSH_URI, \
             profilename=pname)
