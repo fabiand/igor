@@ -6,7 +6,7 @@
 # as a comments
 # Empty lines are ignored.
 
-installation_completed.sh   timeout=300
+installation_completed.sh   timeout=600
 
 helloworld.sh               timeout=10
 
