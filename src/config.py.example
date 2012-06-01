@@ -1,18 +1,18 @@
 
 # Path of testcases relative to runpath
-TESTCASES_PATH          = "../testcases"
+TESTCASES_PATH              = "../testcases"
 
 # Path to store the sessions in
-SESSION_PATH            = "/tmp"
+SESSION_PATH                = "/tmp"
 
 # The URL of Cobblers API
-COBBLER_URL             = "http://127.0.0.1/cobbler_api"
-COBBLER_CREDENTIALS     = ("cobbler", "cobbler")
+COBBLER_URL                 = "http://127.0.0.1/cobbler_api"
+COBBLER_CREDENTIALS         = ("cobbler", "cobbler")
 
 # Kernel arguments to be used for installation/pxe and default boot
-COBBLER_KARGS_INSTALL   = "BOOTIF=eth0 storage_init firstboot"
-COBBLER_KARGS           = "local_boot_trigger=192.168.122.1:8080/testjob/${igor_cookie}"
-#COBBLER_KARGS           += " adminpw=%s" % run("openssl passwd -salt OMG 123123")
+COBBLER_KARGS_INSTALL       = "BOOTIF=eth0 storage_init firstboot"
+COBBLER_KARGS               = "local_boot_trigger=192.168.122.1:8080/testjob/{igor_cookie}"
+#COBBLER_KARGS               += " adminpw=%s" % run("openssl passwd -salt OMG 123123")
 
 LIBVIRT_CONNECTION_URI          = "qemu:///system"
 LIBVIRT_STORAGE_POOL            = "default"
@@ -20,6 +20,7 @@ LIBVIRT_STORAGE_POOL            = "default"
 LIBVIRT_NETWORK_CONFIGURATION   = "network=default"
 
 
-REMOTE_COBBLER_PROFILE_CREATION_ENABLED = False
-REMOTE_COBBLER_PROFILE_CREATION_BASE_URL = "http://jenkins.example.com/artifacts/"
-REMOTE_COBBLER_PROFILE_CREATION_SSH_URI  = "cobbler.example.com"
+REMOTE_COBBLER_PROFILE_CREATION_ENABLED     = False
+REMOTE_COBBLER_PROFILE_CREATION_BASE_URL    = "http://jenkins.example.com/artifacts/"
+REMOTE_COBBLER_PROFILE_CREATION_SSH_URI     = "cobbler.example.com"
+REMOTE_COBBLER_PROFILE_KOPTS                ="rootflags=loop rootflags=ro ro liveimg install rootfstype=auto root=live:/{isoname} check"

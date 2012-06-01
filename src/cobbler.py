@@ -54,7 +54,7 @@ class Cobbler(object):
                     raise Exception("Profile '%s' unknown to server" % (self.name))
                 additional_args = {}
                 for k, v in self.additional_args.items():
-                    additional_args[k] = Template(v).substitute(
+                    additional_args[k] = v.format(
                             igor_cookie=host.session.cookie
                         )
                 session.add_system(host.get_name(), host.get_mac_address(), \
