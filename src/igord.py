@@ -230,7 +230,7 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
         retval = 0
         with utils.TemporaryDirectory() as tmpdir:
             cmd = """
-    wget "{baseurl}/{isoname}"
+    curl -v "{baseurl}/{isoname}" --output "{isoname}"
     [[ -e "{isoname}" ]] || ( echo NO {isoname} ; exit 1; )
 
     export KOPTS="{kopts}" # To reduce the number of opts

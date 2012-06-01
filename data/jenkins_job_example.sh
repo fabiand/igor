@@ -19,7 +19,7 @@ ISONAME=$(ls *.iso | tail -n1)
 
 echo Using ISO '$ISONAME'
 
-wget "${IGORCLIENTURL}" -O "igorclient.sh"
+curl -v "${IGORCLIENTURL}" --output "igorclient.sh"
 [[ -e igorclient.sh ]]
 
 export BASENAME="${BASENAMEPREFIX}${BUILD_TAG}"       # profile and distro name are derived from BASENAME
