@@ -11,8 +11,11 @@
 [[ -z $BUILD_TAG ]] && exit 1
 
 # This is an artifact from a previous job
-[[ $(ls *.iso | wc -l) -gt 1 ]] && { echo More than one iso ; ls *.iso ; exit 1 ; }
-ISONAME=$(ls *.iso)
+ISONAME=$(ls *.iso | tail -n1)
+[[ $(ls *.iso | wc -l) -gt 1 ]] && { 
+    echo More than one iso ; 
+    ls *.iso ;
+}
 
 echo Using ISO '$ISONAME'
 
