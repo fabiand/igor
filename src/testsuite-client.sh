@@ -15,6 +15,8 @@ debug() { echo "$SESSION $(date) - $@" >&2 ; }
 {
   debug "Loading oVirt functions"
   . /usr/libexec/ovirt-functions
+  debug "Loading defaults"
+  . /etc/default/ovirt
 }
 
 debug "Environment variables:"
@@ -59,13 +61,6 @@ step_succeeded()
 step_failed()
 {
   api_call job/step/$SESSION/$CURRENT_STEP/success
-}
-
-get_kernelarg()
-{
-  KEY=${1:-testsuite}
-  VALUE=$(egrep -o '$KEY=[^[:space:]]+' /proc/cmdline)
-  return ${VALUE#$KEY=}
 }
 
 main()
