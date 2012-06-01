@@ -71,9 +71,17 @@ add()
     --name=$DISTRONAME \
     --kernel=$(ls $(pwd)/tftpboot/vmlinuz*) \
     --initrd=$(ls $(pwd)/tftpboot/initrd*) \
-    --kopts=$KOPTS \
-    --arch=x86_64
-  cobbler profile add --name=$PROFILENAME --distro=$DISTRONAME
+    --kopts="$KOPTS" \
+    --arch=x86_64 \
+    --breed="" \
+    --os-version=""
+
+  cobbler profile add \
+    --name=$PROFILENAME \
+    --distro=$DISTRONAME \
+    --kickstart="" \
+    --repos=""
+
   [[ -z $FORCE_SYNC ]] || cobbler sync
 
   exit 0
