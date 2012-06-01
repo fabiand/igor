@@ -6,11 +6,11 @@
 # as a comments
 # Empty lines are ignored.
 
-installation_completed.sh
+installation_completed.sh   timeout=300
 
 helloworld.sh               timeout=10
 
 initiate_reboot.sh          timeout=10
-reboot_completed.sh         timeout=180         # Rebooting takes a while
+reboot_completed.sh         timeout=120         # Rebooting takes a while
 
 set_admin_password.sh
