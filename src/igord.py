@@ -5,6 +5,7 @@ import os
 import sys
 import base64
 import logging
+import logging.config
 import time
 import re
 import bottle
@@ -18,8 +19,12 @@ import utils
 
 from config import *
 
+logging.config.fileConfig("logconf.ini")
+#logging.basicConfig( \
+#    filename="igord.log", \
+#    format='%(levelname)s - %(module)s - %(asctime)s - %(message)s', \
+#    level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 IGORDDIR=sys.path[0]
 

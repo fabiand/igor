@@ -2,3 +2,4 @@
 *.pyo
 *~
 src/config.py
+src/igord.log
