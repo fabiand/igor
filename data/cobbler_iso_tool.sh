@@ -73,7 +73,7 @@ add()
     --initrd=$(ls $(pwd)/tftpboot/initrd*) \
     --kopts="$KOPTS" \
     --arch=x86_64 \
-    --breed="" \
+    --breed="other" \
     --os-version=""
 
   cobbler profile add \
