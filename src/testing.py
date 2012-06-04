@@ -259,8 +259,14 @@ class TestSession(UpdateableObject):
         for artifact in self.artifacts():
             logger.debug("Removing artifact '%s'" % artifact)
             os.remove(os.path.join(self.dirname, artifact))
-        logger.debug("Removing testdir '%s'" % self.dirname)
-        os.removedirs(self.dirname)
+        remaining_files = os.listdir(self.dirname)
+        if len(remaining_files) > 0:
+            logger.warning("Remaining files for session '%s': %s" % ( \
+                                                            self.cookie, \
+                                                            remaining_files))
+        else:
+            logger.debug("Removing testdir '%s'" % self.dirname)
+            os.rmdir(self.dirname)
 
     def add_artifact(self, name, data):
         assert("/" not in name and "\\" not in name)
