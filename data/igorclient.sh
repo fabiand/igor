@@ -157,12 +157,19 @@ wait_state() # Wait until a specific state is reached (regex)
   has_cookie
   echo -n "Waiting "
   export DEBUG=""
+  TIME_START=$(date +%s)
+  TIMEOUT=$(api job/status/$IGORCOOKIE | _filter_key timeout)
   while true
   do
     STATE=$(state)
     echo $STATE | egrep -q "$EXPR" && break
     sleep $INTERVAL
     echo -n "."
+    RUNTIME=$(( $(date +%s) - $TIME_START ))
+    [[ $RUNTIME -gt $TIMEOUT ]] && {
+      echo "Timed out ($TIMEOUT)"
+      break;
+    }
   done
   echo ""
   echo "Reached state '$(state)' ($STATE)"
