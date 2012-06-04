@@ -17,7 +17,7 @@ ISONAME=$(ls *.iso | tail -n1)
     ls *.iso ;
 }
 
-echo Using ISO '$ISONAME'
+echo "Using ISO '$ISONAME'"
 
 curl -v "${IGORCLIENTURL}" --output "igorclient.sh"
 [[ -e igorclient.sh ]]
