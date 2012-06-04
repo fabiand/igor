@@ -65,7 +65,6 @@ class VMHost(Host):
     _vm_name = None
 
     connection_uri = "qemu:///system"
-    libvirt_vm_definition = None
 
     def __init__(self, *args, **kwargs):
         self.vm_defaults = {}
@@ -119,11 +118,9 @@ class VMHost(Host):
             poolvol = self._upload_image(image_spec)
             cmd += " --disk vol=%s,device=disk,bus=%s,format=%s" % (poolvol, self.disk_bus_type, image_spec.format)
 
-        self.libvirt_vm_definition = run(cmd)
+        definition = run(cmd)
 
-#        logger.debug(self.libvirt_vm_definition)
-
-        self.define()
+        self.define(definition)
 
     def _virsh(self, cmd):
         run("virsh --connect='%s' %s" % (self.connection_uri, cmd))
@@ -142,7 +139,7 @@ class VMHost(Host):
         return self._vm_name
 
     def get_mac_address(self):
-        dom = etree.XML(self.libvirt_vm_definition)
+        dom = etree.XML(self.dumpxml())
         mac = dom.xpath("/domain/devices/interface[1]/mac")[0]
         return mac.attrib["address"]
 
@@ -191,16 +188,19 @@ class VMHost(Host):
     def destroy(self):
         self._virsh("destroy %s" % self._vm_name)
 
-    def define(self):
+    def define(self, definition):
         tmpfile = run("mktemp --tmpdir")
         with open(tmpfile, "w") as f:
             logger.debug(tmpfile)
-            f.write(self.libvirt_vm_definition)
+            f.write(definition)
             f.flush()
             self._virsh("define %s" % tmpfile)
 
     def undefine(self):
         self._virsh("undefine %s" % self._vm_name)
+
+    def dumpxml(self):
+        return self._virsh("dumpxml '%s'", self._vm_name)
 
 
 class VMHostFactory:
