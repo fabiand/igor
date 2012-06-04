@@ -174,7 +174,7 @@ def disable_pxe_cb(cookie, enable_pxe=False):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
-    m = j.profile.enable_pxe(j.host.get_name(), enable_pxe)
+    m = j.profile.enable_pxe(j.host, enable_pxe)
     return to_json(m)
 
 @bottle.route('/job/<cookie>/set/kernelargs/<kernelargs>', method='GET')
@@ -183,7 +183,7 @@ def set_kernelargs_cb(cookie, kernelargs):
         bottle.abort(404, "Unknown job '%s'" % cookie)
     raise Exception("Not implemented yet, but needed for updates")
     j = jc.jobs[cookie]
-    m = j.profile.set_kargs(j.host.get_name(), kernelargs)
+    m = j.profile.set_kargs(j.host, kernelargs)
     return to_json(m)
 
 
