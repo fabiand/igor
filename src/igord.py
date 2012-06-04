@@ -173,9 +173,8 @@ def get_artifacts(cookie):
 def disable_pxe_cb(cookie, enable_pxe=False):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
-    # FIXME Only for cobbler
     j = jc.jobs[cookie]
-    m = j.profile.cobbler_session_cb().set_netboot_enable(j.host.get_name(), enable_pxe)
+    m = j.profile.enable_pxe(enable_pxe)
     return to_json(m)
 
 @bottle.route('/job/<cookie>/set/kernelargs/<kernelargs>', method='GET')
@@ -183,9 +182,8 @@ def set_kernelargs_cb(cookie, kernelargs):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     raise Exception("Not implemented yet, but needed for updates")
-    # FIXME Only for cobbler
-#    j = jc.jobs[cookie]
-#    m = j.profile.cobbler_session_cb().set_netboot_enable(j.host.get_name(), enable_pxe)
+    j = jc.jobs[cookie]
+    m = j.profile.set_kargs(j.host.get_name(), kernelargs)
     return to_json(m)
 
 

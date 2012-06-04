@@ -79,6 +79,15 @@ class Cobbler(object):
                                    self.name, additional_args)
                 session.set_netboot_enable(host.get_name(), True)
 
+        def enable_pxe(self, host, enable):
+            with self.cobbler_session_cb() as session:
+                session.set_netboot_enable(host.get_name(), enable)
+
+        def set_kargs(self, host, kargs):
+            raise Exception("Not yet implemented")
+            #with self.cobbler_session_cb() as session:
+                #session.modify_system(system_id,"kernel_options", v, self.token)
+
         def revoke_from(self, host):
             with self.cobbler_session_cb() as session:
                 if host.get_name() not in session.get_systems():
@@ -166,7 +175,7 @@ class Cobbler(object):
             return [e["name"] for e in self.server.get_systems(self.token)]
 
 
-if __name__ == '__main__':
+def example():
     c = Cobbler("http://127.0.0.1/cobbler_api")
     s = c.new_session()
     print (s.get_systems())
