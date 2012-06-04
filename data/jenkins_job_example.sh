@@ -10,7 +10,8 @@
 [[ -z $ARTIFACTSARCHIVE ]] && exit 1
 [[ -z $BUILD_TAG ]] && exit 1
 
-highlight() { echo -e "\n$@\n"; }
+drawline() { awk "BEGIN { while (a++<$1) s=s \"$2\"; print s }" ; }
+highlight() { echo -e "\n$(drawline ${#1} -)\n$@\n$(drawline ${#1} -)\n" ; }
 
 # This is an artifact from a previous job
 ISONAME=$(ls *.iso | tail -n1)
