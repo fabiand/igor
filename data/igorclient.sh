@@ -158,7 +158,7 @@ wait_state() # Wait until a specific state is reached (regex)
   echo -n "Waiting "
   export DEBUG=""
   TIME_START=$(date +%s)
-  TIMEOUT=$(api job/status/$IGORCOOKIE | _filter_key timeout)
+  TIMEOUT=$(api job/status/$IGORCOOKIE | grep timeout | tail -n1 | _filter_key timeout)
   while true
   do
     STATE=$(state)
