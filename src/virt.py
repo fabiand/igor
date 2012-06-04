@@ -189,12 +189,11 @@ class VMHost(Host):
         self._virsh("destroy %s" % self._vm_name)
 
     def define(self, definition):
-        tmpfile = run("mktemp --tmpdir")
-        with open(tmpfile, "w") as f:
-            logger.debug(tmpfile)
+        with tempfile.NamedTemporaryFile() as f:
+            logger.debug(f.name)
             f.write(definition)
             f.flush()
-            self._virsh("define %s" % tmpfile)
+            self._virsh("define '%s'" % f.name)
 
     def undefine(self):
         self._virsh("undefine %s" % self._vm_name)
