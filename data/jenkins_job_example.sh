@@ -12,7 +12,7 @@
 
 pyc() { python -c "$@" ; }
 drawline() { pyc "print('$2' * $1);" ; }
-highlight() { echo -e "\n$(drawline ${#1} -)\n$@\n$(drawline ${#1} -)\n" ; }
+highlight() { L=$(drawline ${#1} -) ; echo -e "\n$L\n$@\n$L\n" ; }
 
 # This is an artifact from a previous job
 ISONAME=$(ls *.iso | tail -n1)

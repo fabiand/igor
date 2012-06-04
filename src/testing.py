@@ -188,9 +188,8 @@ class Testset(object):
 
     def add(self, cs):
         for c in cs:
-            if not isinstance(c, Testcase):
-                c = Testcase(c)
-            self._testcases.append(c)
+            self._testcases.append(c if isinstance(c, Testcase) \
+                                     else Testcase(c))
 
     def __str__(self):
         return "%s: %s" % (self.name, str(["%s: %s" % (n, c) for n, c in enumerate(self.testcases())]))
@@ -249,8 +248,9 @@ class TestSession(UpdateableObject):
 
         self.do_cleanup = cleanup
         self.cookie = cookie
-        self.dirname = run("mktemp -d '%s/test-session-%s-XXXXXX'" % \
-                           (session_path, self.cookie))
+        self.dirname = tempfile.mkdtemp(suffix="-" + self.cookie, \
+                                        prefix="igord-session-", \
+                                        dir=session_path)
         run("chmod a+X '%s'" % self.dirname)
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
 
