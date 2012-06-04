@@ -162,23 +162,29 @@ class Job(object):
         if self.current_step != n:
             raise Exception("Expected a different step to finish.")
 
+        current_testcase = self.testsuite.testcases()[n]
+
         self.results.append({
             "created_at": time.time(),
-            "testcase_name": self.testsuite.testcases()[n].name,
+            "testcase_name": current_testcase.name,
             "is_success": is_success, 
             "note": note
             })
-        self.current_step += 1
+
         if is_success is True:
-            logger.debug("Finished step %s succesfully" % n)
-            if self.completed_all_steps():
-                logger.debug("Finished job %s" % (self.cookie))
-                self.watchdog.stop()
-                self.state(s_done)
+            logger.debug("Finished step %s (%s) succesfully" % (n, \
+                                                        current_testcase.name))
         elif is_success is False:
-            logger.info("Finished step %s unsucsessfull" % n)
+            logger.info("Finished step %s (%s) unsucsessfull" % (n, \
+                                                        current_testcase.name))
             self.watchdog.stop()
             self.state(s_failed)
+        self.current_step += 1
+
+        if self.completed_all_steps():
+            logger.debug("Finished job %s" % (self.cookie))
+            self.watchdog.stop()
+            self.state(s_done)
         return self.current_step
 
     def add_artifact(self, name, data):
