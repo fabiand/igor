@@ -123,7 +123,7 @@ class VMHost(Host):
         self.define(definition)
 
     def _virsh(self, cmd):
-        run("virsh --connect='%s' %s" % (self.connection_uri, cmd))
+        return run("virsh --connect='%s' %s" % (self.connection_uri, cmd))
 
     def _upload_image(self, image_spec):
         image_spec.compress()
@@ -200,7 +200,7 @@ class VMHost(Host):
         self._virsh("undefine %s" % self._vm_name)
 
     def dumpxml(self):
-        return self._virsh("dumpxml '%s'", self._vm_name)
+        return self._virsh("dumpxml '%s'" % self._vm_name)
 
 
 class VMHostFactory:

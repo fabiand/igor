@@ -255,10 +255,11 @@ class TestSession(UpdateableObject):
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
 
     def remove(self):
-        logger.debug("Removing testdir '%s'" % self.dirname)
+        logger.debug("Removing session '%s'" % self.cookie)
         for artifact in self.artifacts():
             logger.debug("Removing artifact '%s'" % artifact)
             os.remove(os.path.join(self.dirname, artifact))
+        logger.debug("Removing testdir '%s'" % self.dirname)
         os.removedirs(self.dirname)
 
     def add_artifact(self, name, data):
