@@ -87,10 +87,18 @@ abort() # Abort the current job
   uncookie
 }
 
-end() # End the current job and remove it's artifacts
+end() # End the current job
 {
   has_cookie
   api job/end/$IGORCOOKIE
+  [[ "x$1" == "xremove" ]] && remove
+  uncookie
+}
+
+remove() # Remove the current job and it's artifacts
+{
+  has_cookie
+  api job/remove/$IGORCOOKIE
   uncookie
 }
 
@@ -173,7 +181,7 @@ abort_all() # Abort all jobs
 #
 # Executive part
 #
-if _is_command $@
+if _is_command $1
 then
   ${@}
 else

@@ -141,6 +141,16 @@ def end_job(cookie):
         m = e.message
     return to_json(m)
 
+@bottle.route('/job/remove/<cookie>', method='GET')
+def remove_job(cookie, remove=False):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job '%s'" % cookie)
+    try:
+        m = jc.jobs[cookie].remove()
+    except Exception as e:
+        m = e.message
+    return to_json(m)
+
 @bottle.route('/job/testsuite/for/<cookie>', method='GET')
 def get_testsuite_archive(cookie):
     if cookie not in jc.jobs:

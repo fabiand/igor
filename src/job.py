@@ -222,6 +222,10 @@ class Job(object):
         self.host.purge()
         self.profile.revoke_from(self.host)
         if do_cleanup:
+            self.remove()
+
+    @utils.synchronized(_high_state_change_lock)
+    def remove(self):
             self.session.remove()
 
     @utils.synchronized(_state_change_lock)

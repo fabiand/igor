@@ -42,8 +42,8 @@ LAST_STATE=$(bash ./igorclient.sh state)
 bash ./igorclient.sh artifacts $ARTIFACTSARCHIVE
 bash ./igorclient.sh status
 
-# remove job
-bash ./igorclient.sh end
+# end & remove job
+bash ./igorclient.sh end remove
 
 # remove cobbler distro/profile
 bash ./igorclient.sh extra_profile_remove "$BASENAME"
