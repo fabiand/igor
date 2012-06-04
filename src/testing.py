@@ -196,6 +196,7 @@ class Testset(object):
 
     def __json__(self):
         return {
+            "name": self.name,
             "testcases": [c.__json__() for c in self.testcases()]
         }
 
