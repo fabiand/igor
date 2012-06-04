@@ -73,6 +73,12 @@ class Profile(UpdateableObject):
     def assign_to(self, host):
         raise Exception("Not implemented.")
 
+    def enable_pxe(self, enable):
+        raise Exception("Not implemented.")
+
+    def set_kargs(self, kargs):
+        raise Exception("Not implemented.")
+
     def revoke_from(self, host):
         raise Exception("Not implemented.")
 
