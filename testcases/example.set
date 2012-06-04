@@ -2,6 +2,7 @@
 # file.
 # Additionally you can specify a timeout argument to specify a timeout in
 # seconds (default 60).
+#
 # Any line starting with a # and the rest of a line after a hash are treated
 # as a comments
 # Empty lines are ignored.

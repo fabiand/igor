@@ -1,0 +1,6 @@
+#
+# Some selinux related tests
+#
+
+
+selinux-denials.py

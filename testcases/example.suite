@@ -1,1 +1,8 @@
+# First token must be the filename of a set to run, relative to this file.
+#
+# Any line starting with a # and the rest of a line after a hash are treated
+# as a comments
+# Empty lines are ignored.
+
 example.set
+selinux.set
