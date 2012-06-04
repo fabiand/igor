@@ -10,42 +10,45 @@
 [[ -z $ARTIFACTSARCHIVE ]] && exit 1
 [[ -z $BUILD_TAG ]] && exit 1
 
+highlight() { echo -e "\n$@\n"; }
+
 # This is an artifact from a previous job
 ISONAME=$(ls *.iso | tail -n1)
+highlight "Using ISO '$ISONAME'"
+
 [[ $(ls *.iso | wc -l) -gt 1 ]] && { 
     echo More than one iso ; 
     ls *.iso ;
 }
 
-echo "Using ISO '$ISONAME'"
-
+highlight "Fetching igor client"
 curl -v "${IGORCLIENTURL}" --output "igorclient.sh"
 [[ -e igorclient.sh ]]
 
 export BASENAME="${BASENAMEPREFIX}${BUILD_TAG}"       # profile and distro name are derived from BASENAME
 export PROFILENAME="$BASENAME-profile"
 
-# Create cobbler distro and profile
+highlight "Create cobbler distro and profile"
 bash ./igorclient.sh extra_profile_add "$BASENAME" "$ISONAME"
 
-# Create igor job
+highlight "Create igor job"
 bash ./igorclient.sh submit example "$PROFILENAME" ahost
 export $(bash ./igorclient.sh cookie)
 [[ -z $IGORCOOKIE ]] && { echo No Igor cookie ; return 1 ; }
-# ... start and wait to reach some endstate
+highlight "... start and wait to reach some endstate"
 bash ./igorclient.sh start
 bash ./igorclient.sh wait_state "aborted|failed|timedout|done"
 
 LAST_STATE=$(bash ./igorclient.sh state)
 
-# get artifacts archive
+highlight "get artifacts archive"
 bash ./igorclient.sh artifacts $ARTIFACTSARCHIVE
 bash ./igorclient.sh status
 
-# end & remove job
+highlight "end & remove job"
 bash ./igorclient.sh end remove
 
-# remove cobbler distro/profile
+highlight "remove cobbler distro/profile"
 bash ./igorclient.sh extra_profile_remove "$BASENAME"
 
 [[ "x$LAST_STATE" == "xdone" ]] && exit 0
