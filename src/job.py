@@ -167,7 +167,7 @@ class Job(object):
 
         self.results.append({
             "created_at": time.time(),
-            "testcase_name": current_testcase.name,
+            "testcase": current_testcase,
             "is_success": is_success,
             "expect_failure": current_testcase.expect_failure,
             "as_expected": as_expected,
