@@ -163,13 +163,13 @@ class Job(object):
             raise Exception("Expected a different step to finish.")
 
         current_testcase = self.testsuite.testcases()[n]
-        as_expected = is_success == current_testcase.expect_success
+        as_expected = not is_success == current_testcase.expect_failure
 
         self.results.append({
             "created_at": time.time(),
             "testcase_name": current_testcase.name,
             "is_success": is_success,
-            "expect_success": current_testcase.expect_success,
+            "expect_failure": current_testcase.expect_failure,
             "as_expected": as_expected,
             "is_abort": is_abort,
             "note": note
@@ -183,7 +183,7 @@ class Job(object):
         elif is_success is True:
             logger.debug("Finished step %s (%s) succesfully" % (n, \
                                                         current_testcase.name))
-        elif is_success is False and current_testcase.expect_success is False:
+        elif is_success is False and current_testcase.expect_failure is True:
             logger.info("Finished step %s (%s) unsucsessfull as expected" % (n, \
                                                         current_testcase.name))
         elif is_success is False:
