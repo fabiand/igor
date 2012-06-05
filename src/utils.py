@@ -153,6 +153,17 @@ def synchronized(lock):
         return newFunction
     return wrap
 
+def xor(a, b):
+    return bool(a) ^ bool(b)
+
+def parse_bool(s):
+    """Parse a bool from string
+
+    >>> all([ parse_bool(s) for s in ["yes", "Yes", "y", "true", "True", 1] ])
+    True
+    """
+    return str(s).lower()[0] in ["t", "1", "y"]
+
 class State(object):
     name = None
     map = None

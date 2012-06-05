@@ -205,6 +205,7 @@ class Testcase(object):
     filename = None
     source = None
     timeout = 60
+    expect_success = True
 
     def __init__(self, filename=None, name=None):
         if name is None and filename is None:
@@ -225,6 +226,8 @@ class Testcase(object):
         for k, v in utils.cmdline_to_dict(" ".join(token)).items():
             if k == "timeout":
                 c.timeout = int(v)
+            elif k == "expect_success":
+                c.expect_success = utils.parse_bool(v)
         return c
 
     def source(self):

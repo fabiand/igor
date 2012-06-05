@@ -97,8 +97,15 @@ main()
       api_call job/step/$SESSION/$CURRENT_STEP/success
     else
       api_call job/step/$SESSION/$CURRENT_STEP/failed
-      exit 1
+      # We are not breaking here, because a failed testcase could be expected
     fi
+
+    # Check if we are continuing
+    api_call job/status/$SESSION | grep '"state":' | grep -q '"running"' || {
+      debug "Testsuite is not running anymore"
+      break
+    }
+
     CURRENT_STEP=$(($CURRENT_STEP + 1))
   done
 

@@ -149,7 +149,7 @@ class Job(object):
         self.host.start()
 
     @utils.synchronized(_high_state_change_lock)
-    def finish_step(self, n, is_success, note=None):
+    def finish_step(self, n, is_success, note=None, is_abort=False):
         """Finish one test step
         """
         logger.debug("%s: Finishing step %s: %s (%s)" % (self.cookie, n, 
@@ -163,28 +163,41 @@ class Job(object):
             raise Exception("Expected a different step to finish.")
 
         current_testcase = self.testsuite.testcases()[n]
+        as_expected = is_success == current_testcase.expect_success
 
         self.results.append({
             "created_at": time.time(),
             "testcase_name": current_testcase.name,
-            "is_success": is_success, 
+            "is_success": is_success,
+            "expect_success": current_testcase.expect_success,
+            "as_expected": as_expected,
+            "is_abort": is_abort,
             "note": note
             })
 
-        if is_success is True:
+        if is_abort:
+            logger.debug("Aborting at step %s (%s)" % (n, \
+                                                        current_testcase.name))
+            self.watchdog.stop()
+            self.state(s_aborted)
+        elif is_success is True:
             logger.debug("Finished step %s (%s) succesfully" % (n, \
+                                                        current_testcase.name))
+        elif is_success is False and current_testcase.expect_success is False:
+            logger.info("Finished step %s (%s) unsucsessfull as expected" % (n, \
                                                         current_testcase.name))
         elif is_success is False:
             logger.info("Finished step %s (%s) unsucsessfull" % (n, \
                                                         current_testcase.name))
             self.watchdog.stop()
             self.state(s_failed)
-        self.current_step += 1
 
         if self.completed_all_steps():
             logger.debug("Finished job %s" % (self.cookie))
             self.watchdog.stop()
             self.state(s_done)
+
+        self.current_step += 1
         return self.current_step
 
     def add_artifact(self, name, data):
@@ -204,9 +217,7 @@ class Job(object):
                                                        self.cookie, \
                                                        self.state()))
 
-        self.finish_step(self.current_step, is_success=False, note="aborted")
-        self.watchdog.stop()
-        self.state(s_aborted)
+        self.finish_step(self.current_step, is_success=False, note="aborted", is_abort=True)
 
     @utils.synchronized(_high_state_change_lock)
     def reopen(self):
