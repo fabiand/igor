@@ -1,8 +1,17 @@
-#!/bin/bash
+#!/bin/bash -e
+# vim: set sw=2:
 
-# Sourcing additional library from "testcase extra dir"
-. ${0}.d/mylib.sh
+# Change into "our" directory tree
+cd "${0}.d"
 
-echo "Hello World."
+main()
+{
+  source mylib.sh
+  echo "Hello World."
+  pwd
+  ls -lah
+}
+
+main
 
 exit 0
