@@ -259,8 +259,7 @@ def get_testsuite_archive(name):
 if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
     logger.info("Enabling remote ISO management for cobbler")
 
-    @bottle.route('/extra/profile/add/<pname>/iso/<isoname>/remote', \
-                  method='GET')
+    @bottle.route('/extra/profile/add/<pname>/iso/<isoname>/remote')
     def add_iso_profile_remote(pname, isoname):
         retval = 0
         with utils.TemporaryDirectory() as tmpdir:
