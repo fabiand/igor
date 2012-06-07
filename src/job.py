@@ -110,12 +110,17 @@ class Job(object):
 
             def run(self):
                 logger.debug("Starting watchdog for job %s" % self.job.cookie)
-                while not self.job.is_timedout() and not self.is_stopped():
-                    self._stop_event.wait(self.interval)
-                with _high_state_change_lock:
-                    logger.debug("Watchdog: Job %s timed out." % \
+                while True:
+                    if self.job.is_timedout():
+                        with _high_state_change_lock:
+                            logger.debug("Watchdog for job %s: timed out." % \
                                                                self.job.cookie)
-                    self.job.state(s_timedout)
+                            self.job.state(s_timedout)
+                    elif self.is_stopped():
+                        with _high_state_change_lock:
+                            logger.debug("Watchdog for job %s: stopped." % \
+                                                               self.job.cookie)
+                    self._stop_event.wait(self.interval)
                 logger.debug("Ending watchdog for job %s" % self.job.cookie)
 
             def stop(self):
@@ -365,6 +370,7 @@ class JobCenter(object):
     """
     session_path = None
 
+    
     jobs = {}
     closed_jobs = []
 
@@ -414,6 +420,11 @@ class JobCenter(object):
         job.start()
         return "Started job %s (%s)." % (cookie, repr(job))
 
+    def finish_test_step(self, cookie, step, is_success,note=None):
+        j = self.jobs[cookie]
+        j.finish_step(step, is_success, note)
+        return j
+
     def end_job(self, cookie, remove=False):
         job = self.jobs[cookie]
         job.end(remove)
@@ -426,11 +437,6 @@ class JobCenter(object):
         j.abort()
         self.closed_jobs.append(j)
         return "Aborted job %s" % cookie
-
-    def finish_test_step(self, cookie, step, is_success,note=None):
-        j = self.jobs[cookie]
-        j.finish_step(step, is_success, note)
-        return j
 
     def clean(self):
         for job in self.jobs.values():
