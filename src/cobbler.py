@@ -91,7 +91,7 @@ class Cobbler(object):
 
         def revoke_from(self, host):
             with self.cobbler_session_cb() as session:
-                if host.get_name() not in session.get_systems():
+                if host.get_name() not in session.systems():
                     raise Exception("Host '%s' unknown to server." % self.name)
                 session.remove_system(host.get_name())
 
@@ -170,16 +170,16 @@ class Cobbler(object):
             self.server.remove_system(name, self.token)
 
         def profiles(self):
-            return [e["name"] for e in self.server.profiles(self.token)]
+            return [e["name"] for e in self.server.get_profiles(self.token)]
 
-        def get_systems(self):
+        def systems(self):
             return [e["name"] for e in self.server.get_systems(self.token)]
 
 
 def example():
     c = Cobbler("http://127.0.0.1/cobbler_api")
     s = c.new_session()
-    print (s.get_systems())
+    print (s.systems())
     print (s.profiles())
 
     p = c.new_profile("abc")
