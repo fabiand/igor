@@ -110,16 +110,18 @@ class Job(object):
 
             def run(self):
                 logger.debug("Starting watchdog for job %s" % self.job.cookie)
-                while True:
+                keep_running = True
+                while keep_running:
                     if self.job.is_timedout():
                         with _high_state_change_lock:
                             logger.debug("Watchdog for job %s: timed out." % \
                                                                self.job.cookie)
                             self.job.state(s_timedout)
+                        keep_running = False
                     elif self.is_stopped():
-                        with _high_state_change_lock:
-                            logger.debug("Watchdog for job %s: stopped." % \
-                                                               self.job.cookie)
+                        logger.debug("Watchdog for job %s: stopped." % \
+                                                           self.job.cookie)
+                        keep_running = False
                     self._stop_event.wait(self.interval)
                 logger.debug("Ending watchdog for job %s" % self.job.cookie)
 
