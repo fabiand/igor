@@ -49,6 +49,7 @@ def dict_to_args(d):
                      "--%s=%s" % (k, v) \
                      for k, v in d.items()])
 
+
 def cmdline_to_dict(cmdline):
     """Simple cmdline parsing.
     Expects key=value pairs.
@@ -57,12 +58,12 @@ def cmdline_to_dict(cmdline):
     >>> cmdline_to_dict("foo=bar")
     { "foo": "bar" }
     """
-    #http://stackoverflow.com/questions/156873/customized-command-line-parsing-in-python
     args = {}
     for arg in shlex.split(cmdline):
         key, value = arg.split('=', 1)
         args[key] = value
     return args
+
 
 class MountedArchive:
     isofilename = None
@@ -113,33 +114,39 @@ class LosetupMountedArchive(MountedArchive):
 
 
 def surl(number):
-    import math, string
+    import math
+    import string
     codes = string.digits[2:] + string.lowercase + string.uppercase
     r = ""
     number = int(number)
     while True:
         key = number % len(codes)
         r += codes[key]
-        if number < len(codes)-1:
+        if number < len(codes) - 1:
             break
         number = int(number / len(codes)) - 1
     return r
 
+
 class TemporaryDirectory:
     tmpdir = None
+
     def __enter__(self):
         self.tmpdir = tempfile.mkdtemp()
         return self.tmpdir
+
     def __exit__(self, type, value, traceback):
         os.rmdir(self.tmpdir)
+
 
 def scanf(pat, txt):
     #http://docs.python.org/library/re.html#simulating-scanf
     regex = pat
-    for (a, b) in [ ("%s", "(\S+)"), ("%d", "([-+]?\d+)") ]:
+    for (a, b) in [("%s", "(\S+)"), ("%d", "([-+]?\d+)")]:
         regex = regex.replace(a, b)
     r = re.search(regex, txt)
     return r.groups()
+
 
 def synchronized(lock):
     """ Synchronization decorator. """
@@ -153,8 +160,10 @@ def synchronized(lock):
         return newFunction
     return wrap
 
+
 def xor(a, b):
     return bool(a) ^ bool(b)
+
 
 def parse_bool(s):
     """Parse a bool from string
@@ -164,18 +173,24 @@ def parse_bool(s):
     """
     return str(s).lower()[0] in ["t", "1", "y"]
 
+
 class State(object):
     name = None
     map = None
+
     def __init__(self, n):
         self.name = n
+
     def transition(self, input):
-        next_states = [ s for f, s in self.map if f(input)  ]
+        next_states = [s for f, s in self.map if f(input)]
         assert len(next_states) >= 1, "faulty transition rule"
         return next_states[0]
+
     def __str__(self):
         return "%s" % (self.name)
+
     def __eq__(self, other):
         return str(self) == str(other)
+
     def __ne__(self, other):
         return not (self == other)

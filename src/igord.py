@@ -25,14 +25,16 @@ logging.basicConfig( \
     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-IGORDDIR=sys.path[0]
-IGORD_DATA_DIR=os.path.join(IGORDDIR, "..", "data")
+IGORDDIR = sys.path[0]
+IGORD_DATA_DIR = os.path.join(IGORDDIR, "..", "data")
 
 jc = JobCenter(session_path=SESSION_PATH)
 cobbler = Cobbler(COBBLER_URL, COBBLER_CREDENTIALS)
 
+
 def load_testsuites():
     return Factory.testsuites_from_path(TESTCASES_PATH)
+
 
 def create_cobbler_profile(pname):
     """This is actually creating a cobbler system, in cobbler terms
@@ -41,6 +43,7 @@ def create_cobbler_profile(pname):
       "kernel_options": " ".join([COBBLER_KARGS, COBBLER_KARGS_INSTALL]),
       "kernel_options_post": COBBLER_KARGS,
       })
+
 
 class IgordJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -51,9 +54,11 @@ class IgordJSONEncoder(json.JSONEncoder):
             return str(obj)
         return json.JSONEncoder.default(self, obj)
 
+
 def to_json(obj):
     bottle.response.content_type = "application/json"
     return json.dumps(obj, cls=IgordJSONEncoder, sort_keys=True, indent=2)
+
 
 def _req_cookie():
     cookie_key = "x-igor-cookie"
@@ -64,11 +69,12 @@ def _req_cookie():
         bottle.abort("Unknown job")
     return cookie
 
+
 #
 # bottles
-
-@bottle.route('/submit/<testsuite>/with/<profile>/on/<host>', method='GET')#
-@bottle.route('/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>', method='GET')
+#
+@bottle.route('/submit/<testsuite>/with/<profile>/on/<host>')
+@bottle.route('/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
     host = VMHostFactory.create_default_host( \
         connection_uri=LIBVIRT_CONNECTION_URI, \
@@ -84,7 +90,7 @@ def submit_testsuite(testsuite, profile, host, cookiereq=None):
     logger.debug("Starting cobbler session")
     with cobbler.new_session() as cblr_sess:
         logger.debug("Checking profile %s" % profile)
-        if profile not in cblr_sess.get_profiles():
+        if profile not in cblr_sess.profiles():
             bottle.abort(412, "Unknown profile '%s'" % profile)
 
     logger.debug("Checks done, submitting testsuite")
@@ -93,25 +99,29 @@ def submit_testsuite(testsuite, profile, host, cookiereq=None):
                                host, cookiereq)
     return to_json(resp)
 
-@bottle.route('/jobs', method='GET')
+
+@bottle.route('/jobs')
 def get_jobs():
     return to_json(jc.get_jobs())
 
-@bottle.route('/job/start/<cookie>', method='GET')
+
+@bottle.route('/job/start/<cookie>')
 def start_job(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     m = jc.start_job(cookie)
     return to_json(m)
 
-@bottle.route('/job/status/<cookie>', method='GET')
+
+@bottle.route('/job/status/<cookie>')
 def job_status(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     m = jc.jobs[cookie]
     return to_json(m)
 
-@bottle.route('/job/step/<cookie>/<n:int>/<result:re:success|failed>', method='GET')
+
+@bottle.route('/job/step/<cookie>/<n:int>/<result:re:success|failed>')
 def finish_step(cookie, n, result):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -119,8 +129,9 @@ def finish_step(cookie, n, result):
     m = jc.finish_test_step(cookie, n, result == "success", note)
     return to_json(m)
 
-@bottle.route('/job/abort/<cookie>', method='GET')
-@bottle.route('/job/abort/<cookie>/<clean>', method='GET')
+
+@bottle.route('/job/abort/<cookie>')
+@bottle.route('/job/abort/<cookie>/<clean>')
 def abort_job(cookie, clean=False):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -132,7 +143,8 @@ def abort_job(cookie, clean=False):
         jc.end_job(cookie)
     return to_json(m)
 
-@bottle.route('/job/end/<cookie>', method='GET')
+
+@bottle.route('/job/end/<cookie>')
 def end_job(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -142,7 +154,8 @@ def end_job(cookie):
         m = e.message
     return to_json(m)
 
-@bottle.route('/job/remove/<cookie>', method='GET')
+
+@bottle.route('/job/remove/<cookie>')
 def remove_job(cookie, remove=False):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -152,7 +165,8 @@ def remove_job(cookie, remove=False):
         m = e.message
     return to_json(m)
 
-@bottle.route('/job/testsuite/for/<cookie>', method='GET')
+
+@bottle.route('/job/testsuite/for/<cookie>')
 def get_testsuite_archive(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -163,6 +177,7 @@ def get_testsuite_archive(cookie):
 
     return r.getvalue()
 
+
 @bottle.route('/job/artifact/for/<cookie>/<name>', method='PUT')
 def add_artifact(cookie, name):
     if cookie not in jc.jobs:
@@ -172,15 +187,17 @@ def add_artifact(cookie, name):
     j = jc.jobs[cookie]
     j.add_artifact(name, bottle.request.body.read())
 
-@bottle.route('/job/artifact/from/<cookie>', method='GET')
+
+@bottle.route('/job/artifact/from/<cookie>')
 def get_artifacts(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
     return j.get_artifacts_archive().getvalue()
 
-@bottle.route('/firstboot/<cookie>', method='GET')
-@bottle.route('/job/<cookie>/set/enable_pxe/<enable_pxe>', method='GET')
+
+@bottle.route('/firstboot/<cookie>')
+@bottle.route('/job/<cookie>/set/enable_pxe/<enable_pxe>')
 def disable_pxe_cb(cookie, enable_pxe=False):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -188,7 +205,8 @@ def disable_pxe_cb(cookie, enable_pxe=False):
     m = j.profile.enable_pxe(j.host, enable_pxe)
     return to_json(m)
 
-@bottle.route('/job/<cookie>/set/kernelargs/<kernelargs>', method='GET')
+
+@bottle.route('/job/<cookie>/set/kernelargs/<kernelargs>')
 def set_kernelargs_cb(cookie, kernelargs):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -198,7 +216,7 @@ def set_kernelargs_cb(cookie, kernelargs):
     return to_json(m)
 
 
-@bottle.route('/testjob/<cookie>', method='GET')
+@bottle.route('/testjob/<cookie>')
 def get_bootstrap_script(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -221,11 +239,13 @@ def get_bootstrap_script(cookie):
 
     return r
 
+
 @bottle.route('/static/data/<filename>')
 def static_data(filename):
     return bottle.static_file(filename, root=IGORD_DATA_DIR)
 
-@bottle.route('/testsuite/<name>', method='GET')
+
+@bottle.route('/testsuite/<name>')
 def get_testsuite_archive(name):
     testsuites = load_testsuites()
     t = testsuites[name]
@@ -235,10 +255,12 @@ def get_testsuite_archive(name):
 
     return r.getvalue()
 
+
 if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
     logger.info("Enabling remote ISO management for cobbler")
 
-    @bottle.route('/extra/profile/add/<pname>/iso/<isoname>/remote', method='GET')
+    @bottle.route('/extra/profile/add/<pname>/iso/<isoname>/remote', \
+                  method='GET')
     def add_iso_profile_remote(pname, isoname):
         retval = 0
         with utils.TemporaryDirectory() as tmpdir:
@@ -262,7 +284,7 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
             retval, stdout = run(cmd, with_retval=True)
         return to_json((retval, stdout))
 
-    @bottle.route('/extra/profile/remove/<pname>/remote', method='GET')
+    @bottle.route('/extra/profile/remove/<pname>/remote')
     def remove_iso_profile_remote(pname):
         retval = 0
         with utils.TemporaryDirectory() as tmpdir:
@@ -285,6 +307,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.debug("Cleaning")
         jc.clean()
-
-
-

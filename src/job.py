@@ -45,6 +45,7 @@ endstates = [s_aborted, s_failed, s_timedout, s_done]
 _high_state_change_lock = threading.Lock()
 _state_change_lock = threading.Lock()
 
+
 class Job(object):
     """Lifecycle
     setup()
@@ -153,7 +154,7 @@ class Job(object):
     @utils.synchronized(_high_state_change_lock)
     def start(self):
         """Start the actual test
-        We expecte the testsuite to be gathered by the host, thus the host 
+        We expecte the testsuite to be gathered by the host, thus the host
         calling in to fetch it
         """
         if self.state() != s_prepared:
@@ -167,7 +168,7 @@ class Job(object):
     def finish_step(self, n, is_success, note=None, is_abort=False):
         """Finish one test step
         """
-        logger.debug("%s: Finishing step %s: %s (%s)" % (self.cookie, n, 
+        logger.debug("%s: Finishing step %s: %s (%s)" % (self.cookie, n, \
                                                              is_success, note))
         if self.state() != s_running:
             raise Exception(("Can not finish step %s of job %s, it is not" + \
@@ -198,7 +199,8 @@ class Job(object):
             logger.debug("Finished step %s (%s) succesfully" % (n, \
                                                         current_testcase.name))
         elif is_success is False and current_testcase.expect_failure is True:
-            logger.info("Finished step %s (%s) unsucsessfull as expected" % (n, \
+            logger.info("Finished step %s (%s) unsucsessfull as expected" % ( \
+                                                        n, \
                                                         current_testcase.name))
         elif is_success is False:
             logger.info("Finished step %s (%s) unsucsessfull" % (n, \
@@ -235,11 +237,12 @@ class Job(object):
                                                        self.cookie, \
                                                        self.state()))
 
-        self.finish_step(self.current_step, is_success=False, note="aborted", is_abort=True)
+        self.finish_step(self.current_step, is_success=False, note="aborted", \
+                         is_abort=True)
 
     @utils.synchronized(_high_state_change_lock)
     def reopen(self):
-        if self.is_running(): #fixm prepare part
+        if self.is_running():  # FIXME prepare part is missing
             raise Exception("Can not reopen job %s, it is: %s" % self.state())
 
         self.current_step = 0
@@ -251,7 +254,7 @@ class Job(object):
         """Tear down this test, might clean up the host
         """
         logger.debug("Tearing down job %s" % self.cookie)
-        if self.state() not in [s_running, s_aborted, s_failed, s_done, s_timedout]:
+        if self.state() not in [s_running] + endstates:
             raise Exception("Job %s can not yet be torn down: %s" % ( \
                                                     self.cookie, self.state()))
         self.host.purge()
@@ -328,7 +331,8 @@ class Job(object):
     def runtime(self):
         runtime = 0
         now = time.time()
-        get_first_state_change = lambda q: [s for s in self._state_history if s["state"] == q][0]
+        get_first_state_change = lambda q: [s for s in self._state_history \
+                                                       if s["state"] == q][0]
         if self.state() == s_running:
             time_started = get_first_state_change(s_running)["created_at"]
             runtime = now - time_started
@@ -354,8 +358,9 @@ class Job(object):
         return is_timeout
 
     def __str__(self):
-        return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.cookie, 
+        return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.cookie, \
                 self.state(), self.current_step, self.testsuite)
+
     def __to_dict__(self):
         return { \
             "id": self.cookie,
@@ -375,7 +380,6 @@ class JobCenter(object):
     """
     session_path = None
 
-    
     jobs = {}
     closed_jobs = []
 
@@ -398,19 +402,22 @@ class JobCenter(object):
         cookie = cookie_req
         self._cookie_lock.acquire()
         while cookie is None or cookie in self.jobs.keys():
-            cookie = "%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), len(self.jobs.items()))
-            cookie = utils.surl(cookie.replace("-",""))
+            cookie = "%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), \
+                                len(self.jobs.items()))
+            cookie = utils.surl(cookie.replace("-", ""))
         self._cookie_lock.release()
-        assert cookie is not None, "Cookie creation failed: %s -> %s" % (cookie_req, cookie)
+        assert cookie is not None, "Cookie creation failed: %s -> %s" % ( \
+                                                            cookie_req, cookie)
         return cookie
 
     def submit_testsuite(self, testsuite, profile, host, cookie_req=None):
-        """Enqueue a testsuite to be run against a specififc build on 
+        """Enqueue a testsuite to be run against a specififc build on
         given host
         """
         cookie = self._generate_cookie(cookie_req)
 
-        j = Job(cookie, testsuite, profile, host, session_path=self.session_path)
+        j = Job(cookie, testsuite, profile, host, \
+                session_path=self.session_path)
         j.created_at = time.time()
 
         self.jobs[cookie] = j
@@ -425,7 +432,7 @@ class JobCenter(object):
         job.start()
         return "Started job %s (%s)." % (cookie, repr(job))
 
-    def finish_test_step(self, cookie, step, is_success,note=None):
+    def finish_test_step(self, cookie, step, is_success, note=None):
         j = self.jobs[cookie]
         j.finish_step(step, is_success, note)
         return j
@@ -446,4 +453,3 @@ class JobCenter(object):
     def clean(self):
         for job in self.jobs.values():
             job.end(True)
-

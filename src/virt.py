@@ -33,6 +33,7 @@ from partition import *
 
 logger = logging.getLogger(__name__)
 
+
 class VMImage(Layout):
     def compress(self, dst_fmt="qcow2"):
         '''Convert the raw image into a qemu image.
@@ -40,7 +41,8 @@ class VMImage(Layout):
         assert dst_fmt in ["raw", "qcow2"], "Only qcow2 and raw allowed"
 
         dst_filename = "%s.%s" % (self.filename, dst_fmt)
-        cmd = "nice time qemu-img convert -c -O %s '%s' '%s'" % (dst_fmt, self.filename, dst_filename)
+        cmd = "nice time qemu-img convert -c -O %s '%s' '%s'" % (dst_fmt, \
+                                                   self.filename, dst_filename)
         run(cmd)
         cmd = "mv '%s' '%s'" % (dst_filename, self.filename)
         run(cmd)
@@ -49,8 +51,8 @@ class VMImage(Layout):
 
 class VMHost(Host):
     '''A host which is actually a virtual guest.
-
-    VMHosts are not much different from other hosts, besides that we can configure them.
+    VMHosts are not much different from other hosts, besides that we can
+    configure them.
     '''
     name = None
     session = None
@@ -74,7 +76,8 @@ class VMHost(Host):
     def prepare(self, session):
         logger.debug("Preparing VMHost")
         self.session = session
-        self._vm_name = "%s%s-%s" % (self.vm_prefix, self.name, self.session.cookie)
+        self._vm_name = "%s%s-%s" % (self.vm_prefix, self.name, \
+                                     self.session.cookie)
         self.prepare_images()
         self.prepare_vm()
 
@@ -116,7 +119,8 @@ class VMHost(Host):
 
         for image_spec in self.image_specs:
             poolvol = self._upload_image(image_spec)
-            cmd += " --disk vol=%s,device=disk,bus=%s,format=%s" % (poolvol, self.disk_bus_type, image_spec.format)
+            cmd += " --disk vol=%s,device=disk,bus=%s,format=%s" % (poolvol, \
+                                         self.disk_bus_type, image_spec.format)
 
         definition = run(cmd)
 
@@ -130,9 +134,14 @@ class VMHost(Host):
         disk = image_spec.filename
         volname = os.path.basename(disk)
         poolvol = "%s/%s" % (self.poolname, volname)
-        logger.debug("Uploading disk image '%s' to new volume '%s'" % (disk, poolvol))
-        self._virsh("vol-create-as --name '%s' --capacity '%s' --format %s --pool '%s'" % (volname, image_spec.size, image_spec.format, self.poolname))
-        self._virsh("vol-upload --vol '%s' --file '%s' --pool '%s'" % (volname, disk, self.poolname))
+        logger.debug("Uploading disk image '%s' to new volume '%s'" % (disk, \
+                                                                      poolvol))
+        self._virsh("vol-create-as --name '%s' --capacity '%s' " + \
+                    "--format %s --pool '%s'" % (volname, image_spec.size, \
+                                                 image_spec.format, \
+                                                 self.poolname))
+        self._virsh("vol-upload --vol '%s' --file '%s' --pool '%s'" % ( \
+                                                 volname, disk, self.poolname))
         return poolvol
 
     def get_name(self):
@@ -162,7 +171,8 @@ class VMHost(Host):
             for image_spec in self.image_specs:
                 image_spec.remove()
                 volname = os.path.basename(image_spec.filename)
-                self._virsh("vol-delete --vol '%s' --pool '%s'" % (volname, self.poolname))
+                self._virsh("vol-delete --vol '%s' --pool '%s'" % (volname, \
+                                                                self.poolname))
 
     def remove_vm(self):
         self.destroy()

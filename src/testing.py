@@ -26,7 +26,8 @@ from string import Template
 import time
 import logging
 import unittest
-import tempfile, tarfile
+import tempfile
+import tarfile
 import StringIO
 import re
 
@@ -53,7 +54,7 @@ class Host(UpdateableObject):
 
     def prepare(self, session):
         """Prepare a host until the point where a testsuite can be submitted.
-        This can involve preparing a VM or preparing a real server via some 
+        This can involve preparing a VM or preparing a real server via some
         sophisticated stuff.
         """
         raise Exception("Not implemented.")
@@ -72,7 +73,7 @@ class Host(UpdateableObject):
 
     def purge(self):
         """Remove, erase, clean a host - if needed.
-        This can be removing images of VMs or erasing a hard drive on real 
+        This can be removing images of VMs or erasing a hard drive on real
         hardware.
         """
         raise Exception("Not implemented.")
@@ -106,7 +107,8 @@ class Factory:
     @staticmethod
     def _from_file(filename, per_line_cb):
         """Reads a file and calls a callback per line.
-        This provides some functionality liek ignoring comments and blank lines.
+        This provides some functionality liek ignoring comments and blank
+        lines.
         """
         fdir = os.path.dirname(filename)
         objlist = []
@@ -160,13 +162,14 @@ class Factory:
     @staticmethod
     def testset_from_file(filename, suffix=".set"):
         """Builds a Testset from a testset file.
-        The *.set files are expected to contain one testcase file and 
+        The *.set files are expected to contain one testcase file and
         optionally some arguments per line.
         The testcase files path is relative to the testset file.
         """
         name = os.path.basename(filename).replace(suffix, "")
         cases = Factory._from_file(filename, Testcase.from_line)
         return Testset(name=name, testcases=cases)
+
 
 class Testsuite(object):
     """Represents a list of testsets.
@@ -231,7 +234,7 @@ class Testsuite(object):
         """
         r = StringIO.StringIO()
         logger.debug("Preparing archive for testsuite %s" % self.name)
-        with tarfile.open(fileobj=r,mode="w:bz2") as archive:
+        with tarfile.open(fileobj=r, mode="w:bz2") as archive:
             stepn = 0
             for testcase in self.testcases():
                 logger.debug("Adding testcase #%s: %s" % (stepn, \
@@ -256,6 +259,7 @@ class Testsuite(object):
             logger.debug("Adding extra dir: %s" % testcaseextradir)
             archive.add(testcaseextradir, arcname=arcname + ".d", \
                         recursive=True)
+
 
 class Testset(object):
     """Represents a list of testcases.
@@ -288,7 +292,8 @@ class Testset(object):
                                      else Testcase(c))
 
     def __str__(self):
-        return "%s: %s" % (self.name, str(["%s: %s" % (n, c) for n, c in enumerate(self.testcases())]))
+        return "%s: %s" % (self.name, str(["%s: %s" % (n, c) for n, c in \
+                                                enumerate(self.testcases())]))
 
     def __to_dict__(self):
         """Is used to derive a JSON and XML description.
@@ -298,7 +303,14 @@ class Testset(object):
             "testcases": [c.__to_dict__() for c in self.testcases()]
         }
 
+
 class Testcase(object):
+    """Represents a testcase which is mapped to a script file.
+    Each testcase corresponds to a script (bash, python, ...) which is run
+    on a host.
+    A testcase can fail or succeed and has a timeout. Sometimes a testcase is
+    expected to fail.
+    """
     name = None
     filename = None
     source = None
@@ -381,7 +393,7 @@ class TestSession(UpdateableObject):
         with open(afilename, "w") as afile:
             afile.write(data)
 
-    def artifacts(self, use_abs = False):
+    def artifacts(self, use_abs=False):
         fns = os.listdir(self.dirname)
         if use_abs:
             fns = [os.path.join(self.dirname, fn) \
@@ -391,8 +403,9 @@ class TestSession(UpdateableObject):
     def get_artifacts_archive(self, selection=None):
         selection = selection or self.artifacts()
         r = StringIO.StringIO()
-        logger.debug("Preparing artifacts archive for session %s" % self.cookie)
-        with tarfile.open(fileobj=r,mode="w:bz2") as archive:
+        logger.debug("Preparing artifacts archive for session %s" % \
+                                                                   self.cookie)
+        with tarfile.open(fileobj=r, mode="w:bz2") as archive:
             for artifact in selection:
                 if artifact not in self.artifacts():
                     logger.debug("Artifact not here: %s" % artifact)

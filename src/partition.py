@@ -94,6 +94,7 @@ class Layout(UpdateableObject):
         for parted_cmd in for_parted:
             run("parted '%s' '%s'" % (self.filename, parted_cmd))
 
+
 class Partition(UpdateableObject):
     '''
     Params

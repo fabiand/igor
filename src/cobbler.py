@@ -67,9 +67,9 @@ class Cobbler(object):
 
         def assign_to(self, host):
             with self.cobbler_session_cb() as session:
-                if self.name not in session.get_profiles():
-                    logger.info("Available profiles: %s" % session.get_profiles())
-                    raise Exception("Profile '%s' unknown to server" % (self.name))
+                if self.name not in session.profiles():
+                    logger.info("Available profiles: %s" % session.profiles())
+                    raise Exception("Unknown profile '%s'" % (self.name))
                 additional_args = {}
                 for k, v in self.additional_args.items():
                     additional_args[k] = v.format(
@@ -86,7 +86,8 @@ class Cobbler(object):
         def set_kargs(self, host, kargs):
             raise Exception("Not yet implemented")
             #with self.cobbler_session_cb() as session:
-                #session.modify_system(system_id,"kernel_options", v, self.token)
+                #session.modify_system(system_id,"kernel_options", v,
+                #                      self.token)
 
         def revoke_from(self, host):
             with self.cobbler_session_cb() as session:
@@ -168,8 +169,8 @@ class Cobbler(object):
         def remove_system(self, name):
             self.server.remove_system(name, self.token)
 
-        def get_profiles(self):
-            return [e["name"] for e in self.server.get_profiles(self.token)]
+        def profiles(self):
+            return [e["name"] for e in self.server.profiles(self.token)]
 
         def get_systems(self):
             return [e["name"] for e in self.server.get_systems(self.token)]
@@ -179,6 +180,6 @@ def example():
     c = Cobbler("http://127.0.0.1/cobbler_api")
     s = c.new_session()
     print (s.get_systems())
-    print (s.get_profiles())
+    print (s.profiles())
 
     p = c.new_profile("abc")
