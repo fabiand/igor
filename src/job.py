@@ -366,7 +366,7 @@ class Job(object):
             "id": self.cookie,
             "profile": self.profile.get_name(),
             "host": self.host.get_name(),
-            "testsuite": self.testsuite.__json__(),
+            "testsuite": self.testsuite.__to_dict__(),
             "state": self.state(),
             "current_step": self.current_step,
             "results": self.results,
