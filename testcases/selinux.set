@@ -3,4 +3,4 @@
 #
 
 
-selinux-denials.py              expect_failure=False
+selinux-denials.py              expect_failure=True
