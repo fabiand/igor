@@ -184,7 +184,6 @@ class Job(object):
             "created_at": time.time(),
             "testcase": current_testcase,
             "is_success": is_success,
-            "expect_failure": current_testcase.expect_failure,
             "as_expected": as_expected,
             "is_abort": is_abort,
             "note": note
