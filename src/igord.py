@@ -46,7 +46,7 @@ class IgordJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Job) or isinstance(obj, Testsuite) or \
            isinstance(obj, Testset) or isinstance(obj, Testcase):
-            return obj.__json__()
+            return obj.__to_dict__()
         elif isinstance(obj, utils.State):
             return str(obj)
         return json.JSONEncoder.default(self, obj)

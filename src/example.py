@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
   print jc.finish_test_step(cookie_req, 0, True, "some note")
 
-  print jc.jobs[cookie_req].__json__()
+  print jc.jobs[cookie_req].__to_dict__()
 #  jc.abort_job(cookie_req)
 
   jc.end_job(cookie_req, True)

@@ -356,7 +356,7 @@ class Job(object):
     def __str__(self):
         return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.cookie, 
                 self.state(), self.current_step, self.testsuite)
-    def __json__(self):
+    def __to_dict__(self):
         return { \
             "id": self.cookie,
             "profile": self.profile.get_name(),
