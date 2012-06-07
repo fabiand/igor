@@ -109,14 +109,22 @@ class Job(object):
                 self.daemon = True
 
             def run(self):
-                while not self.job.is_timedout():
+                logger.debug("Starting watchdog for job %s" % self.job.cookie)
+                while not self.job.is_timedout() and not self.is_stopped():
                     self._stop_event.wait(self.interval)
                 with _high_state_change_lock:
-                    logger.debug("Watchdog: Job %s timed out." % self.job.cookie)
+                    logger.debug("Watchdog: Job %s timed out." % \
+                                                               self.job.cookie)
                     self.job.state(s_timedout)
+                logger.debug("Ending watchdog for job %s" % self.job.cookie)
 
             def stop(self):
+                logger.debug("Requesting watchdog stop")
                 self._stop_event.set()
+
+            def is_stopped(self):
+                return self._stop_event.is_set()
+
         watchdog = JobWatchdog(self)
         watchdog.start()
         return watchdog
@@ -428,5 +436,3 @@ class JobCenter(object):
         for job in self.jobs.values():
             job.end(True)
 
-if __name__ == '__main__':
-    j = JobCenter()
