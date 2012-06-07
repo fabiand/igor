@@ -206,9 +206,13 @@ class Job(object):
             self.state(s_failed)
 
         if self.completed_all_steps():
-            logger.debug("Finished job %s" % (self.cookie))
+            if self.state() in endstates:
+                logger.debug(("Finished job %s but no change because " + \
+                              "already in end state") % (self.cookie))
+            else:
+                logger.debug("Finished job %s" % (self.cookie))
+                self.state(s_done)
             self.watchdog.stop()
-            self.state(s_done)
 
         self.current_step += 1
         return self.current_step
