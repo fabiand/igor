@@ -79,6 +79,30 @@ class Host(UpdateableObject):
         raise Exception("Not implemented.")
 
 
+class GenericHost(Host):
+    """This class can be used to map to real servers
+    """
+
+    name = None
+    mac = None
+
+    def __init__(self, name, mac)
+        self.name = name
+        self.mac = mac
+
+    def prepare(self, session):
+        pass
+
+    def get_name(self):
+        return self.name
+
+    def get_mac_address(self):
+        return self.mac
+
+    def purge(self):
+        pass
+
+
 class Profile(UpdateableObject):
     """A profile is some abstraction of an installation.
     """
