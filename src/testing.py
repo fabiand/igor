@@ -86,7 +86,7 @@ class GenericHost(Host):
     name = None
     mac = None
 
-    def __init__(self, name, mac)
+    def __init__(self, name, mac):
         self.name = name
         self.mac = mac
 
