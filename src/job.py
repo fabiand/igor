@@ -70,6 +70,8 @@ class Job(object):
 
     _state = None
     _state_history = None
+    _ended = False
+    _ended_at = None
 
     _watchdog = None
 
@@ -257,14 +259,26 @@ class Job(object):
         if self.state() not in [s_running] + endstates:
             raise Exception("Job %s can not yet be torn down: %s" % ( \
                                                     self.cookie, self.state()))
+        try:
+            self.abort()
+        except Exception as e:
+            logger.info("While aborting: %s" % e.message)
+
         self.host.purge()
         self.profile.revoke_from(self.host)
         if do_cleanup:
             self.remove()
+        self._ended = True
+        self._ended_at = time.time()
 
     @utils.synchronized(_high_state_change_lock)
     def remove(self):
-            self.session.remove()
+        assert self._ended is True
+        self.session.remove()
+
+    def time_since_end(self):
+        assert self._ended is True
+        return time.time() - self._ended_at
 
     @utils.synchronized(_state_change_lock)
     def state(self, new_state=None):
@@ -298,37 +312,51 @@ class Job(object):
         return self.testsuite.testcases()
 
     def has_succeeded(self):
+        """If the testsuite was completed and all results are as expected
+        """
         m_val = self.completed_all_steps() and not self.has_failed()
         e_val = self.state() == s_done
         assert(m_val == e_val)
         return m_val
 
     def completed_all_steps(self):
+        """If all tests of the testsuite are completed
+        """
         m_val = len(self.testcases()) == len(self.results)
         return m_val
 
     def has_failed(self):
-        m_val = not all(self.results) is True
+        """If the jobs test failed
+        """
+        m_val = not all([r["as_expected"] for r in self.results])
         e_val = self.state() == s_failed
         assert(m_val == e_val)
         return m_val
 
     def is_running(self):
+        """If the job is still running the test phase
+        """
         m_val = self.current_step < len(self.testsuite.testcases())
         e_val = self.state() == s_running
         assert(m_val == e_val)
         return m_val
 
     def is_aborted(self):
-        m_val = "aborted" in [r["note"] for r in self.results]
+        """If the jobs testing part was aborted
+        """
+        m_val = any([r["is_abort"] for r in self.results])
         e_val = self.state() == s_aborted
         assert(m_val == e_val)
         return m_val
 
     def timeout(self):
+        """The maximum time the testing part of this job can consume.
+        """
         return self.testsuite.timeout()
 
     def runtime(self):
+        """The time the job ran or is running.
+        """
         runtime = 0
         now = time.time()
         get_first_state_change = lambda q: [s for s in self._state_history \
@@ -357,6 +385,9 @@ class Job(object):
         # FIXME we need to check each testcase
         return is_timeout
 
+    def reached_endstate(self):
+        return self.state() in endstates
+
     def __str__(self):
         return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.cookie, \
                 self.state(), self.current_step, self.testsuite)
@@ -383,13 +414,22 @@ class JobCenter(object):
     jobs = {}
     closed_jobs = []
 
+    _queue_of_pending_jobs = []
+    _pool_of_hosts_in_use = set([])
+
     _cookie_lock = threading.Lock()
+
+    _worker = None
 
     def __init__(self, session_path):
         self.session_path = session_path
         logger.debug("JobCenter opened in %s" % self.session_path)
 
-    def __delete__(self):
+        self._worker = JobCenter.JobWorker()
+        self._worker.start()
+
+    def __del__(self):
+        self._worker.stop()
         logger.debug("JobCenter is gone.")
 
     def get_jobs(self):
@@ -427,7 +467,15 @@ class JobCenter(object):
         return {"cookie": cookie, "job": j}
 
     def start_job(self, cookie):
+        self._queue_of_pending_jobs.prepend(cookie)
+        return "Started job %s (%s). %d in queue" % (cookie, repr(job), \
+                                                     len(self._queue_of_pending_jobs))
+
+    def _start_job(self, cookie):
         job = self.jobs[cookie]
+        if job.host in self._pool_of_hosts_in_use:
+            raise Exception("The host is already in use: %s" % job.cookie)
+        self._pool_of_hosts_in_use.add(job.host)
         job.setup()
         job.start()
         return "Started job %s (%s)." % (cookie, repr(job))
@@ -437,19 +485,50 @@ class JobCenter(object):
         j.finish_step(step, is_success, note)
         return j
 
-    def end_job(self, cookie, remove=False):
-        job = self.jobs[cookie]
-        job.end(remove)
-        self.closed_jobs.append(job)
-        return "Ended job %s." % cookie
-
     def abort_job(self, cookie):
         logger.debug("Aborting %s" % cookie)
         j = self.jobs[cookie]
         j.abort()
-        self.closed_jobs.append(j)
-        return "Aborted job %s" % cookie
+        return j
 
-    def clean(self):
-        for job in self.jobs.values():
-            job.end(True)
+    def _end_job(self, cookie, remove=False):
+        job = self.jobs[cookie]
+        job.end(remove)
+        if job.host not in self._pool_of_hosts_in_use:
+            logger.warning("The host was not in use: %s" % job.cookie)
+        self._pool_of_hosts_in_use.discard(job.host)
+        self.closed_jobs.append(job)
+        del self.jobs[job]
+        return "Ended job %s." % cookie
+
+    class JobWorker(utils.PollingWorkerDaemon):
+        jc = None
+        do_cleanup = None
+
+        def __init__(self, jc, do_cleanup):
+            self.jc = jc
+            self.do_cleanup = do_cleanup
+            utils.PollingWorkerDaemon(self)
+
+        def work(self):
+            if len(self.jc._queue_of_pending_jobs) == 0:
+                # No item
+                pass
+            else:
+                # FIXME this doesn't respect the order
+                for cookie in self.jc._queue_of_pending_jobs:
+                    candidate = self.jc.jobs[cookie]
+                    if candidate.host in self.jc._pool_of_hosts_in_use:
+                        self._debug("Host of candidate %s is still in use" % self.job)
+                    else:
+                        self._debug("Starting job %s" % self.job)
+                        self.jc._start_job(cookie)
+                        self.jc._queue_of_pending_jobs.remove(cookie)
+
+            # Look for ended jobs
+            for j in self.jc.jobs:
+                if j.reached_endstate():
+                    self._debug("Unwinding job %s" % self.job)
+                    self.jc._end_job(j.cookie, self.do_cleanup)
+                else:
+                    self._debug("Job %s is still running" % self.job)

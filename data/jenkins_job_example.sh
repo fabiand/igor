@@ -47,9 +47,6 @@ highlight "get artifacts archive"
 bash ./igorclient.sh artifacts $ARTIFACTSARCHIVE
 bash ./igorclient.sh status
 
-highlight "end & remove job"
-bash ./igorclient.sh end remove
-
 highlight "remove cobbler distro/profile"
 bash ./igorclient.sh extra_profile_remove "$BASENAME"
 

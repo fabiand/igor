@@ -24,6 +24,7 @@ import urllib
 import re
 import tempfile
 import shlex
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +173,43 @@ def parse_bool(s):
     True
     """
     return str(s).lower()[0] in ["t", "1", "y"]
+
+
+class PollingWorkerDaemon(threading.Thread):
+    interval = None
+    _stop_event = None
+
+    def __init__(self, interval=1):
+        self.interval = interval
+        self._stop_event = threading.Event()
+        threading.Thread.__init__(self)
+        self.daemon = True
+
+    def _debug(self, msg):
+        logger.debug("[%s] %s" % (self, msg))
+
+    def run(self):
+        self._debug("Starting")
+        keep_running = True
+        while keep_running:
+            self.work()
+            if self.is_stopped():
+                self._debug("Stopping")
+                keep_running = False
+            self._stop_event.wait(self.interval)
+        self._debug("Ending")
+
+    def stop(self):
+        self._debug("Requesting worker stop")
+        self._stop_event.set()
+
+    def is_stopped(self):
+        return self._stop_event.is_set()
+
+    def work(self):
+        """Call self.stop() to end
+        """
+        raise Exception("Not implemented")
 
 
 class State(object):

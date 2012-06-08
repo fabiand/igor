@@ -21,7 +21,7 @@ from config import *
 
 #logging.config.fileConfig("logconf.ini")
 logging.basicConfig( \
-    format='%(levelname)s - %(module)s - %(asctime)s - %(message)s', \
+    format='%(levelname)s - %(asctime)s - %(module)s - %(message)s', \
     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -131,36 +131,11 @@ def finish_step(cookie, n, result):
 
 
 @bottle.route('/job/abort/<cookie>')
-@bottle.route('/job/abort/<cookie>/<clean>')
-def abort_job(cookie, clean=False):
+def abort_job(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     try:
         m = jc.abort_job(cookie)
-    except Exception as e:
-        m = e.message
-    if clean:
-        jc.end_job(cookie)
-    return to_json(m)
-
-
-@bottle.route('/job/end/<cookie>')
-def end_job(cookie):
-    if cookie not in jc.jobs:
-        bottle.abort(404, "Unknown job '%s'" % cookie)
-    try:
-        m = jc.end_job(cookie)
-    except Exception as e:
-        m = e.message
-    return to_json(m)
-
-
-@bottle.route('/job/remove/<cookie>')
-def remove_job(cookie, remove=False):
-    if cookie not in jc.jobs:
-        bottle.abort(404, "Unknown job '%s'" % cookie)
-    try:
-        m = jc.jobs[cookie].remove()
     except Exception as e:
         m = e.message
     return to_json(m)

@@ -87,20 +87,6 @@ abort() # Abort the current job
   uncookie
 }
 
-end() # End the current job
-{
-  has_cookie
-  api job/end/$IGORCOOKIE
-  [[ "x$1" == "xremove" ]] && remove
-  uncookie
-}
-
-remove() # Remove the current job and it's artifacts
-{
-  has_cookie
-  api job/remove/$IGORCOOKIE
-  uncookie
-}
 
 start() # Start the current job
 {
@@ -159,6 +145,7 @@ wait_state() # Wait until a specific state is reached (regex)
   export DEBUG=""
   TIME_START=$(date +%s)
   TIMEOUT=$(api job/status/$IGORCOOKIE | grep timeout | tail -n1 | _filter_key timeout)
+  TIMEOUT=$(( $TIMEOUT * 2 )) # Higher timeout, because it can take time before the job ist actually started
   while true
   do
     STATE=$(state)
