@@ -105,7 +105,8 @@ class VMHost(Host):
             "boot": "network",
             "network": self.network_configuration,
             "graphics": "spice",
-            "video": "cirrus",
+            "video": "qxl",
+            "channel": "spicevmc",
             "noautoconsole": None,      # Prevents opening a window
             "import": None,
             "dry-run": None,
