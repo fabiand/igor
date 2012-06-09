@@ -277,7 +277,7 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
 if __name__ == "__main__":
     try:
     #    logger.info("Starting igord")
-        bottle.run(host='0.0.0.0', port=8080, reloader=True)
+        bottle.run(host='0.0.0.0', port=8080, reloader=False)
     except KeyboardInterrupt:
         logger.debug("Cleaning")
         jc.clean()

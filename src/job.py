@@ -44,6 +44,7 @@ endstates = [s_aborted, s_failed, s_timedout, s_done]
 
 _high_state_change_lock = threading.Lock()
 _state_change_lock = threading.Lock()
+_jobcenter_lock = threading.RLock()
 
 
 class Job(object):
@@ -420,6 +421,7 @@ class JobCenter(object):
         self._worker.stop()
         logger.debug("JobCenter is gone.")
 
+    @utils.synchronized(_jobcenter_lock)
     def get_jobs(self):
         return {
             "all": self.jobs,
@@ -438,6 +440,7 @@ class JobCenter(object):
                                                             cookie_req, cookie)
         return cookie
 
+    @utils.synchronized(_jobcenter_lock)
     def submit_testsuite(self, testsuite, profile, host, cookie_req=None):
         """Enqueue a testsuite to be run against a specififc build on
         given host
@@ -454,6 +457,7 @@ class JobCenter(object):
 
         return {"cookie": cookie, "job": j}
 
+    @utils.synchronized(_jobcenter_lock)
     def start_job(self, cookie):
         self._queue_of_pending_jobs.append(cookie)
         return "Started job %s. %d in queue" % (cookie, \
@@ -468,11 +472,13 @@ class JobCenter(object):
         job.start()
         return "Started job %s (%s)." % (cookie, repr(job))
 
+    @utils.synchronized(_jobcenter_lock)
     def finish_test_step(self, cookie, step, is_success, note=None):
         j = self.jobs[cookie]
         j.finish_step(step, is_success, note)
         return j
 
+    @utils.synchronized(_jobcenter_lock)
     def abort_job(self, cookie):
         logger.debug("Aborting %s" % cookie)
         j = self.jobs[cookie]
@@ -499,6 +505,7 @@ class JobCenter(object):
             self.removal_age = removal_age
             utils.PollingWorkerDaemon.__init__(self)
 
+        @utils.synchronized(_jobcenter_lock)
         def work(self):
             if len(self.jc._queue_of_pending_jobs) == 0:
                 # No item

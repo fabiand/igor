@@ -80,6 +80,10 @@ main()
   for TESTCASE in *
   do
     TESTCASESTEP=${TESTCASE/-*/}
+    [[ -d $TESTCASE ]] && {
+      debug "Is not testcase, a directory: $TESTCASE"
+      continue
+    }
     [[ $TESTCASESTEP -lt $CURRENT_STEP ]] && {
       debug "Skipping testcase $TESTCASE"
       continue
