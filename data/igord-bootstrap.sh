@@ -94,13 +94,11 @@ main()
     ./$TESTCASE
     RETVAL=$?
 
-    add_artifact "ovirt.log" "/var/log/ovirt.log"
-
     if [[ $RETVAL = 0 ]];
     then
-      api_call job/step/$SESSION/$CURRENT_STEP/success
+      step_succeeded
     else
-      api_call job/step/$SESSION/$CURRENT_STEP/failed
+      step_failed
       # We are not breaking here, because a failed testcase could be expected
     fi
 

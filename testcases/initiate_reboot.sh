@@ -2,7 +2,9 @@
 
 . /usr/libexec/ovirt-functions
 
-step_succeeded
+
+add_artifact "ovirt.log" "/var/log/ovirt.log"
+
 reboot
 
 

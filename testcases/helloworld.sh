@@ -10,6 +10,7 @@ main()
   echo "Hello World."
   pwd
   ls -lah
+  add_artifact "ovirt.log" "/var/log/ovirt.log"
 }
 
 main
