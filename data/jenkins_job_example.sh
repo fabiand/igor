@@ -40,7 +40,7 @@ export $(bash ./igorclient.sh cookie)
 [[ -z $IGORCOOKIE ]] && { echo No Igor cookie ; return 1 ; }
 highlight "... start and wait to reach some endstate"
 bash ./igorclient.sh start
-bash ./igorclient.sh wait_state "aborted|failed|timedout|done"
+bash ./igorclient.sh wait_state "aborted|failed|timedout|passed"
 
 LAST_STATE=$(bash ./igorclient.sh state)
 
@@ -51,6 +51,6 @@ bash ./igorclient.sh status
 highlight "remove cobbler distro/profile"
 bash ./igorclient.sh extra_profile_remove "$BASENAME"
 
-[[ "x$LAST_STATE" == "xdone" ]] && exit 0
+[[ "x$LAST_STATE" == "xpassed" ]] && exit 0
 
 exit 1

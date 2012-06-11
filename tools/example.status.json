@@ -1,0 +1,126 @@
+{
+  "current_step": 6, 
+  "host": "igor-vm-8g-gpt-1g-oXQRHxRc2", 
+  "id": "oXQRHxRc2", 
+  "profile": "fdeutsch-jenkins-rhev-hypervisor-6-devel-at-97-profile", 
+  "results": [
+    {
+      "is_passed": true, 
+      "created_at": 1339422282.418439, 
+      "is_abort": false, 
+      "is_success": true, 
+      "note": null, 
+      "testcase": {
+        "filename": "../testcases/installation_completed.sh", 
+        "name": "installation_completed.sh", 
+        "timeout": 600
+      }
+    }, 
+    {
+      "is_passed": true, 
+      "created_at": 1339422282.513714, 
+      "is_abort": false, 
+      "is_success": true, 
+      "note": null, 
+      "testcase": {
+        "filename": "../testcases/helloworld.sh", 
+        "name": "helloworld.sh", 
+        "timeout": 10
+      }
+    }, 
+    {
+      "is_passed": true, 
+      "created_at": 1339422284.703432, 
+      "is_abort": false, 
+      "is_success": true, 
+      "note": null, 
+      "testcase": {
+        "filename": "../testcases/initiate_reboot.sh", 
+        "name": "initiate_reboot.sh", 
+        "timeout": 10
+      }
+    }, 
+    {
+      "is_passed": true, 
+      "created_at": 1339422360.218526, 
+      "is_abort": false, 
+      "is_success": true, 
+      "note": null, 
+      "testcase": {
+        "filename": "../testcases/reboot_completed.sh", 
+        "name": "reboot_completed.sh", 
+        "timeout": 120
+      }
+    }, 
+    {
+      "is_passed": true, 
+      "created_at": 1339422360.472076, 
+      "is_abort": false, 
+      "is_success": true, 
+      "note": null, 
+      "testcase": {
+        "filename": "../testcases/set_admin_password.sh", 
+        "name": "set_admin_password.sh"
+      }
+    }, 
+    {
+      "is_passed": false, 
+      "created_at": 1339422360.596281, 
+      "is_abort": false, 
+      "is_success": true, 
+      "note": null, 
+      "testcase": {
+        "expect_failure": true, 
+        "filename": "../testcases/selinux-denials.py", 
+        "name": "selinux-denials.py"
+      }
+    }
+  ], 
+  "runtime": 386.7092549800873, 
+  "state": "passed", 
+  "testsuite": {
+    "name": "example", 
+    "testsets": [
+      {
+        "name": "example", 
+        "testcases": [
+          {
+            "filename": "../testcases/installation_completed.sh", 
+            "name": "installation_completed.sh", 
+            "timeout": 600
+          }, 
+          {
+            "filename": "../testcases/helloworld.sh", 
+            "name": "helloworld.sh", 
+            "timeout": 10
+          }, 
+          {
+            "filename": "../testcases/initiate_reboot.sh", 
+            "name": "initiate_reboot.sh", 
+            "timeout": 10
+          }, 
+          {
+            "filename": "../testcases/reboot_completed.sh", 
+            "name": "reboot_completed.sh", 
+            "timeout": 120
+          }, 
+          {
+            "filename": "../testcases/set_admin_password.sh", 
+            "name": "set_admin_password.sh"
+          }
+        ]
+      }, 
+      {
+        "name": "selinux", 
+        "testcases": [
+          {
+            "expect_failure": true, 
+            "filename": "../testcases/selinux-denials.py", 
+            "name": "selinux-denials.py"
+          }
+        ]
+      }
+    ]
+  }, 
+  "timeout": 860
+}

@@ -58,7 +58,7 @@ def cmdline_to_dict(cmdline):
 
     Examples:
     >>> cmdline_to_dict("foo=bar")
-    { "foo": "bar" }
+    {'foo': 'bar'}
     """
     args = {}
     for arg in shlex.split(cmdline):
@@ -236,29 +236,35 @@ class State(object):
     def __ne__(self, other):
         return not (self == other)
 
-def dict2xml(d, rootname="items"):
+def obj2xml(root, obj):
     """Simple dict2xml mechanism
 
-    >>> a = {"a": "ah", "<b>": { "1": 1, "2": 2 } }
-    >>> print(etree.tostring(dict2xml(a, "root"), pretty_print=True))
-<root>
-  <item key="a">ah</item>
-  <item key="&lt;b&gt;">
-    <items>
-      <item key="1">1</item>
-      <item key="2">2</item>
-    </items>
-  </item>
-</root>
-
+    >>> a = {"abc": "ah", "b": { "one": 1, "two": "<2>" }, "c": [10,20,30]}
+    >>> root = obj2xml("root", a)
+    >>> print(etree.tostring(root, pretty_print=True)).strip()
+    <root>
+      <c>10</c>
+      <c>20</c>
+      <c>30</c>
+      <abc>ah</abc>
+      <b>
+        <two>&lt;2&gt;</two>
+        <one>1</one>
+      </b>
+    </root>
     """
-    root = etree.Element(rootname)
-    for k, v in d.items():
-        node = etree.Element("item")
-        node.attrib["key"] = str(k)
-        if type(v) == dict:
-            node.append(dict2xml(v))
-        else:
-            node.text = str(v)
-        root.append(node)
+    if type(root) == str:
+        root = etree.Element(root)
+    if type(obj) == list:
+        for v in obj:
+            root.append(obj2xml(root.tag, v))
+    elif type(obj) == dict:
+        for k, v in obj.items():
+            if type(v) == list:
+                items = obj2xml(k, v)
+                root.extend(items)
+            else:
+                root.append(obj2xml(k, v))
+    else:
+        root.text = str(obj)
     return root

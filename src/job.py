@@ -38,8 +38,8 @@ s_running = utils.State("running")
 s_aborted = utils.State("aborted")
 s_failed = utils.State("failed")
 s_timedout = utils.State("timedout")
-s_done = utils.State("done")
-endstates = [s_aborted, s_failed, s_timedout, s_done]
+s_passed = utils.State("passed")
+endstates = [s_aborted, s_failed, s_timedout, s_passed]
 
 
 _high_state_change_lock = threading.RLock()
@@ -71,6 +71,7 @@ class Job(object):
 
     _state = None
     _state_history = None
+    _created_at = None
     _ended = False
     _ended_at = None
 
@@ -99,6 +100,8 @@ class Job(object):
         self.state(s_open)
 
         self.watchdog = self.__init_watchdog()
+
+        self._created_at = time.time()
 
     def __init_watchdog(self):
         class JobTimeoutWatchdog(utils.PollingWorkerDaemon):
@@ -162,13 +165,13 @@ class Job(object):
             raise Exception("Expected a different step to finish.")
 
         current_testcase = self.testsuite.testcases()[n]
-        as_expected = not is_success == current_testcase.expect_failure
+        is_passed = not is_success == current_testcase.expect_failure
 
         self.results.append({
             "created_at": time.time(),
             "testcase": current_testcase,
             "is_success": is_success,
-            "as_expected": as_expected,
+            "is_passed": is_passed,
             "is_abort": is_abort,
             "note": note
             })
@@ -197,7 +200,7 @@ class Job(object):
                               "already in end state") % (self.cookie))
             else:
                 logger.debug("Finished job %s" % (self.cookie))
-                self.state(s_done)
+                self.state(s_passed)
             self.watchdog.stop()
 
         self.current_step += 1
@@ -284,7 +287,7 @@ class Job(object):
         """If the testsuite was completed and all results are as expected
         """
         m_val = self.completed_all_steps() and not self.has_failed()
-        e_val = self.state() == s_done
+        e_val = self.state() == s_passed
         assert(m_val == e_val)
         return m_val
 
@@ -297,7 +300,7 @@ class Job(object):
     def has_failed(self):
         """If the jobs test failed
         """
-        m_val = not all([r["as_expected"] for r in self.results])
+        m_val = not all([r["is_passed"] for r in self.results])
         e_val = self.state() == s_failed
         assert(m_val == e_val)
         return m_val
@@ -371,7 +374,8 @@ class Job(object):
             "current_step": self.current_step,
             "results": self.results,
             "timeout": self.timeout(),
-            "runtime": self.runtime()
+            "runtime": self.runtime(),
+            "created_at": self._created_at
             }
 
 
