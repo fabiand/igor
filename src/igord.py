@@ -16,6 +16,7 @@ from virt import *
 from cobbler import Cobbler
 from job import *
 import utils
+import reports
 
 from config import *
 
@@ -119,6 +120,14 @@ def job_status(cookie):
         bottle.abort(404, "Unknown job '%s'" % cookie)
     m = jc.jobs[cookie]
     return to_json(m)
+
+
+@bottle.route('/job/report/<cookie>')
+def job_report(cookie):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job '%s'" % cookie)
+    j = jc.jobs[cookie]
+    return reports.status_to_report(j.__to_dict__)
 
 
 @bottle.route('/job/step/<cookie>/<n:int>/<result:re:success|failed>')

@@ -23,11 +23,20 @@ import simplejson as json
 
 import utils
 
-def statusjson_to_report(txt):
-    return transform_status_json("data/tools/report.rst.xsl", txt)
-
-def transform_status_json(stylefile, txt):
+def status_to_report_json(txt):
+    """Apply the plaintext report transformation to a json obj (str)
+    """
     d = json.loads(txt)
+    return status_to_report(d)
+
+def status_to_report(d):
+    """Apply the plaintext report transformation to a dict
+    """
+    return transform_status("data/tools/report.rst.xsl", d)
+
+def transform_status(stylefile, d):
+    """Apply a transformation to a dict
+    """
     xml = utils.obj2xml("status", d)
     transform = etree.XSLT(etree.parse(stylefile))
     report = transform(xml)

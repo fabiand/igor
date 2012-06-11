@@ -46,7 +46,7 @@ def main():
 
     txt = fp.read()
 
-    print(reports.statusjson_to_report(txt))
+    print(reports.status_to_report_json(txt))
 
 def usage():
     print "Usage: %s <status.json-file>" % sys.argv[0]
