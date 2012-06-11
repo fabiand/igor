@@ -234,12 +234,14 @@ def get_testsuite_archive(name):
 if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
     logger.info("Enabling remote ISO management for cobbler")
 
-    @bottle.route('/extra/profile/add/<pname>/iso/<isoname>/remote')
-    def add_iso_profile_remote(pname, isoname):
+    @bottle.route('/extra/profile/add/<pname>/iso/<isopath:path>/remote')
+    def add_iso_profile_remote(pname, isopath):
         retval = 0
         with utils.TemporaryDirectory() as tmpdir:
+            isoname = os.path.basename(isopath)
+            isodirname = os.path.dirname(isopath)
             cmd = """
-    curl -v "{baseurl}/{isoname}" --output "{isoname}"
+    curl -v "{baseurl}/{isodirname}/{isoname}" --output "{isoname}"
     [[ -e "{isoname}" ]] || ( echo NO {isoname} ; exit 1; )
 
     export KOPTS="{kopts}" # To reduce the number of opts
@@ -253,6 +255,7 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
             baseurl=REMOTE_COBBLER_PROFILE_CREATION_BASE_URL, \
             sshuri=REMOTE_COBBLER_PROFILE_CREATION_SSH_URI, \
             profilename=pname, \
+            isodirname=isodirname,
             isoname=isoname,
             kopts=REMOTE_COBBLER_PROFILE_KOPTS)
             retval, stdout = run(cmd, with_retval=True)

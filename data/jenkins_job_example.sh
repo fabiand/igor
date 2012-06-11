@@ -8,6 +8,7 @@
 [[ -z $APIURL ]] && exit 1
 [[ -z $BASENAMEPREFIX ]] && exit 1
 [[ -z $ARTIFACTSARCHIVE ]] && exit 1
+[[ -z $JENKINS_PROJECT_NAME ]] && exit 1
 [[ -z $BUILD_TAG ]] && exit 1
 
 pyc() { python -c "$@" ; }
@@ -31,7 +32,7 @@ export BASENAME="${BASENAMEPREFIX}${BUILD_TAG}"       # profile and distro name 
 export PROFILENAME="$BASENAME-profile"
 
 highlight "Create cobbler distro and profile"
-bash ./igorclient.sh extra_profile_add "$BASENAME" "$ISONAME"
+bash ./igorclient.sh extra_profile_add "$BASENAME" "${JENKINS_PROJECT_NAME}/lastSuccessfulBuild/artifact/$ISONAME"
 
 highlight "Create igor job"
 bash ./igorclient.sh submit example "$PROFILENAME" ahost
