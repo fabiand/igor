@@ -1,5 +1,4 @@
 #!/bin/bash
 
-# Confirm that the installation has completed.
-
+# Confirm (by returning 0) that the installation has completed.
 exit 0

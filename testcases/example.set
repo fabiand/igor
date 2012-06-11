@@ -1,12 +1,14 @@
 # First token must be the filename of the script to be run, relative to this
 # file.
 # Additionally you can specify a timeout argument to specify a timeout in
-# seconds (default 60).
+# seconds (default 60). They are not env variables.
 #
 # Any line starting with a # and the rest of a line after a hash are treated
 # as a comments
 # Empty lines are ignored.
 
+
+# This must take the time for installation into account
 installation_completed.sh   timeout=600
 
 helloworld.sh               timeout=10
@@ -14,4 +16,4 @@ helloworld.sh               timeout=10
 initiate_reboot.sh          timeout=10
 reboot_completed.sh         timeout=120         # Rebooting takes a while
 
-set_admin_password.sh
+set_admin_password.sh                           # Default timeout will be used

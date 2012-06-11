@@ -1,8 +1,21 @@
 #!/bin/bash -e
 
-# Change into "our" directory tree
-cd ${0}.d
+#
+# An - yet incomplete - example of how to use uinput
+#
 
-python main.py
+main()
+{
+    # Change into "our" directory tree
+    cd "${0}.d"
 
-exit 0
+    # And run the python script
+    python main.py
+
+    return 0
+}
+
+
+main
+
+exit $?

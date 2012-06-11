@@ -1,10 +1,21 @@
 #!/bin/bash
 
-. /usr/libexec/ovirt-functions
-
+#
+# Set the admin password to PW
+#
 PW="ovirt"
 
-unmount_config /etc/passwd /etc/shadow
-echo -n $PW | passwd --stdin admin
 
-exit 0
+main ()
+{
+    . /usr/libexec/ovirt-functions
+
+    unmount_config /etc/passwd /etc/shadow
+    echo -n $PW | passwd --stdin admin
+
+    return 0
+}
+
+main
+
+exit $?
