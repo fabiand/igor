@@ -436,6 +436,8 @@ class JobCenter(object):
 
         logger.debug("Created job %s with cookie %s" % (repr(j), cookie))
 
+        logger.info("Job %s got submitted." % cookie)
+
         return {"cookie": cookie, "job": j}
 
     @utils.synchronized(_jobcenter_lock)
@@ -449,14 +451,19 @@ class JobCenter(object):
         if job.host in self._pool_of_hosts_in_use:
             raise Exception("The host is already in use: %s" % job.cookie)
         self._pool_of_hosts_in_use.add(job.host)
+
+        logger.info("Job %s is beeing started." % cookie)
         job.setup()
         job.start()
+        logger.info("Job %s got started." % cookie)
+
         return "Started job %s (%s)." % (cookie, repr(job))
 
     @utils.synchronized(_jobcenter_lock)
     def finish_test_step(self, cookie, step, is_success, note=None):
         j = self.jobs[cookie]
         j.finish_step(step, is_success, note)
+        logger.info("Job %s finished step %s" % (cookie, n))
         return j
 
     @utils.synchronized(_jobcenter_lock)
@@ -464,6 +471,7 @@ class JobCenter(object):
         logger.debug("Aborting %s" % cookie)
         j = self.jobs[cookie]
         j.abort()
+        logger.info("Job %s aborted." % (cookie, n))
         return j
 
     def _end_job(self, cookie):
@@ -475,6 +483,7 @@ class JobCenter(object):
         self.closed_jobs.append(job)
         #del self.jobs[job]
         # cant poll the status if we remove the job from jobs
+        logger.info("Job %s ended." % cookie)
         return "Ended job %s." % cookie
 
     class JobWorker(utils.PollingWorkerDaemon):
@@ -519,3 +528,4 @@ class JobCenter(object):
                     self._debug("Cleaning job %s" % cookie)
                     j.clean()
                     self.jc._queue_of_ended_jobs.remove(j)
+                    logger.info("Job %s cleaned." % cookie)
