@@ -49,8 +49,8 @@ bash ./igorclient.sh artifacts $ARTIFACTSARCHIVE
 bash ./igorclient.sh status
 
 bash ./igorclient.sh report | tee igor-report.rst
-[[ ! -z $REPORT_EMAIL_TO && ! -z $REPORT_EMAIL_FROM ]] || {
-    cat igor-report.rst | mail -s "[Igor Report ] Job $IGORCOOKIE: $LAST_STATE" -r $REPORTEMAIL_FROM $REPORT_EMAIL_TO
+[[ ! -z $REPORT_EMAIL_TO && ! -z $REPORT_EMAIL_FROM ]] && {
+    cat igor-report.rst | mail -s "[Igor Report ] Job $IGORCOOKIE: $LAST_STATE" -r "$REPORTEMAIL_FROM" "$REPORT_EMAIL_TO"
 }
 
 highlight "remove cobbler distro/profile"
