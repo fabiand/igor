@@ -404,6 +404,7 @@ class JobCenter(object):
     closed_jobs = []
 
     _queue_of_pending_jobs = []
+    _queue_of_ended_jobs = []
     _pool_of_hosts_in_use = set([])
 
     _cookie_lock = threading.Lock()
@@ -527,10 +528,14 @@ class JobCenter(object):
                     if not j._ended:
                         self._debug("Unwinding job %s" % cookie)
                         self.jc._end_job(j.cookie)
-                    else:
-                        if j.ended_within(self.removal_age):
-                            # not yet long enough ended
-                            pass
-                        else:
-                            self._debug("Cleaning job %s" % cookie)
-                            j.clean()
+                        self.jc._queue_of_ended_jobs.append(j)
+
+            # Look for jobs to remove
+            for j in self.jc._queue_of_ended_jobs:
+                if j.ended_within(self.removal_age):
+                    # not yet long enough ended
+                    pass
+                else:
+                    self._debug("Cleaning job %s" % cookie)
+                    j.clean()
+                    self.jc._queue_of_ended_jobs.remove(j)
