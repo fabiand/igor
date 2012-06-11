@@ -25,6 +25,7 @@ import re
 import tempfile
 import shlex
 import threading
+from lxml import etree
 
 logger = logging.getLogger(__name__)
 
@@ -234,3 +235,30 @@ class State(object):
 
     def __ne__(self, other):
         return not (self == other)
+
+def dict2xml(d, rootname="items"):
+    """Simple dict2xml mechanism
+
+    >>> a = {"a": "ah", "<b>": { "1": 1, "2": 2 } }
+    >>> print(etree.tostring(dict2xml(a, "root"), pretty_print=True))
+<root>
+  <item key="a">ah</item>
+  <item key="&lt;b&gt;">
+    <items>
+      <item key="1">1</item>
+      <item key="2">2</item>
+    </items>
+  </item>
+</root>
+
+    """
+    root = etree.Element(rootname)
+    for k, v in d.items():
+        node = etree.Element("item")
+        node.attrib["key"] = str(k)
+        if type(v) == dict:
+            node.append(dict2xml(v))
+        else:
+            node.text = str(v)
+        root.append(node)
+    return root

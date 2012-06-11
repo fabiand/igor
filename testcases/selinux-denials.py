@@ -23,6 +23,7 @@ def main():
   if len(denials) > 0:
     sys.stderr.write("The following comms lead to denials:\n - %s\n" % \
                                                           "\n - ".join(comms))
+    sys.stderr.write("Denials: \n" + "\n - ".join(denials))
     return 1
   return 0
 
