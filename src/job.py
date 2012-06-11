@@ -42,8 +42,8 @@ s_done = utils.State("done")
 endstates = [s_aborted, s_failed, s_timedout, s_done]
 
 
-_high_state_change_lock = threading.Lock()
-_state_change_lock = threading.Lock()
+_high_state_change_lock = threading.RLock()
+_state_change_lock = threading.RLock()
 _jobcenter_lock = threading.RLock()
 
 
@@ -103,7 +103,7 @@ class Job(object):
     def __init_watchdog(self):
         class JobWatchdog(threading.Thread):
             job = None
-            interval = 1
+            interval = 10
             _stop_event = None
 
             def __init__(self, job):

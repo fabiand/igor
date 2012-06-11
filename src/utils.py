@@ -153,10 +153,12 @@ def synchronized(lock):
     """ Synchronization decorator. """
     def wrap(f):
         def newFunction(*args, **kw):
+#            logger.debug("Acq %s, %s" % (f, lock))
             lock.acquire()
             try:
                 return f(*args, **kw)
             finally:
+#                logger.debug("Rel %s, %s" % (f, lock))
                 lock.release()
         return newFunction
     return wrap
@@ -179,7 +181,7 @@ class PollingWorkerDaemon(threading.Thread):
     interval = None
     _stop_event = None
 
-    def __init__(self, interval=1):
+    def __init__(self, interval=10):
         self.interval = interval
         self._stop_event = threading.Event()
         threading.Thread.__init__(self)
