@@ -32,7 +32,7 @@ def status_to_report_json(txt):
 def status_to_report(d):
     """Apply the plaintext report transformation to a dict
     """
-    return transform_status("data/tools/report.rst.xsl", d)
+    return transform_status("../data/tools/report.rst.xsl", d)
 
 def transform_status(stylefile, d):
     """Apply a transformation to a dict
