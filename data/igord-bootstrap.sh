@@ -60,7 +60,7 @@ step_succeeded()
 
 step_failed()
 {
-  api_call job/step/$SESSION/$CURRENT_STEP/success
+  api_call job/step/$SESSION/$CURRENT_STEP/failed
 }
 
 main()

@@ -10,6 +10,8 @@
 [[ -z $ARTIFACTSARCHIVE ]] && exit 1
 [[ -z $JENKINS_PROJECT_NAME ]] && exit 1
 [[ -z $BUILD_TAG ]] && exit 1
+# $REPORT_EMAIL_TO
+# $REPORT_EMAIL_FROM
 
 pyc() { python -c "$@" ; }
 drawline() { pyc "print('$2' * $1);" ; }

@@ -194,13 +194,11 @@ class Job(object):
             self.watchdog.stop()
             self.state(s_failed)
 
-        if self.completed_all_steps():
-            if self.state() in endstates:
-                logger.debug(("Finished job %s but no change because " + \
-                              "already in end state") % (self.cookie))
-            else:
-                logger.debug("Finished job %s" % (self.cookie))
-                self.state(s_passed)
+        if self.has_passed():
+            self.state(s_passed)
+
+        if self.state() in endstates:
+            logger.debug("Finished job %s: %s" % (self.cookie, self.state()))
             self.watchdog.stop()
 
         self.current_step += 1
@@ -264,8 +262,8 @@ class Job(object):
 
     def result(self):
         msg = None
-        if self.has_succeeded():
-            msg = "success"
+        if self.has_passed():
+            msg = "passed"
         elif self.has_failed():
             msg = "failed"
         elif self.is_aborted():
@@ -283,12 +281,10 @@ class Job(object):
     def testcases(self):
         return self.testsuite.testcases()
 
-    def has_succeeded(self):
+    def has_passed(self):
         """If the testsuite was completed and all results are as expected
         """
         m_val = self.completed_all_steps() and not self.has_failed()
-        e_val = self.state() == s_passed
-        assert(m_val == e_val)
         return m_val
 
     def completed_all_steps(self):

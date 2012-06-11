@@ -35,7 +35,7 @@ Testcase Results
 ---------------------------------------------------------------
 <xsl:for-each select="//results">
 <xsl:variable name="created_at_h" select="date:add('1970-01-01T00:00:00Z', date:duration(created_at/text()))"/>
-#. <xsl:value-of select="$created_at_h"/> / <xsl:value-of select="testcase/name/text()"/>: <xsl:value-of select="is_success/text()"/>
+#. <xsl:value-of select="$created_at_h"/> / <xsl:value-of select="testcase/name/text()"/>: <xsl:value-of select="is_passed/text()"/>
 </xsl:for-each>
 
 
