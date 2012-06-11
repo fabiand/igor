@@ -108,13 +108,13 @@ class Job(object):
                 self.job = job
                 utils.PollingWorkerDaemon.__init__(self)
 
-                def work(self):
-                    if self.job.is_timedout():
-                        with _high_state_change_lock:
-                            logger.debug("Watchdog for job %s: timed out." % \
-                                                               self.job.cookie)
-                            self.job.state(s_timedout)
-                        self.stop()
+            def work(self):
+                if self.job.is_timedout():
+                    with _high_state_change_lock:
+                        logger.debug("Watchdog for job %s: timed out." % \
+                                                           self.job.cookie)
+                        self.job.state(s_timedout)
+                    self.stop()
 
         watchdog = JobTimeoutWatchdog(self)
         watchdog.start()
