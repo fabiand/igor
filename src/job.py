@@ -495,7 +495,6 @@ class JobCenter(object):
             self.removal_age = removal_age
             utils.PollingWorkerDaemon.__init__(self)
 
-        @utils.synchronized(_jobcenter_lock)
         def work(self):
             if len(self.jc._queue_of_pending_jobs) == 0:
                 # No item
