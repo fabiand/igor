@@ -468,7 +468,7 @@ class JobCenter(object):
     def finish_test_step(self, cookie, step, is_success, note=None):
         j = self.jobs[cookie]
         j.finish_step(step, is_success, note)
-        logger.info("Job %s finished step %s" % (cookie, n))
+        logger.info("Job %s finished step %s" % (cookie, step))
         return j
 
     @utils.synchronized(_jobcenter_lock)
