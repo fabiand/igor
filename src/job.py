@@ -375,7 +375,8 @@ class Job(object):
             "results": self.results,
             "timeout": self.timeout(),
             "runtime": self.runtime(),
-            "created_at": self._created_at
+            "created_at": self._created_at,
+            "artifacts": self._artifacts
             }
 
 

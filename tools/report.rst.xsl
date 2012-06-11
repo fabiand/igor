@@ -30,11 +30,23 @@ Summary
 - Host: <xsl:value-of select="/status/host/text()"/>
 - ID: <xsl:value-of select="/status/id/text()"/>
 
+
 Testcase Results
 ---------------------------------------------------------------
 <xsl:for-each select="//results">
 <xsl:variable name="created_at_h" select="date:add('1970-01-01T00:00:00Z', date:duration(created_at/text()))"/>
 #. <xsl:value-of select="$created_at_h"/> / <xsl:value-of select="testcase/name/text()"/>: <xsl:value-of select="is_success/text()"/>
+</xsl:for-each>
+
+
+Artifacts
+---------------------------------------------------------------
+Created artifacts:
+<xsl:if test="count(//artifacts) = 0">
+(None)
+</xsl:if>
+<xsl:for-each select="//artifacts">
+- <xsl:value-of select="text()"/>
 </xsl:for-each>
 
 
