@@ -18,42 +18,17 @@
 #
 # -*- coding: utf-8 -*-
 
-import sys
-import os.path
 from lxml import etree
 import simplejson as json
 
-import reports
+import utils
 
-def xs(xml):
-    return etree.tostring(xml, pretty_print=True)
+def statusjson_to_report(txt):
+    return transform_status_json("data/tools/report.rst.xsl", txt)
 
-def main():
-    if len(sys.argv) < 2:
-        raise Exception("No status file given.")
-
-    filename = sys.argv[1]
-    fp = None
-
-    if filename == "-":
-        fp = sys.stdin
-
-    elif os.path.exists(filename):
-        fp = open(filename)
-
-    else:
-        raise Exception("Status file does not exist.")
-
-    txt = fp.read()
-
-    print(reports.statusjson_to_report(txt))
-
-def usage():
-    print "Usage: %s <status.json-file>" % sys.argv[0]
-
-if __name__ == '__main__':
-    try:
-        main()
-    except Exception as e:
-        sys.stderr.write("ERROR: %s\n" % e.message)
-        usage()
+def transform_status_json(stylefile, txt):
+    d = json.loads(txt)
+    xml = utils.obj2xml("status", d)
+    transform = etree.XSLT(etree.parse(stylefile))
+    report = transform(xml)
+    return report
