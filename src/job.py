@@ -101,42 +101,22 @@ class Job(object):
         self.watchdog = self.__init_watchdog()
 
     def __init_watchdog(self):
-        class JobWatchdog(threading.Thread):
+        class JobTimeoutWatchdog(utils.PollingWorkerDaemon):
             job = None
-            interval = 10
-            _stop_event = None
 
             def __init__(self, job):
                 self.job = job
-                self._stop_event = threading.Event()
-                threading.Thread.__init__(self)
-                self.daemon = True
+                utils.PollingWorkerDaemon.__init__(self)
 
-            def run(self):
-                logger.debug("Starting watchdog for job %s" % self.job.cookie)
-                keep_running = True
-                while keep_running:
+                def work(self):
                     if self.job.is_timedout():
                         with _high_state_change_lock:
                             logger.debug("Watchdog for job %s: timed out." % \
                                                                self.job.cookie)
                             self.job.state(s_timedout)
-                        keep_running = False
-                    elif self.is_stopped():
-                        logger.debug("Watchdog for job %s: stopped." % \
-                                                           self.job.cookie)
-                        keep_running = False
-                    self._stop_event.wait(self.interval)
-                logger.debug("Ending watchdog for job %s" % self.job.cookie)
+                        self.stop()
 
-            def stop(self):
-                logger.debug("Requesting watchdog stop")
-                self._stop_event.set()
-
-            def is_stopped(self):
-                return self._stop_event.is_set()
-
-        watchdog = JobWatchdog(self)
+        watchdog = JobTimeoutWatchdog(self)
         watchdog.start()
         return watchdog
 
