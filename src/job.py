@@ -169,7 +169,7 @@ class Job(object):
 
         self.results.append({
             "created_at": time.time(),
-            "testcase": current_testcase,
+            "testcase": current_testcase.__to_dict__(),
             "is_success": is_success,
             "is_passed": is_passed,
             "is_abort": is_abort,
