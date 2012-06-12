@@ -90,12 +90,14 @@ class Cobbler(object):
                 #                      self.token)
 
         def revoke_from(self, host):
+            logger.debug("Revoking host '%s' from cobbler " % self.name)
             with self.cobbler_session_cb() as session:
-                if host.get_name() not in session.systems():
+                if host.get_name() in session.systems():
+                    session.remove_system(host.get_name())
+                else:
                     # Can happen if corresponding distro or profile was deleted
                     logger.info(("Unknown '%s' host when trying to revoke " + \
                                  "igor profile.") % self.name)
-                session.remove_system(host.get_name())
 
     class Session:
         """Helper to login and sync
