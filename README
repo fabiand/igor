@@ -28,7 +28,7 @@ using Fedora 16 and libvirt
 ===========================
 Ensure to install some common components:
 $ sudo yum -y groupinstall virtualization
-$ sudo yum -y install python-bottle libvirt-python python-lxml
+$ sudo yum -y install python-bottle libvirt-python python-lxml parted lvm2
 
 Now run igord:
 $ cd src
