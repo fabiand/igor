@@ -55,11 +55,14 @@ bash ./igorclient.sh report | tee igor-report.rst
 highlight "remove cobbler distro/profile"
 bash ./igorclient.sh extra_profile_remove "$BASENAME"
 
-[[ "x$LAST_STATE" == "xpassed" ]] && {
-    [[ ! -z $REPORT_EMAIL_TO && ! -z $REPORT_EMAIL_FROM ]] && {
-       mail -s "[Igor Report ] Job $IGORCOOKIE: $LAST_STATE" -r "$REPORT_EMAIL_FROM" -a $ARTIFACTSARCHIVE "$REPORT_EMAIL_TO" < igor-report.rst
-    }
-    exit 0
-}
+# Passed? The exit.
+[[ "x$LAST_STATE" == "xpassed" ]] && exit 0
 
+# Not passed. Send a mail.
+[[ ! -z $REPORT_EMAIL_TO && ! -z $REPORT_EMAIL_FROM ]] && {
+    mail -s "[Igor Report ] Job $IGORCOOKIE: $LAST_STATE" \
+         -r "$REPORT_EMAIL_FROM" \
+         -a $ARTIFACTSARCHIVE \
+         "$REPORT_EMAIL_TO" < igor-report.rst
+}
 exit 1
