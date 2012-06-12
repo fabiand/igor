@@ -156,6 +156,7 @@ class Factory:
 
         >>> suites = Factory.testsuites_from_path("../testcases/")
         """
+        assert os.path.exists(path), "Testsuites path does not exist: %s" % path
         suites = {}
         pat = os.path.join(path, "*%s" % suffix)
         logger.debug("Trying to load from %s" % pat)

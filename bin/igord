@@ -18,7 +18,7 @@ from igor.job import *
 import igor.utils as utils
 import igor.reports as reports
 
-from config import *
+import igor.config as config
 
 #logging.config.fileConfig("logconf.ini")
 logging.basicConfig( \
@@ -26,23 +26,25 @@ logging.basicConfig( \
     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+CONFIG = config.parse_config()
+
 IGORDDIR = sys.path[0]
 IGORD_DATA_DIR = os.path.join(IGORDDIR, "..", "data")
 
-jc = JobCenter(session_path=SESSION_PATH)
-cobbler = Cobbler(COBBLER_URL, COBBLER_CREDENTIALS)
+jc = JobCenter(session_path=CONFIG["session.path"])
+cobbler = Cobbler(CONFIG["cobbler.url"], (CONFIG["cobbler.username"], CONFIG["cobbler.password"]))
 
 
 def load_testsuites():
-    return Factory.testsuites_from_path(TESTCASES_PATH)
+    return Factory.testsuites_from_path(CONFIG["testcases.path"])
 
 
 def create_cobbler_profile(pname):
     """This is actually creating a cobbler system, in cobbler terms
     """
     return cobbler.new_profile(pname, {
-      "kernel_options": " ".join([COBBLER_KARGS, COBBLER_KARGS_INSTALL]),
-      "kernel_options_post": COBBLER_KARGS,
+      "kernel_options": " ".join([CONFIG["cobbler.kargs"], CONFIG["cobbler.kargs_install"]]),
+      "kernel_options_post": CONFIG["cobbler.kargs"],
       })
 
 
@@ -78,9 +80,9 @@ def _req_cookie():
 @bottle.route('/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>')
 def submit_testsuite(testsuite, profile, host, cookiereq=None):
     host = VMHostFactory.create_default_host( \
-        connection_uri=LIBVIRT_CONNECTION_URI, \
-        storage_pool=LIBVIRT_STORAGE_POOL,
-        network_configuration=LIBVIRT_NETWORK_CONFIGURATION)
+        connection_uri=CONFIG["libvirtd.connection_uri"], \
+        storage_pool=CONFIG["libvirtd.virt-install.storage_pool"],
+        network_configuration=CONFIG["libvirtd.virt-install.network_configuration"])
     logger.warning("We are currently using a default host")
 
     testsuites = load_testsuites()
@@ -240,7 +242,7 @@ def get_testsuite_archive(name):
     return r.getvalue()
 
 
-if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
+if utils.parse_bool(CONFIG["cobbler.jenkins_injection.enable"]):
     logger.info("Enabling remote ISO management for cobbler")
 
     @bottle.route('/extra/profile/add/<pname>/iso/<isopath:path>/remote')
@@ -261,12 +263,12 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
     """.format( \
             igorddir=sys.path[0], \
             tmpdir=tmpdir, \
-            baseurl=REMOTE_COBBLER_PROFILE_CREATION_BASE_URL, \
-            sshuri=REMOTE_COBBLER_PROFILE_CREATION_SSH_URI, \
+            baseurl=CONFIG["cobbler.jenkins_injection.jenkins_job_url"], \
+            sshuri=CONFIG["cobbler.jenkins_injection.remote_cobbler_ssh_uri"], \
             profilename=pname, \
             isodirname=isodirname,
             isoname=isoname,
-            kopts=REMOTE_COBBLER_PROFILE_KOPTS)
+            kopts=CONFIG["cobbler.jenkins_injection.remote_cobbler_kopts"])
             retval, stdout = run(cmd, with_retval=True)
         return to_json((retval, stdout))
 
@@ -280,7 +282,7 @@ if REMOTE_COBBLER_PROFILE_CREATION_ENABLED:
     """.format( \
             igorddir=IGORDDIR, \
             tmpdir=tmpdir, \
-            sshuri=REMOTE_COBBLER_PROFILE_CREATION_SSH_URI, \
+            sshuri=CONFIG["cobbler.jenkins_injection.remote_cobbler_ssh_uri"], \
             profilename=pname)
             retval, stdout = run(cmd, with_retval=True)
         return to_json((retval, stdout))

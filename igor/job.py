@@ -22,7 +22,7 @@ import logging
 import threading
 import time
 import zlib
-import pickle
+import os
 
 import testing
 import virt
@@ -394,6 +394,9 @@ class JobCenter(object):
 
     def __init__(self, session_path):
         self.session_path = session_path
+        assert os.path.exists(self.session_path), \
+               "Session path does not exist: %s" % session_path
+
         logger.debug("JobCenter opened in %s" % self.session_path)
 
         self._worker = JobCenter.JobWorker(jc=self, removal_age=5 * 60)
