@@ -1,0 +1,8 @@
+[Unit]
+Description=igor daemon for automated testing
+
+[Service]
+ExecStart=/usr/bin/igord
+
+[Install]
+WantedBy=default.target

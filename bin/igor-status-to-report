@@ -1,3 +1,4 @@
+#!/bin/env python
 #
 # Copyright (C) 2012  Red Hat, Inc.
 #
@@ -23,7 +24,7 @@ import os.path
 from lxml import etree
 import simplejson as json
 
-import reports
+import igor.reports as reports
 
 def xs(xml):
     return etree.tostring(xml, pretty_print=True)

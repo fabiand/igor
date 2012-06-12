@@ -11,12 +11,12 @@ import re
 import bottle
 from string import Template
 
-from testing import *
-from virt import *
-from cobbler import Cobbler
-from job import *
-import utils
-import reports
+from igor.testing import *
+from igor.virt import *
+from igor.cobbler import Cobbler
+from igor.job import *
+import igor.utils as utils
+import igor.reports as reports
 
 from config import *
 
