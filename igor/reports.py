@@ -24,10 +24,12 @@ from lxml import etree
 
 import utils
 
+
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 TRANSFORM_MAP = {
-    "rst": os.path.join(BASE_PATH, "data" , "report.rst.xsl")
+    "rst": os.path.join(BASE_PATH, "data", "report.rst.xsl")
 }
+
 
 def status_to_report_json(txt):
     """Apply the plaintext report transformation to a json obj (str)
@@ -35,11 +37,13 @@ def status_to_report_json(txt):
     d = json.loads(txt)
     return status_to_report(d)
 
+
 def status_to_report(d, t="rst"):
     """Apply the plaintext report transformation to a dict
     """
     assert t in TRANSFORM_MAP, "Unknown transformation: %s" % t
     return transform_status(TRANSFORM_MAP[t], d)
+
 
 def transform_status(stylefile, d):
     """Apply a transformation to a dict

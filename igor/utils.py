@@ -236,6 +236,7 @@ class State(object):
     def __ne__(self, other):
         return not (self == other)
 
+
 def obj2xml(root, obj):
     """Simple dict2xml mechanism
 

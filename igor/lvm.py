@@ -193,7 +193,10 @@ class Losetup:
 
     def __enter__(self):
         logger.debug("Setting up: %s" % self.image)
-        self.device = run("losetup -v -f '%s' | egrep -o 'is /dev/loop[0-9]+'" % self.image).split(" ")[1]
+        devices = run(("losetup -v -f '%s'" + \
+                       " | egrep -o 'is /dev/loop[0-9]+'") % \
+                       self.image).split(" ")
+        self.device = devices[1]
         logger.debug("losetup: %s on %s" % (self.image, self.device))
         return self
 

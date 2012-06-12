@@ -396,7 +396,7 @@ class JobCenter(object):
         self.session_path = session_path
         logger.debug("JobCenter opened in %s" % self.session_path)
 
-        self._worker = JobCenter.JobWorker(jc=self, removal_age=5*60)
+        self._worker = JobCenter.JobWorker(jc=self, removal_age=5 * 60)
         self._worker.start()
 
     def __del__(self):
@@ -445,7 +445,7 @@ class JobCenter(object):
     def start_job(self, cookie):
         self._queue_of_pending_jobs.append(cookie)
         return "Started job %s. %d in queue" % (cookie, \
-                                                     len(self._queue_of_pending_jobs))
+                                              len(self._queue_of_pending_jobs))
 
     def _start_job(self, cookie):
         job = self.jobs[cookie]
@@ -505,7 +505,8 @@ class JobCenter(object):
                 for cookie in self.jc._queue_of_pending_jobs:
                     candidate = self.jc.jobs[cookie]
                     if candidate.host in self.jc._pool_of_hosts_in_use:
-                        self._debug("Host of candidate %s is still in use" % cookie)
+                        self._debug("Host of candidate %s is still in use" % \
+                                    cookie)
                     else:
                         self._debug("Starting job %s" % cookie)
                         self.jc._start_job(cookie)
