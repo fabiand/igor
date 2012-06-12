@@ -269,3 +269,73 @@ def obj2xml(root, obj):
     else:
         root.text = str(obj)
     return root
+
+
+class Factory(object):
+    """A factory to build testing objects from different structures.
+    The current default structure is a file/-system based approach.
+    Files provide enough informations to build testsuites.
+    """
+
+    @staticmethod
+    def _from_file(filename, per_line_cb):
+        """Reads a file and calls a callback per line.
+        This provides some functionality like ignoring comments and blank
+        lines.
+
+        per_line_cb is expected to be a callback called for each line.
+        Alternatively this can also be a map of {selector: cb}, where the selector
+        is determind by the pattern "^([^:]+):" on each line, e.g.:
+            lib:common      # Selector: lib   >>   lib cb choosen
+            tc.should       # No selector     >>   default cb choosen
+        """
+        fdir = os.path.dirname(filename)
+        objs = []
+        with open(filename, "r") as f:
+            for line in f:
+                line = re.sub("\s*#.*$", "", line).strip()
+                if line == "":
+                    continue
+                cb, line = Factory._selector_based_cb_from_line(line, per_line_cb)
+                obj = cb(os.path.join(fdir, line))
+                if obj:
+                    objs.append(obj)
+        return objs
+
+    @staticmethod
+    def _selector_based_cb_from_line(line, cbmap):
+        """Parse a selector from a string.
+        If cbmap is a map, then the None entry is taken as the default selector
+
+        Example:
+        >>> def rcb(txt, cbm):
+        ...     cb, ntxt = Factory._selector_based_cb_from_line(txt, cbm)
+        ...     return cb(ntxt)
+        >>> rcb("common", lambda x: x)
+        'common'
+
+        >>> cbmap = {}
+        >>> cbmap[None] = lambda x: ("default", x)
+        >>> cbmap["lib"] = lambda x: ("lib", x)
+
+        >>> rcb("lib:common", cbmap)
+        ('lib', 'common')
+
+        >>> rcb("tc", cbmap)
+        ('default', 'tc')
+        """
+        cb = None
+        if callable(cbmap):
+            cb = cbmap
+        elif type(cbmap) is dict:
+            selector_pat = re.compile("^([^:]+):")
+            sel = None
+            if selector_pat.match(line):
+                sel = selector_pat.match(line).groups()[0]
+                line = selector_pat.sub("", line)
+            if sel not in cbmap:
+                raise Exception("Unknown selector '%s'" % sel)
+            cb = cbmap[sel]
+        else:
+            raise Exception("Not mapable: %s (%s)" % (cbmap, type(cbmap)))
+        return (cb, line)
