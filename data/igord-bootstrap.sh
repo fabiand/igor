@@ -97,7 +97,7 @@ main()
       RETVAL=$?
     } &> /tmp/testcase.log
 
-    add_artifact "testcase.log" "/tmp/testcase.log"
+    add_artifact "${TESTCASE#*-}.log" "/tmp/testcase.log"
 
     if [[ $RETVAL = 0 ]];
     then
