@@ -6,10 +6,9 @@ setup(
     author='Fabian Deutsch',
     author_email='fabiand@fedoraproject.org',
     packages=['igor', 'igor.test'],
-    scripts=['bin/igord','bin/status2report.py'],
+    scripts=['bin/igord', 'bin/igor-status-to-report'],
     url='http://www.gitorious.org/ovirt/igord',
     license='LGPLv2.1',
     description='Testing a Linux distribution',
     long_description=open('README.txt').read(),
 )
-
