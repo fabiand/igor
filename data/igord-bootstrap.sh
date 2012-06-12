@@ -73,6 +73,7 @@ main()
   debug "Running testcases"
   cd testcases
 
+  typeset -fx debug
   typeset -fx api_url api_call add_artifact
   typeset -fx step_succeeded step_failed
   export SESSION CURRENT_STEP TESTSUITE
@@ -90,9 +91,13 @@ main()
     }
     debug "Running testcase $TESTCASE"
 
-    chmod a+x $TESTCASE
-    ./$TESTCASE
-    RETVAL=$?
+    {
+      chmod a+x $TESTCASE
+      ./$TESTCASE
+      RETVAL=$?
+    } &> /tmp/testcase.log
+
+    add_artifact "testcase.log" "/tmp/testcase.log"
 
     if [[ $RETVAL = 0 ]];
     then
