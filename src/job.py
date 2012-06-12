@@ -396,7 +396,7 @@ class JobCenter(object):
         self.session_path = session_path
         logger.debug("JobCenter opened in %s" % self.session_path)
 
-        self._worker = JobCenter.JobWorker(jc=self, removal_age=10*60)
+        self._worker = JobCenter.JobWorker(jc=self, removal_age=5*60)
         self._worker.start()
 
     def __del__(self):
