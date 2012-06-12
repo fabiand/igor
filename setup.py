@@ -1,4 +1,18 @@
 from distutils.core import setup
+import os
+import re
+
+def build_testcases_filelist(dst, path):
+    xpat = re.compile("~$")
+    lst = []
+    for root, dirs, files in os.walk(path):
+        lf = []
+        for f in files:
+            if xpat.search(f):
+                continue
+            lf.append(os.path.join(root, f))
+        lst.append((os.path.join(dst, root), lf))
+    return lst
 
 setup(
     name='igor',
@@ -11,7 +25,7 @@ setup(
     data_files=[('/lib/systemd/system', ['igord.service']),
                 ('/etc/igord', ['igord.cfg.example']),
                 ('/srv/igord', []),
-                ('/usr/lib/igord/testcases', [])],
+                ('/usr/lib/igord/testcases', [])], # FIXME testcases are missing
     url='http://www.gitorious.org/ovirt/igord',
     license='LGPLv2.1',
     description='Testing a Linux distribution',
