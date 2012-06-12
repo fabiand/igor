@@ -1,5 +1,8 @@
 *.pyc
 *.pyo
 *~
-src/config.py
-src/igord.log
+igor/config.py
+igor/igord.log
+build/
+dist/
+MANIFEST

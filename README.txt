@@ -1,4 +1,13 @@
 
+====
+Igor
+====
+
+Igor is a small daemon to continous automated testing of pxe based linux
+distributions with cobbler, libvirt and real hardware.
+Intended to be combined with jenkins.
+
+
 Ingredients
 ===========
 - Working cobbler environment
@@ -26,14 +35,16 @@ Pitfalls & Requirements
 Getting started
 using Fedora 16 and libvirt
 ===========================
-Ensure to install some common components:
-$ sudo yum -y groupinstall virtualization
-$ sudo yum -y install python-bottle libvirt-python python-lxml parted lvm2
+Ensure to install some common components::
 
-Now run igord:
-$ cd src
-$ edit config.py
-$ sudo python igord.py
+    $ sudo yum -y groupinstall virtualization
+    $ sudo yum -y install python-bottle libvirt-python python-lxml parted lvm2
+
+Now run igord::
+
+    $ cd src
+    $ edit config.py
+    $ sudo python igord.py
 
 Firewall and Cobbler API
 ------------------------
@@ -47,15 +58,16 @@ $ ssh $COBBLERSERVER -L25151:127.0.0.1:25151
 Simple client
 -------------
 If the daemon is running you can use a small tool which can be found in data/ 
-to submit new jobs:
-$ ./igorclient.sh help
-$ ./igorclient.sh submit a_testsuite a_profile some_host    # Aquires a cookie, wihch is used in subsequent calls until "uncookie"
-$ ./igorclient.sh cookie    # Show the cookie
-$ ./igorclient.sh status    # Show the job status(open)
-$ ./igorclient.sh start     # Start the job
-$ ./igorclient.sh status    # Show the job status (running)
-$ ./igorclient.sh abort     # Eventually
-$ ./igorclient.sh uncookie  # To remove the cookie aquired with "submit"
+to submit new jobs::
+
+    $ ./igorclient.sh help
+    $ ./igorclient.sh submit a_testsuite a_profile some_host    # Aquires a cookie, wihch is used in subsequent calls until "uncookie"
+    $ ./igorclient.sh cookie    # Show the cookie
+    $ ./igorclient.sh status    # Show the job status(open)
+    $ ./igorclient.sh start     # Start the job
+    $ ./igorclient.sh status    # Show the job status (running)
+    $ ./igorclient.sh abort     # Eventually
+    $ ./igorclient.sh uncookie  # To remove the cookie aquired with "submit"
 
 
                                 ~ To be continued ~
