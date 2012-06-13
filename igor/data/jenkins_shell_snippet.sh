@@ -17,7 +17,7 @@ export BUILD_TAG
 JJOB="jenkins_job.sh"
 
 # Get the fully-fledged Jenkins script
-wget "${APIURL}static/data/jenkins_job_example.sh" -O $JJOB
+curl --silent "${APIURL}static/data/jenkins_job_example.sh" -o $JJOB
 
 # If it exists, run it
 [[ -e $JJOB ]]
