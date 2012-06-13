@@ -1,7 +1,6 @@
 *.pyc
 *.pyo
 *~
-igor/config.py
 igor/igord.log
 build/
 dist/
