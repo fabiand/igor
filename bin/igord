@@ -170,7 +170,8 @@ def add_artifact(cookie, name):
     if "/" in name:
         bottle.abort(412, "Name may not contain slashes")
     j = jc.jobs[cookie]
-    j.add_artifact(name, bottle.request.body.read())
+    data = bottle.request.body.read()
+    j.add_artifact(name, data)
 
 
 @bottle.route('/job/artifact/from/<cookie>')
