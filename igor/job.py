@@ -476,7 +476,7 @@ class JobCenter(object):
         logger.debug("Aborting %s" % cookie)
         j = self.jobs[cookie]
         j.abort()
-        logger.info("Job %s aborted." % (cookie, n))
+        logger.info("Job %s aborted." % (cookie))
         return j
 
     def _end_job(self, cookie):
