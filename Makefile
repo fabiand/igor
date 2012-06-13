@@ -12,6 +12,8 @@ rpm: build
 dist: build
 	python setup.py sdist
 
+clean:
+	rm -rvf dist build
 
 install: rpm
 	yum -y localinstall dist/igor-*.noarch.rpm
