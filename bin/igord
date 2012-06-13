@@ -248,16 +248,15 @@ if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
         retval = 0
         with utils.TemporaryDirectory() as tmpdir:
             logger.debug("Writing iso file.")
-            with open(isoname, "wb") as isofile:
+            with open(os.path.join(tmpdir, isoname), "wb") as isofile:
                 isofile.write(bottle.request.body.read())
             logger.debug("Done writing iso file.")
             cmd = """
+    cd {tmpdir}
     [[ -e "{isoname}" ]] || ( echo NO {isoname} ; exit 1; )
-
-    checkisomd5 "{isoname}"
-
+    ls -lah
     export KOPTS="{kopts}" # To reduce the number of opts
-    bash "{config_datadir}/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}"
+    bash "{config_datadir}/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}" >&2
     RETVAL=$?
     rm -f "{isoname}"
     exit $RETVAL
@@ -276,6 +275,7 @@ if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
         retval = 0
         with utils.TemporaryDirectory() as tmpdir:
             cmd = """
+    cd {tmpdir}
     bash "{config_datadir}/cobbler_iso_tool.sh" remote_remove "{sshuri}" "{profilename}"
     exit 0
     """.format( \

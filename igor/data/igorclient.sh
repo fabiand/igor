@@ -130,7 +130,7 @@ extra_profile_add() # Add a profile to a remote cobbler server, EXTRA
   [[ -z $ISONAME ]] && die "ISO name is mandatory."
   [[ ! -e $ISONAME ]] && die "ISO does not exist."
   URL=$(_api_url extra/profile/add/$PNAME/iso/$ISONAME/remote)
-  curl --silent --request PUT --upload-file - "$URL" <"$ISONAME"
+  curl --silent --request PUT --upload-file "$ISONAME" "$URL"
 }
 extra_profile_remove() # Remove a profile from a remote cobbler server, EXTRA
 {

@@ -29,7 +29,7 @@ highlight "Using ISO '$ISONAME'"
 [[ -e $ISONAME ]]
 
 highlight "Fetching igor client from server"
-curl -v "${IGORCLIENTURL}" --output "igorclient.sh"
+curl "${IGORCLIENTURL}" --output "igorclient.sh"
 [[ -e igorclient.sh ]]
 
 export BASENAME="${BASENAMEPREFIX}${BUILD_TAG}"       # profile and distro name later are derived from this BASENAME
