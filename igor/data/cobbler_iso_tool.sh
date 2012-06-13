@@ -133,7 +133,7 @@ pre_remote()
   ssh $DSTHOST "[[ -e $RTMPDIR ]] && exit 1 ; mkdir $RTMPDIR" || die "Something wrong with remote dir."
 
   debug "Copying this script"
-  scp $0 $DSTHOST:$RTMPDIR/
+  scp -C $0 $DSTHOST:$RTMPDIR/
 }
 post_remote()
 {
