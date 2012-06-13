@@ -20,7 +20,7 @@ setup(
     author='Fabian Deutsch',
     author_email='fabiand@fedoraproject.org',
     packages=['igor', 'igor.test'],
-    package_data={'igor': ['data/*.xsl']},
+    package_data={'igor': ['data/*.xsl', 'data/*.sh']},
     scripts=['bin/igord', 'bin/igor-status-to-report'],
     data_files=[('/lib/systemd/system', ['data/igord.service']),
                 ('/etc/igord', ['data/igord.cfg.example']),
