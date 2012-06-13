@@ -28,8 +28,7 @@ logger = logging.getLogger(__name__)
 
 CONFIG = config.parse_config()
 
-IGORDDIR = sys.path[0]
-IGORD_DATA_DIR = os.path.join(IGORDDIR, "..", "data")
+IGORDDIR = os.path.dirname(__file__)
 
 jc = JobCenter(session_path=CONFIG["session.path"])
 cobbler = Cobbler(CONFIG["cobbler.url"], (CONFIG["cobbler.username"], CONFIG["cobbler.password"]))
@@ -211,7 +210,7 @@ def get_bootstrap_script(cookie):
 
     script = None
 
-    with open(os.path.join(IGORD_DATA_DIR, "igord-bootstrap.sh"), "r") as f:
+    with open(os.path.join(config.DATA_DIR, "client-bootstrap.sh"), "r") as f:
         script = f.read()
 
     r = Template(script).safe_substitute(
@@ -228,7 +227,7 @@ def get_bootstrap_script(cookie):
 
 @bottle.route('/static/data/<filename>')
 def static_data(filename):
-    return bottle.static_file(filename, root=IGORD_DATA_DIR)
+    return bottle.static_file(filename, root=config.DATA_DIR)
 
 
 @bottle.route('/testsuite/<name>')

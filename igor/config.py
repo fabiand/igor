@@ -5,7 +5,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 search_paths = [".", "~/.igord", "/etc/igord"]
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 def flatten_config(cfg):
     cfgdict = {}
