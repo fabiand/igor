@@ -210,6 +210,7 @@ class Job(object):
         self.session.add_artifact(aname, data)
 
     def get_artifacts_archive(self):
+        logger.debug("Creating artifacts archive for: %s" % self._artifacts)
         return self.session.get_artifacts_archive(self._artifacts)
 
     def abort(self):
