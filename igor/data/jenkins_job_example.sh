@@ -37,7 +37,8 @@ export BASENAME="${BASENAMEPREFIX}${BUILD_TAG}"       # profile and distro name 
 export PROFILENAME="$BASENAME-profile"
 
 highlight "Create cobbler distro and profile"
-bash ./igorclient.sh extra_profile_add "$BASENAME" "${JENKINS_PROJECT_NAME}/lastSuccessfulBuild/artifact/$ISONAME"
+# Expects the iso to be injected to be in the workspace of the testing job
+bash ./igorclient.sh extra_profile_add "$BASENAME" "${JENKINS_PROJECT_NAME}/ws/$ISONAME"
 
 highlight "Create igor job"
 bash ./igorclient.sh submit example "$PROFILENAME" ahost
