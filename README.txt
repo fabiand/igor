@@ -43,13 +43,21 @@ Ensure to install some common components::
     $ sudo yum -y install python-bottle libvirt-python python-lxml parted \
                           lvm2 openssh-clients
 
-Now build and install igord::
+Now run it::
+
+    $ cp data/igord.cfg.example ~/igord.cfg
+    $ edit ~/igord.cfg
+    $ mkdir /srv/igord
+    $ PYTHONPATH=. ./bin/igord
+
+Or: Build and install igord::
 
     $ make install                              # Will build and install igord
     $ cp data/igord.cfg.example /etc/igord.d/igord.cfg
     $ edit /etc/igord.d/igord.cfg
     $ service igord start
     $ service igord status
+
 
 Firewall and Cobbler API
 ------------------------
@@ -59,6 +67,7 @@ $ sudo iptables -I INPUT -m tcp -p tcp --dport 8080 -j ACCEPT
 Also note that Cobbler's API is just allowing local connections, you might
 want to tunnel the daemons calls:
 $ ssh $COBBLERSERVER -L25151:127.0.0.1:25151
+
 
 Simple client
 -------------
