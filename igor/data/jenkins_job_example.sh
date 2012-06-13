@@ -12,19 +12,22 @@
 [[ -z $BUILD_TAG ]] && exit 1
 # $REPORT_EMAIL_TO
 # $REPORT_EMAIL_FROM
+# ISONAME
 
 pyc() { python -c "$@" ; }
 drawline() { pyc "print('$2' * $1);" ; }
 highlight() { L=$(drawline ${#1} -) ; echo -e "\n$L\n$@\n$L\n" ; }
 
 # This is an artifact from a previous job
-ISONAME=$(ls *.iso | tail -n1)
+ISONAME=${ISONAME:-$(ls *.iso | tail -n1)}
 highlight "Using ISO '$ISONAME'"
 
 [[ $(ls *.iso | wc -l) -gt 1 ]] && { 
     echo More than one iso ; 
     ls *.iso ;
 }
+
+[[ -e $ISONAME ]]
 
 highlight "Fetching igor client"
 curl -v "${IGORCLIENTURL}" --output "igorclient.sh"
