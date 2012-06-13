@@ -240,18 +240,21 @@ def get_testsuite_archive(name):
     return r.getvalue()
 
 
-if utils.parse_bool(CONFIG["cobbler.jenkins_injection.enable"]):
-    logger.info("Enabling remote ISO management for cobbler")
+if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
+    logger.info("Enabling remote ISO injection/management for cobbler")
 
-    @bottle.route('/extra/profile/add/<pname>/iso/<isopath:path>/remote')
-    def add_iso_profile_remote(pname, isopath):
+    @bottle.route('/extra/profile/add/<pname>/iso/<isoname>/remote', method='PUT')
+    def add_iso_profile_remote(pname, isoname):
         retval = 0
         with utils.TemporaryDirectory() as tmpdir:
-            isoname = os.path.basename(isopath)
-            isodirname = os.path.dirname(isopath)
+            logger.debug("Writing iso file.")
+            with open(isoname, "wb") as isofile:
+                isofile.write(bottle.request.body.read())
+            logger.debug("Done writing iso file.")
             cmd = """
-    curl -v "{baseurl}/{isodirname}/{isoname}" --output "{isoname}"
     [[ -e "{isoname}" ]] || ( echo NO {isoname} ; exit 1; )
+
+    checkisomd5 "{isoname}"
 
     export KOPTS="{kopts}" # To reduce the number of opts
     bash "{config_datadir}/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}"
@@ -261,12 +264,10 @@ if utils.parse_bool(CONFIG["cobbler.jenkins_injection.enable"]):
     """.format( \
             config_datadir=config.DATA_DIR, \
             tmpdir=tmpdir, \
-            baseurl=CONFIG["cobbler.jenkins_injection.jenkins_job_url"], \
-            sshuri=CONFIG["cobbler.jenkins_injection.remote_cobbler_ssh_uri"], \
+            sshuri=CONFIG["cobbler.iso_injection.remote_cobbler_ssh_uri"], \
             profilename=pname, \
-            isodirname=isodirname,
             isoname=isoname,
-            kopts=CONFIG["cobbler.jenkins_injection.remote_cobbler_kopts"])
+            kopts=CONFIG["cobbler.iso_injection.remote_cobbler_kopts"])
             retval, stdout = run(cmd, with_retval=True)
         return to_json((retval, stdout))
 
@@ -280,7 +281,7 @@ if utils.parse_bool(CONFIG["cobbler.jenkins_injection.enable"]):
     """.format( \
             config_datadir=config.DATA_DIR, \
             tmpdir=tmpdir, \
-            sshuri=CONFIG["cobbler.jenkins_injection.remote_cobbler_ssh_uri"], \
+            sshuri=CONFIG["cobbler.iso_injection.remote_cobbler_ssh_uri"], \
             profilename=pname)
             retval, stdout = run(cmd, with_retval=True)
         return to_json((retval, stdout))

@@ -32,9 +32,14 @@ has_cookie()
   }
 }
 
+_api_url()
+{
+  echo ${APIURL:-http://localhost:8080/}${1#/}
+}
+
 api()
 {
-  URL=${APIURL:-http://localhost:8080/}${1#/}
+  URL=$(_api_url $1)
   debug "Calling $URL"
   curl --silent "$URL"
   echo ""
@@ -123,7 +128,9 @@ extra_profile_add() # Add a profile to a remote cobbler server, EXTRA
   ISONAME=$2
   [[ -z $PNAME ]] && die "Profile name is mandatory."
   [[ -z $ISONAME ]] && die "ISO name is mandatory."
-  api extra/profile/add/$PNAME/iso/$ISONAME/remote
+  [[ ! -e $ISONAME ]] && die "ISO does not exist."
+  URL=$(_api_url extra/profile/add/$PNAME/iso/$ISONAME/remote)
+  curl --silent --request PUT --upload-file - "$URL" <"$ISONAME"
 }
 extra_profile_remove() # Remove a profile from a remote cobbler server, EXTRA
 {

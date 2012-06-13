@@ -41,7 +41,7 @@ Ensure to install some common components::
 
     $ sudo yum -y groupinstall virtualization fedora-packager
     $ sudo yum -y install python-bottle libvirt-python python-lxml parted \
-                          lvm2 openssh-clients
+                          lvm2 openssh-clients isomd5sum
 
 Now run it::
 

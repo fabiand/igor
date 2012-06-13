@@ -21,10 +21,9 @@ kargs = local_boot_trigger=igord.example.com:8080/testjob/${igor_cookie}
 kargs_install = BOOTIF=eth0 storage_init firstboot
 
 
-[Cobbler.Jenkins_Injection]
+[Cobbler.ISO_Injection]
 # Fetches jenkins builds and injects them into cobbler
 enable = False
-jenkins_job_url = http://jenkins.example.com/jenkins/job/
 remote_cobbler_ssh_uri  = cobbler.example.com
 # Override Cobbler/kargs, sometimes needed because kargs is limited to 255chars
 remote_cobbler_kopts = rootflags=loop rootflags=ro ro liveimg install rootfstype=auto root=live:/{isoname} check

@@ -8,7 +8,6 @@
 [[ -z $APIURL ]] && exit 1
 [[ -z $BASENAMEPREFIX ]] && exit 1
 [[ -z $ARTIFACTSARCHIVE ]] && exit 1
-[[ -z $JENKINS_PROJECT_NAME ]] && exit 1
 [[ -z $BUILD_TAG ]] && exit 1
 # $REPORT_EMAIL_TO
 # $REPORT_EMAIL_FROM
@@ -29,16 +28,15 @@ highlight "Using ISO '$ISONAME'"
 
 [[ -e $ISONAME ]]
 
-highlight "Fetching igor client"
+highlight "Fetching igor client from server"
 curl -v "${IGORCLIENTURL}" --output "igorclient.sh"
 [[ -e igorclient.sh ]]
 
-export BASENAME="${BASENAMEPREFIX}${BUILD_TAG}"       # profile and distro name are derived from BASENAME
-export PROFILENAME="$BASENAME-profile"
+export BASENAME="${BASENAMEPREFIX}${BUILD_TAG}"       # profile and distro name later are derived from this BASENAME
+export PROFILENAME="$BASENAME-profile"                # future profile name will be BASENAME-profile
 
-highlight "Create cobbler distro and profile"
-# Expects the iso to be injected to be in the workspace of the testing job
-bash ./igorclient.sh extra_profile_add "$BASENAME" "${JENKINS_PROJECT_NAME}/ws/$ISONAME"
+highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
+bash ./igorclient.sh extra_profile_add "$BASENAME" "$ISONAME"
 
 highlight "Create igor job"
 bash ./igorclient.sh submit example "$PROFILENAME" ahost
