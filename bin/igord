@@ -28,8 +28,6 @@ logger = logging.getLogger(__name__)
 
 CONFIG = config.parse_config()
 
-IGORDDIR = os.path.dirname(__file__)
-
 jc = JobCenter(session_path=CONFIG["session.path"])
 cobbler = Cobbler(CONFIG["cobbler.url"], (CONFIG["cobbler.username"], CONFIG["cobbler.password"]))
 
@@ -256,12 +254,12 @@ if utils.parse_bool(CONFIG["cobbler.jenkins_injection.enable"]):
     [[ -e "{isoname}" ]] || ( echo NO {isoname} ; exit 1; )
 
     export KOPTS="{kopts}" # To reduce the number of opts
-    bash "{igorddir}/../data/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}"
+    bash "{config_datadir}/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}"
     RETVAL=$?
     rm -f "{isoname}"
     exit $RETVAL
     """.format( \
-            igorddir=sys.path[0], \
+            config_datadir=config.DATA_DIR, \
             tmpdir=tmpdir, \
             baseurl=CONFIG["cobbler.jenkins_injection.jenkins_job_url"], \
             sshuri=CONFIG["cobbler.jenkins_injection.remote_cobbler_ssh_uri"], \
@@ -277,10 +275,10 @@ if utils.parse_bool(CONFIG["cobbler.jenkins_injection.enable"]):
         retval = 0
         with utils.TemporaryDirectory() as tmpdir:
             cmd = """
-    bash "{igorddir}/../data/cobbler_iso_tool.sh" remote_remove "{sshuri}" "{profilename}"
+    bash "{config_datadir}/cobbler_iso_tool.sh" remote_remove "{sshuri}" "{profilename}"
     exit 0
     """.format( \
-            igorddir=IGORDDIR, \
+            config_datadir=config.DATA_DIR, \
             tmpdir=tmpdir, \
             sshuri=CONFIG["cobbler.jenkins_injection.remote_cobbler_ssh_uri"], \
             profilename=pname)
