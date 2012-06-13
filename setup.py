@@ -22,8 +22,8 @@ setup(
     packages=['igor', 'igor.test'],
     package_data={'igor': ['data/*.xsl']},
     scripts=['bin/igord', 'bin/igor-status-to-report'],
-    data_files=[('/lib/systemd/system', ['igord.service']),
-                ('/etc/igord', ['igord.cfg.example']),
+    data_files=[('/lib/systemd/system', ['data/igord.service']),
+                ('/etc/igord', ['data/igord.cfg.example']),
                 ('/srv/igord', []),
                 ('/usr/lib/igord/testcases', [])], # FIXME testcases are missing
     url='http://www.gitorious.org/ovirt/igord',

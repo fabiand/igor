@@ -30,6 +30,8 @@ Pitfalls & Requirements
 - It is currently expected that the images are on the host where VMs are 
   spawned.
 - A working cobbler environment is expected
+- shh-copy-id the keys to the cobbler server when Cobbler.Jenkins_Injection is
+  used, as the ISO is scp'ed onto the cobbler server
 
 
 Getting started
@@ -37,14 +39,17 @@ using Fedora 16 and libvirt
 ===========================
 Ensure to install some common components::
 
-    $ sudo yum -y groupinstall virtualization
-    $ sudo yum -y install python-bottle libvirt-python python-lxml parted lvm2
+    $ sudo yum -y groupinstall virtualization fedora-packager
+    $ sudo yum -y install python-bottle libvirt-python python-lxml parted \
+                          lvm2 openssh-clients
 
-Now run igord::
+Now build and install igord::
 
-    $ cd src
-    $ edit config.py
-    $ sudo python igord.py
+    $ make install                              # Will build and install igord
+    $ cp data/igord.cfg.example /etc/igord.d/igord.cfg
+    $ edit /etc/igord.d/igord.cfg
+    $ service igord start
+    $ service igord status
 
 Firewall and Cobbler API
 ------------------------
