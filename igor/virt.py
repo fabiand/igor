@@ -105,7 +105,7 @@ class VMHost(Host):
             "boot": "network",
             "network": self.network_configuration,
             "graphics": "spice",
-            "video": "qxl",
+            "video": "vga",
             "channel": "spicevmc",
             "noautoconsole": None,      # Prevents opening a window
             "import": None,
