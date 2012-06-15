@@ -229,15 +229,26 @@ def static_data(filename):
     return bottle.static_file(filename, root=config.DATA_DIR)
 
 
-@bottle.route('/testsuite/<name>')
+@bottle.route('/testsuite/<name>/summary')
+def get_testsuite_summary(name):
+    testsuites = load_testsuites()
+    if name not in testsuites:
+        bottle.abort(404, "Unknown testsuite '%s'" % name)
+    return to_json(testsuites[name])
+
+
+@bottle.route('/testsuite/<name>/download')
 def get_testsuite_archive(name):
     testsuites = load_testsuites()
+    if name not in testsuites:
+        bottle.abort(404, "Unknown testsuite '%s'" % name)
     t = testsuites[name]
     r = t.get_archive()
     if not r:
         bottle.abort(404, 'No testsuite for %s' % (cookie))
 
     return r.getvalue()
+
 
 
 if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
