@@ -2,6 +2,7 @@
 
 [Testcases]
 # Path of testcases relative to runpath
+# Separate multiple paths by ":"
 path = /usr/lib/igord/testcases/
 
 

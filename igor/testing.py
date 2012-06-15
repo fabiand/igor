@@ -156,8 +156,8 @@ class Factory:
 
         >>> suites = Factory.testsuites_from_path("../testcases/")
         """
-        assert os.path.exists(path), ("Testsuites path does not exist:" + \
-                                      " %s") % path
+        if not os.path.exists(path):
+            raise Exception("Testsuites path does not exist: %s" % path)
         suites = {}
         pat = os.path.join(path, "*%s" % suffix)
         logger.debug("Trying to load from %s" % pat)
@@ -176,6 +176,7 @@ class Factory:
         >>> suites = Factory.testsuites_from_paths(["../testcases/"])
         """
         suites = {}
+        paths = [str.strip(p) for p in paths]
         for path in paths:
             suites.update(Factory.testsuites_from_path(path, suffix))
         return suites
