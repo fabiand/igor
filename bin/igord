@@ -34,7 +34,7 @@ cobbler = Cobbler(CONFIG["cobbler.url"], (CONFIG["cobbler.username"], CONFIG["co
 
 def load_testsuites():
     return Factory.testsuites_from_path(CONFIG["testcases.path"])
-
+logger.debug("Current testsuites: %s" % str(load_testsuites()))
 
 def create_cobbler_profile(pname):
     """This is actually creating a cobbler system, in cobbler terms
