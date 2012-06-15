@@ -33,6 +33,10 @@ Summary
 
 Testcase Results
 ---------------------------------------------------------------
+(Format: &lt;Start time&gt; / &lt;Testcase name&gt; : &lt;Passed&gt;)
+<xsl:if test="count(//results) = 0">
+(None)
+</xsl:if>
 <xsl:for-each select="//results">
 <xsl:variable name="created_at_h" select="date:add('1970-01-01T00:00:00Z', date:duration(created_at/text()))"/>
 #. <xsl:value-of select="$created_at_h"/> / <xsl:value-of select="testcase/name/text()"/>: <xsl:value-of select="is_passed/text()"/>
