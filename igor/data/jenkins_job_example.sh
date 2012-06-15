@@ -6,6 +6,7 @@
 
 [[ -z $IGORCLIENTURL ]] && exit 1
 [[ -z $APIURL ]] && exit 1
+[[ -z $TESTSUITE ]] && exit 1
 [[ -z $BASENAMEPREFIX ]] && exit 1
 [[ -z $ARTIFACTSARCHIVE ]] && exit 1
 [[ -z $BUILD_TAG ]] && exit 1
@@ -39,7 +40,7 @@ highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
 bash ./igorclient.sh extra_profile_add "$BASENAME" "$ISONAME"
 
 highlight "Create igor job"
-bash ./igorclient.sh submit example "$PROFILENAME" ahost
+bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" ahost
 export $(bash ./igorclient.sh cookie)
 [[ -z $IGORCOOKIE ]] && { echo No Igor cookie ; return 1 ; }
 highlight "... start and wait to reach some endstate"
