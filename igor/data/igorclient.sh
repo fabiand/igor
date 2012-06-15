@@ -111,6 +111,12 @@ report() # Get the rst report
   api job/report/$IGORCOOKIE
 }
 
+testsuite() # Get the testsuite for the current job
+{
+  ARCHIVE=${1:-testsuite.tar.bz2}
+  has_cookie
+  api /job/testsuite/for/$IGORCOOKIE > $ARCHIVE
+}
 
 artifacts() # Get all artifacts for the current job
 {
