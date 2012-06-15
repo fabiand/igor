@@ -156,13 +156,28 @@ class Factory:
 
         >>> suites = Factory.testsuites_from_path("../testcases/")
         """
-        assert os.path.exists(path), "Testsuites path does not exist: %s" % path
+        assert os.path.exists(path), ("Testsuites path does not exist:" + \
+                                      " %s") % path
         suites = {}
         pat = os.path.join(path, "*%s" % suffix)
         logger.debug("Trying to load from %s" % pat)
         for f in glob.glob(pat):
             suite = Factory.testsuite_from_file(f)
             suites[suite.name] = suite
+        return suites
+
+    @staticmethod
+    def testsuites_from_paths(paths, suffix=".suite"):
+        """Builds a dict of testsuites from *.suite files in a list of paths.
+        If more testsuites with the same name exist, the suite in the latest
+        path is winning.
+        Take a look at Factory.testsuites_from_path for more details.
+
+        >>> suites = Factory.testsuites_from_paths(["../testcases/"])
+        """
+        suites = {}
+        for path in paths:
+            suites.update(Factory.testsuites_from_path(path, suffix))
         return suites
 
     @staticmethod
