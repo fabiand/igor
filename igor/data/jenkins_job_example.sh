@@ -52,7 +52,7 @@ highlight "get artifacts archive"
 bash ./igorclient.sh artifacts $ARTIFACTSARCHIVE
 bash ./igorclient.sh status
 
-bash ./igorclient.sh report | tee igor-report.rst
+bash ./igorclient.sh report | tee igor-report.txt
 
 highlight "remove cobbler distro/profile"
 bash ./igorclient.sh extra_profile_remove "$BASENAME"
@@ -65,6 +65,6 @@ bash ./igorclient.sh extra_profile_remove "$BASENAME"
     mail -s "[Igor Report ] Job $IGORCOOKIE: $LAST_STATE" \
          -r "$REPORT_EMAIL_FROM" \
          -a $ARTIFACTSARCHIVE \
-         "$REPORT_EMAIL_TO" < igor-report.rst
+         "$REPORT_EMAIL_TO" < igor-report.txt
 }
 exit 1
