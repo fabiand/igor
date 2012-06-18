@@ -308,6 +308,34 @@ class Factory(utils.Factory):
     """
 
     @staticmethod
+    def testplan_from_file(filename, inventory, suffix=".plan"):
+        """Builds a Testplan from a testplan file.
+        The *.plan files are expected to contain one (testsuite, profile, host)
+        tuple per line.
+
+        A sample tesplan could look like:
+            # Some comment:
+            basic minimal_pkg_set highend_server
+            basic maximal_pkg_set highend_server
+        """
+        name = os.path.basename(filename).replace(suffix, "")
+        specs = Factory._from_file(filename, \
+                       lambda line: Factory.__line_to_jobspec(inventory, line))
+        return Testplan(name=name, job_specs=specs)
+
+    @staticmethod
+    def __line_to_jobspec(inventory, line):
+        """Expects a line with at least three tokens: (testsuite, profile, host)
+        """
+        tokens = re.split("\s+", line)
+        t, p, h = tokens[0:3]
+        return JobSpec({
+            "testsuite": inventory.testsuite(t),
+            "profile": inventory.profile(p),
+            "host": inventory.host(h)
+            })
+
+    @staticmethod
     def testsuites_from_path(path, suffix=".suite"):
         """Builds a dict of testsuites from *.suite files in a path.
         A filesystem layout could look like:
@@ -400,6 +428,31 @@ class Factory(utils.Factory):
             "searchpath": lambda line: v.update({"searchpath": line})
         })
         return Testset(name=name, testcases=cases, libs=libs)
+
+
+class JobSpec(UpdateableObject):
+    """Specifies a job, consiting of testsuite, profile and host
+    """
+    testsuite = None
+    host = None
+    profile = None
+
+
+class Testplan(object):
+    """Runs a list of testsuites on profile/host.
+
+    Attributes
+    ----------
+    job_specs : List of tuples
+        A list of (testsuite, profile, host) tuples to be run.
+    """
+    name = None
+    job_specs = None
+    def __init__(self, job_specs):
+        self.job_specs = job_specs
+
+    def timeout(self):
+        return sum([t.timeout() for t in self.job_specs.testsuite])
 
 
 class Testsuite(object):
@@ -621,6 +674,7 @@ class Testcase(object):
     source = None
     timeout = 60
     expect_failure = False
+    description = None
 
     def __init__(self, filename=None, name=None):
         if name is None and filename is None:

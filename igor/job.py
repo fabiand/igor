@@ -60,9 +60,7 @@ class Job(object):
     session = None
 
     host = None
-
     profile = None
-
     testsuite = None
 
     current_step = 0
@@ -77,7 +75,7 @@ class Job(object):
 
     _watchdog = None
 
-    def __init__(self, cookie, testsuite, profile, host, session_path="/tmp"):
+    def __init__(self, cookie, jobspec, session_path="/tmp"):
         """Create a new job to run the testsuite on host prepared with profile
         """
         self.session_path = session_path
@@ -85,6 +83,9 @@ class Job(object):
         assert cookie is not None, "Cookie can not be None"
         self.cookie = cookie
         self.session = testing.TestSession(cookie, self.session_path)
+
+        testsuite, profile, host = (jobspec.testsuite, jobspec.profile, \
+                                    jobspec.host)
 
         assert host is not None, "host can not be None"
         assert profile is not None, "profile can not be None"
@@ -431,14 +432,13 @@ class JobCenter(object):
         return cookie
 
     @utils.synchronized(_jobcenter_lock)
-    def submit_testsuite(self, testsuite, profile, host, cookie_req=None):
-        """Enqueue a testsuite to be run against a specififc build on
+    def submit(self, jobspec, cookie_req=None):
+        """Enqueue a jobspec to be run against a specififc build on
         given host
         """
         cookie = self._generate_cookie(cookie_req)
 
-        j = Job(cookie, testsuite, profile, host, \
-                session_path=self.session_path)
+        j = Job(cookie, jobspec, session_path=self.session_path)
         j.created_at = time.time()
 
         self.jobs[cookie] = j
@@ -448,6 +448,16 @@ class JobCenter(object):
         logger.info("Job %s got submitted." % cookie)
 
         return {"cookie": cookie, "job": j}
+
+    @utils.synchronized(_jobcenter_lock)
+    def submit_testsuite(self, testsuite, profile, host, cookie_req=None):
+        """Enqueue a testsuite to be run against a specififc build on
+        given host
+        """
+        spec = JobSpec({"testsuite": testsuite,
+                        "profile": profile,
+                        "host": host})
+        return self.submit(spec, cookie_req)
 
     @utils.synchronized(_jobcenter_lock)
     def start_job(self, cookie):
@@ -494,6 +504,23 @@ class JobCenter(object):
         # cant poll the status if we remove the job from jobs
         logger.info("Job %s ended." % cookie)
         return "Ended job %s." % cookie
+
+    def run(self, plan):
+        for spec in plan.job_specs:
+            resp = self.submit(spec)
+            cookie, job = (resp["cookie"], resp["job"])
+            self.start_job(cookie)
+            self.jobs[cookie].wait("ended") # fixme
+            # etc
+
+    def run_plan(self, plan):
+        for testsuite in plan.testsuites:
+            for host, profile in plan.hosts:
+                with host:
+                    resp = self.submit_testsuite(testsuite, profile, host)
+                    cookie, job = (resp["cookie"], resp["job"])
+                    self.start_job(cookie)
+                    # etc
 
     class JobWorker(utils.PollingWorkerDaemon):
         jc = None
