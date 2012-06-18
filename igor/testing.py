@@ -123,6 +123,40 @@ class Profile(UpdateableObject):
         raise Exception("Not implemented.")
 
 
+class Inventory(UpdateableObject):
+    _plans = None
+    _testsuites = None
+    _profiles = None
+    _hosts = None
+
+    def __init__(self, plan_lookup_cb={}, \
+                       testsuites_lookup_cb={}, \
+                       profiles_lookup_cb={}, \
+                       hosts_lookup_cb={}):
+        self._plans = plan_lookup_cb
+        self._testsuites = testsuite_lookup_cb
+        self._profiles = profiles_lookup_cb
+        self._hosts = hosts_lookup_cb
+
+    def plan(s):
+        return self._plans[s]
+
+    def testsuite(s):
+        return self._plans[s]
+
+    def profile(s):
+        return self._profiles[s]
+
+    def host(s):
+        return self._hosts[s]
+
+    def load_from_path(path):
+        self.plans = Factory.testplans_from_path(path)
+        self.testsuites = Factory.testplans_from_path(path)
+#        self.profiles = Factory.testplans_from_path(path)
+#        self.hosts = Factory.testplans_from_path(path)
+
+
 class Factory(utils.Factory):
     """A factory to build testing objects from different structures.
     The current default structure is a file/-system based approach.
