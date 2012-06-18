@@ -31,6 +31,7 @@ import tarfile
 import StringIO
 import io
 import re
+from threading import Lock
 
 import utils
 from utils import run

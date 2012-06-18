@@ -69,6 +69,7 @@ class Job(object):
 
     _state = None
     _state_history = None
+    state_changed = None
     _created_at = None
     _ended = False
     _ended_at = None
@@ -99,6 +100,7 @@ class Job(object):
         self._artifacts = []
 
         self._state_history = []
+        self.state_changed = threading.Event()
         self.state(s_open)
 
         self.watchdog = self.__init_watchdog()
@@ -264,6 +266,8 @@ class Job(object):
                 "state": new_state
             })
             self._state = new_state
+            self.state_changed.set()
+            self.state_changed.clear()
         return self._state
 
     def result(self):
