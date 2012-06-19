@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # The following env vars are available:
 # TESTJOB - original kernelarg
