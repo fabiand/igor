@@ -67,6 +67,7 @@ add_artifact()
   export IGOR_CURRENT_STEP=$CURRENT_STEP
   export IGOR_TESTSUITE=$TESTSUITE
   export IGOR_LIBDIR="$PWD/lib/"
+  export PYTHONPATH="$IGOR_LIBDIR:$PYTHONPATH" # For convenience
 
   for TESTCASE in $(ls -1 . | sort -n)
   do
