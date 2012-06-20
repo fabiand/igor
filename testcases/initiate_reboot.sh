@@ -4,16 +4,18 @@
 # Rebooting consist of two parts: initiating and confirming the reboot
 #
 
+. ${IGOR_LIBDIR}/lib/common/common.sh
+
 main()
 {
     . /usr/libexec/ovirt-functions
 
     # Add an ertifact, just in case
-    add_artifact "ovirt.log" "/var/log/ovirt.log"
+    igor_add_artifact "ovirt.log" "/var/log/ovirt.log"
 
     # Reply before we reboot, otherwise our reply will get lost, as it would be
     # issued after we call for a reboot
-    step_succeeded
+    igor_step_succeeded
 
     reboot
 }

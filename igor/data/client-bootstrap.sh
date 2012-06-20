@@ -58,10 +58,15 @@ add_artifact()
   debug "Running testcases"
   cd testcases
 
-  typeset -fx debug debug_curl
-  typeset -fx api_url api_call add_artifact
-  typeset -fx step_succeeded step_failed
-  export APIURL SESSION CURRENT_STEP TESTSUITE
+#  typeset -fx debug debug_curl
+#  typeset -fx api_url api_call add_artifact
+#  typeset -fx step_succeeded step_failed
+  export APIURL SESSION CURRENT_STEP TESTSUITE 
+  export IGOR_APIURL=$APIURL
+  export IGOR_SESSION=$SESSION
+  export IGOR_CURRENT_STEP=$CURRENT_STEP
+  export IGOR_TESTSUITE=$TESTSUITE
+  export IGOR_LIBDIR="$PWD/lib/"
 
   for TESTCASE in $(ls -1 . | sort -n)
   do

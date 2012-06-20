@@ -3,7 +3,7 @@
 
 # This is a example to illustrate the usage
 
-. lib/common/common.sh
+. ${IGOR_LIBDIR}/lib/common/common.sh
 
 main()
 {
@@ -11,7 +11,7 @@ main()
   # This is not mandatory but why else should we provide our own dir?
   cd "${0}.d"
 
-  # Now source some lib
+  # Now source my own lib
   source mylib.sh
 
   # This will appear in the logs attached to the calling service
@@ -19,10 +19,10 @@ main()
   pwd
   ls -lah
 
-  common_debug "Hello World 2"
+  igor_debug "Hello World 2"
 
   # This will push "/var/log/ovirt.log" to the server as the artifacts "ovirt.log"
-  add_artifact "ovirt.log" "/var/log/ovirt.log"
+  igor_add_artifact "ovirt.log" "/var/log/ovirt.log"
 }
 
 main
