@@ -31,7 +31,7 @@ add_artifact()
   }
   debug "Adding artifact '$DST': '$FILENAME'"
   URL=$(api_url "job/artifact/for/$SESSION/$DST")
-  curl --silent --request PUT --upload-file - "$URL" <"$FILENAME"
+  curl --silent --request PUT --upload-file "$FILENAME" "$URL"
 }
 
 
