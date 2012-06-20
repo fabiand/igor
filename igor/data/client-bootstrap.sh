@@ -58,16 +58,8 @@ add_artifact()
   debug "Running testcases"
   cd testcases
 
-#  typeset -fx debug debug_curl
-#  typeset -fx api_url api_call add_artifact
-#  typeset -fx step_succeeded step_failed
+  # FIXME bc
   export APIURL SESSION CURRENT_STEP TESTSUITE 
-  export IGOR_APIURL=$APIURL
-  export IGOR_SESSION=$SESSION
-  export IGOR_CURRENT_STEP=$CURRENT_STEP
-  export IGOR_TESTSUITE=$TESTSUITE
-  export IGOR_LIBDIR="$PWD/lib/"
-  export PYTHONPATH="$IGOR_LIBDIR:$PYTHONPATH" # For convenience
 
   for TESTCASE in $(ls -1 . | sort -n)
   do
@@ -82,6 +74,12 @@ add_artifact()
 
     debug "Running testcase $TESTCASE"
     {
+      export IGOR_APIURL=$APIURL
+      export IGOR_SESSION=$SESSION
+      export IGOR_CURRENT_STEP=$CURRENT_STEP
+      export IGOR_TESTSUITE=$TESTSUITE
+      export IGOR_LIBDIR="$PWD/lib/"
+      export PYTHONPATH="$IGOR_LIBDIR:$PYTHONPATH" # For convenience
       chmod a+x $TESTCASE
       ./$TESTCASE
       RETVAL=$?

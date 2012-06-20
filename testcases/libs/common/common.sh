@@ -8,7 +8,7 @@
 #
 
 WRAPPER_PREFIX=igor_
-PYMODULE=common
+PYMODULE=common.common
 
 _pyc_cmds()
 {
