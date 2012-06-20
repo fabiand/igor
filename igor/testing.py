@@ -29,6 +29,7 @@ import unittest
 import tempfile
 import tarfile
 import StringIO
+import io
 import re
 
 import utils
@@ -131,18 +132,65 @@ class Factory:
     @staticmethod
     def _from_file(filename, per_line_cb):
         """Reads a file and calls a callback per line.
-        This provides some functionality liek ignoring comments and blank
+        This provides some functionality like ignoring comments and blank
         lines.
+
+        per_line_cb is expected to be a callback called for each line.
+        Alternatively this can also be a map of {selector: cb}, where the selector
+        is determind by the pattern "^([^:]+):" on each line, e.g.:
+            lib:common      # Selector: lib   >>   lib cb choosen
+            tc.should       # No selector     >>   default cb choosen
         """
         fdir = os.path.dirname(filename)
-        objlist = []
+        objs = []
         with open(filename, "r") as f:
             for line in f:
                 line = re.sub("\s*#.*$", "", line).strip()
                 if line == "":
                     continue
-                objlist.append(per_line_cb(os.path.join(fdir, line)))
-        return objlist
+                cb, line = Factory._selector_based_cb_from_line(line, per_line_cb)
+                obj = cb(os.path.join(fdir, line))
+                if obj:
+                    objs.append(obj)
+        return objs
+
+    @staticmethod
+    def _selector_based_cb_from_line(line, cbmap):
+        """Parse a selector from a string.
+        If cbmap is a map, then the None entry is taken as the default selector
+
+        Example:
+        >>> def rcb(txt, cbm):
+        ...     cb, ntxt = Factory._selector_based_cb_from_line(txt, cbm)
+        ...     return cb(ntxt)
+        >>> rcb("common", lambda x: x)
+        'common'
+
+        >>> cbmap = {}
+        >>> cbmap[None] = lambda x: ("default", x)
+        >>> cbmap["lib"] = lambda x: ("lib", x)
+
+        >>> rcb("lib:common", cbmap)
+        ('lib', 'common')
+
+        >>> rcb("tc", cbmap)
+        ('default', 'tc')
+        """
+        cb = None
+        if callable(cbmap):
+            cb = cbmap
+        elif type(cbmap) is dict:
+            selector_pat = re.compile("^([^:]+):")
+            sel = None
+            if selector_pat.match(line):
+                sel = selector_pat.match(line).groups()[0]
+                line = selector_pat.sub("", line)
+            if sel not in cbmap:
+                raise Exception("Unknown selector '%s'" % sel)
+            cb = cbmap[sel]
+        else:
+            raise Exception("Not mapable: %s (%s)" % (cbmap, type(cbmap)))
+        return (cb, line)
 
     @staticmethod
     def testsuites_from_path(path, suffix=".suite"):
@@ -155,6 +203,8 @@ class Factory:
         This would create a dict with two suites basic and advanced.
 
         >>> suites = Factory.testsuites_from_path("../testcases/")
+        >>> suites["example"].libs()
+        {'common': '../testcases/libs/common'}
         """
         if not os.path.exists(path):
             raise Exception("Testsuites path does not exist: %s" % path)
@@ -206,10 +256,19 @@ class Factory:
         The *.set files are expected to contain one testcase file and
         optionally some arguments per line.
         The testcase files path is relative to the testset file.
+
+        Example of a testset file:
+            installation_completed.sh
+            check_selinux_denials.sh
         """
         name = os.path.basename(filename).replace(suffix, "")
-        cases = Factory._from_file(filename, Testcase.from_line)
-        return Testset(name=name, testcases=cases)
+        testcases = []
+        libs = []
+        cases = Factory._from_file(filename, {
+            None: Testcase.from_line,
+            "lib": lambda line: libs.append(line)
+        })
+        return Testset(name=name, testcases=cases, libs=libs)
 
 
 class Testsuite(object):
@@ -233,6 +292,14 @@ class Testsuite(object):
         for tset in self.testsets:
             cases += tset.testcases()
         return cases
+
+    def libs(self):
+        """All dict of (libname, libpath) of libs
+        """
+        libs = {}
+        for tset in self.testsets:
+            libs.update(tset.libs())
+        return libs
 
     def timeout(self):
         """Calculates the time the suite has to complete before it times out.
@@ -272,34 +339,65 @@ class Testsuite(object):
         0-complexexample.sh.d/mylib
         0-complexexample.sh.d/mybin
         1-examplecase.sh
+
+        >>> suites = Factory.testsuites_from_path("../testcases/")
+        >>> suite = suites["example"]
+        >>> archive = io.BytesIO(suite.get_archive().getvalue())
+        >>> tarball = tarfile.open(fileobj=archive, mode="r")
+        >>> tarball.getnames()
+        ['testcases/0-installation_completed.sh', 'testcases/1-helloworld.sh', 'testcases/1-helloworld.sh.d', 'testcases/1-helloworld.sh.d/mylib.sh', 'testcases/2-initiate_reboot.sh', 'testcases/3-reboot_completed.sh', 'testcases/4-set_admin_password.sh', 'testcases/5-selinux-denials.py', 'testcases/lib/common', 'testcases/lib/common/common.sh']
         """
-        r = StringIO.StringIO()
+        r = io.BytesIO()
         logger.debug("Preparing archive for testsuite %s" % self.name)
         with tarfile.open(fileobj=r, mode="w:bz2") as archive:
-            stepn = 0
-            for testcase in self.testcases():
-                logger.debug("Adding testcase #%s: %s" % (stepn, \
-                                                          testcase.name))
-                if testcase.filename is None:
-                    logger.warning("Empty testcase: %s" % testcase.name)
-                    continue
-
-                arcname = os.path.join(subdir, "%d-%s" % (stepn, \
-                                          os.path.basename(testcase.filename)))
-                self.__add_testcase_to_archive(archive, arcname, testcase)
-                stepn += 1
+            self.__add_testcases_to_archive(archive, subdir)
+            self.__add_libs_to_archive(archive, os.path.join(subdir, "lib"))
+        r.flush()
         return r
 
+    def __add_testcases_to_archive(self, archive, subdir):
+        stepn = 0
+        for testcase in self.testcases():
+            logger.debug("Adding testcase #%s: %s" % (stepn, \
+                                                      testcase.name))
+            if testcase.filename is None:
+                logger.warning("Empty testcase: %s" % testcase.name)
+                continue
+
+            arcname = os.path.join(subdir, "%d-%s" % (stepn, \
+                                      os.path.basename(testcase.filename)))
+            self.__add_testcase_to_archive(archive, arcname, testcase)
+            stepn += 1
+
     def __add_testcase_to_archive(self, archive, arcname, testcase):
-        srcobj = StringIO.StringIO(testcase.source())
+        srcobj = io.BytesIO(testcase.source())
         info = tarfile.TarInfo(name=arcname)
-        info.size = len(srcobj.buf)
+        info.size = len(srcobj.getvalue())
+        info.mtime = time.time()
         archive.addfile(tarinfo=info, fileobj=srcobj)
         testcaseextradir = testcase.filename + ".d"
         if os.path.exists(testcaseextradir):
             logger.debug("Adding extra dir: %s" % testcaseextradir)
-            archive.add(testcaseextradir, arcname=arcname + ".d", \
+            arcname += ".d"
+            archive.add(testcaseextradir, arcname=arcname, \
                         recursive=True)
+
+    def __add_libs_to_archive(self, archive, subdir):
+        for libname, libpath in self.libs().items():
+            if not os.path.exists(libpath):
+                logger.warning(("Adding lib '%s' / '%s' failed " + \
+                                "because path does not exist.") % ( \
+                                    libname, libpath))
+                continue
+
+            arcname = os.path.join(subdir, libname)
+            if arcname in archive.getnames():
+                logger.warning("Adding lib failed because arcname " + \
+                             "with name '%s' already exists" % libname)
+                continue
+
+            logger.debug("Adding lib: %s / %s" % (libname, libpath))
+            archive.add(libpath, arcname=arcname, recursive=True)
 
 
 class Testset(object):
@@ -307,17 +405,38 @@ class Testset(object):
     """
 
     name = None
+    _libs = None
     _testcases = None
 
-    def __init__(self, name, testcases=[]):
+    def __init__(self, name, testcases=[], libs=None):
         self.name = name
+        self._libs = {}
         self._testcases = []
         self.add(testcases)
+        self.libs(libs)
 
     def testcases(self):
         """All testcases of this set
         """
         return self._testcases
+
+    def libs(self, libs=None):
+        """Get or set the libs (expected to be a directory) for this testset.
+        libs is a list of path names, the lib name is the basename of each path
+
+        >>> ts = Testset("foo")
+        >>> ts.libs(["libs/foo"])
+        {'foo': 'libs/foo'}
+        >>> ts.libs({"common": "libs/special"})
+        {'common': 'libs/special'}
+        """
+        if type(libs) is dict:
+            self._libs = libs
+        elif type(libs) is list:
+            self._libs = {}
+            for lib in libs:
+                self._libs[os.path.basename(lib)] = lib
+        return self._libs
 
     def timeout(self):
         """The timeout of this set.
@@ -443,7 +562,7 @@ class TestSession(UpdateableObject):
 
     def get_artifacts_archive(self, selection=None):
         selection = selection or self.artifacts()
-        r = StringIO.StringIO()
+        r = io.BytesIO()
         logger.debug("Preparing artifacts archive for session %s" % \
                                                                    self.cookie)
         with tarfile.open(fileobj=r, mode="w:bz2") as archive:

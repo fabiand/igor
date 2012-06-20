@@ -3,6 +3,7 @@
 
 # This is a example to illustrate the usage
 
+. lib/common/common.sh
 
 main()
 {
@@ -17,6 +18,8 @@ main()
   echo "Hello World."
   pwd
   ls -lah
+
+  common_debug "Hello World 2"
 
   # This will push "/var/log/ovirt.log" to the server as the artifacts "ovirt.log"
   add_artifact "ovirt.log" "/var/log/ovirt.log"

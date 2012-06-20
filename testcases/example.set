@@ -3,10 +3,14 @@
 # Additionally you can specify a timeout argument to specify a timeout in
 # seconds (default 60). They are not env variables.
 #
+# Libraries can be added by using the "lib" selector 
+# (<selector>: <rest of the line …>) the library path is relative to this file.
+#
 # Any line starting with a # and the rest of a line after a hash are treated
 # as a comments
 # Empty lines are ignored.
 
+lib:libs/common
 
 # This must take the time for installation into account
 installation_completed.sh   timeout=600
