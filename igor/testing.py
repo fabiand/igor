@@ -190,10 +190,10 @@ class Factory(utils.Factory):
         """
         name = os.path.basename(filename).replace(suffix, "")
         v = {"searchpath": "."}
-        rp = lambda line: os.path.join( \
+        rp = lambda line: os.path.relpath(os.path.realpath(os.path.join( \
                             os.path.dirname(filename), \
                             v["searchpath"], \
-                            line)
+                            line)))
         sets = Factory._from_file(filename, {
             None: lambda line: Factory.testset_from_file(rp(line)),
             "searchpath": lambda line: v.update({"searchpath": line})
@@ -213,10 +213,10 @@ class Factory(utils.Factory):
         """
         name = os.path.basename(filename).replace(suffix, "")
         v = {"searchpath": "."}
-        rp = lambda line: os.path.join( \
+        rp = lambda line: os.path.relpath(os.path.realpath(os.path.join( \
                             os.path.dirname(filename), \
                             v["searchpath"], \
-                            line)
+                            line)))
         testcases = []
         libs = []
         cases = Factory._from_file(filename, {
@@ -355,7 +355,7 @@ class Testsuite(object):
                              "with name '%s' already exists" % libname)
                 continue
 
-            logger.debug("Adding lib: %s / %s" % (libname, libpath))
+            logger.debug("Adding library '%s' from '%s'" % (libname, libpath))
             archive.add(libpath, arcname=arcname, recursive=True)
 
 
