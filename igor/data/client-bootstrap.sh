@@ -76,7 +76,7 @@ add_artifact()
       chmod a+x $TESTCASE
       ./$TESTCASE
       RETVAL=$?
-    } | tee $TESTCASELOGFILE
+    } 2>&1 | tee $TESTCASELOGFILE
     add_artifact "testcase.log" $TESTCASELOGFILE
     debug "Testcase ended with: $RETVAL"
 
