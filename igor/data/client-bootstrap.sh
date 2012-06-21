@@ -80,8 +80,8 @@ EOP
     }
 
     RETVAL=4242
+    debug "Running testcase $TESTCASE"
     {
-      debug "Running testcase $TESTCASE"
       export IGOR_APIURL=$APIURL
       export IGOR_SESSION=$SESSION
       export IGOR_CURRENT_STEP=$CURRENT_STEP
@@ -91,8 +91,8 @@ EOP
       chmod a+x $TESTCASE
       ./$TESTCASE
       RETVAL=$?
-      debug "Testcase ended with: $RETVAL"
-    } 2>&1 | tee $TESTCASELOGFILE
+    } > $TESTCASELOGFILE 2>&1
+    debug "Testcase ended with: $RETVAL"
     add_artifact "testcase.log" $TESTCASELOGFILE
 
     if [[ $RETVAL == 0 ]];
