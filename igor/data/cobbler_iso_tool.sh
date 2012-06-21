@@ -41,7 +41,7 @@ add()
   ISO=$2
   TMPDIR=""
   DISTRONAME=$BNAME-distro
-  PROFILENAME=$BNAME-profile
+  PROFILENAME=$BNAME
   TMPDIR=""
   TFTPBOOTDIR=""
 
