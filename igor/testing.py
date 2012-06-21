@@ -550,7 +550,7 @@ class TestSession(UpdateableObject):
         assert("/" not in name and "\\" not in name)
         afilename = os.path.join(self.dirname, name)
         # fixme collsisions
-        with open(afilename, "w") as afile:
+        with open(afilename, "wb") as afile:
             afile.write(data)
 
     def artifacts(self, use_abs=False):
