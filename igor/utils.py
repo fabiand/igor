@@ -278,26 +278,24 @@ class Factory(object):
     """
 
     @staticmethod
-    def _from_file(filename, per_line_cb):
+    def _from_file(filename, cb_map):
         """Reads a file and calls a callback per line.
         This provides some functionality like ignoring comments and blank
         lines.
 
-        per_line_cb is expected to be a callback called for each line.
-        Alternatively this can also be a map of {selector: cb}, where the selector
-        is determind by the pattern "^([^:]+):" on each line, e.g.:
-            lib:common      # Selector: lib   >>   lib cb choosen
-            tc.should       # No selector     >>   default cb choosen
+        cb_map is a map of {selector: cb}, where the selector is determind by
+        the pattern "^([^:]+):" on each line, e.g.:
+            lib:common      # Selector: lib     >>   Callback: lib
+            tc.should       # selector: (None)  >>   Callback: None (default)
         """
-        fdir = os.path.dirname(filename)
         objs = []
         with open(filename, "r") as f:
             for line in f:
                 line = re.sub("\s*#.*$", "", line).strip()
                 if line == "":
                     continue
-                cb, line = Factory._selector_based_cb_from_line(line, per_line_cb)
-                obj = cb(os.path.join(fdir, line))
+                cb, line = Factory._selector_based_cb_from_line(line, cb_map)
+                obj = cb(line)
                 if obj:
                     objs.append(obj)
         return objs
@@ -311,8 +309,6 @@ class Factory(object):
         >>> def rcb(txt, cbm):
         ...     cb, ntxt = Factory._selector_based_cb_from_line(txt, cbm)
         ...     return cb(ntxt)
-        >>> rcb("common", lambda x: x)
-        'common'
 
         >>> cbmap = {}
         >>> cbmap[None] = lambda x: ("default", x)
@@ -325,9 +321,7 @@ class Factory(object):
         ('default', 'tc')
         """
         cb = None
-        if callable(cbmap):
-            cb = cbmap
-        elif type(cbmap) is dict:
+        if type(cbmap) is dict:
             selector_pat = re.compile("^([^:]+):")
             sel = None
             if selector_pat.match(line):

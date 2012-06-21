@@ -50,7 +50,10 @@ class RealHost(Host):
 class RealHostFactory(utils.Factory):
   def hosts_from_file(filename, suffix=".hosts")
     name = os.path.basename(filename).replace(suffix, "")
-    cases = RealHostFactory._from_file(filename, RealHost.from_line)
+    searchpath = os.path.dirname(filename)
+    cases = RealHostFactory._from_file(filename, {
+      None: lambda line: RealHost.from_line(os.path.join(searchpath, line))
+    })
     return Testset(name=name, testcases=cases)
 
 class HostInventory(object):

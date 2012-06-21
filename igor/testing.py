@@ -184,7 +184,11 @@ class Factory(utils.Factory):
             selinux.set
         """
         name = os.path.basename(filename).replace(suffix, "")
-        sets = Factory._from_file(filename, Factory.testset_from_file)
+        searchpath = os.path.dirname(filename)
+        sets = Factory._from_file(filename, {
+            None: lambda line: Factory.testset_from_file(os.path.join(searchpath, line))
+            "searchpath": lambda line: searchpath = line
+        })
         return Testsuite(name=name, testsets=sets)
 
     @staticmethod
@@ -199,11 +203,13 @@ class Factory(utils.Factory):
             check_selinux_denials.sh
         """
         name = os.path.basename(filename).replace(suffix, "")
+        searchpath = os.path.dirname(filename)
         testcases = []
         libs = []
         cases = Factory._from_file(filename, {
-            None: Testcase.from_line,
-            "lib": lambda line: libs.append(line)
+            None: lambda line: Testcase.from_line(os.path.join(searchpath, line))
+            "lib": lambda line: libs.append(os.path.join(searchpath, line))
+            "searchpath": lambda line: searchpath = line
         })
         return Testset(name=name, testcases=cases, libs=libs)
 
