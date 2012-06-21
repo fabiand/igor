@@ -129,6 +129,9 @@ class Factory(utils.Factory):
     Files provide enough informations to build testsuites.
     """
 
+    class Variables(object):
+        pass
+
     @staticmethod
     def testsuites_from_path(path, suffix=".suite"):
         """Builds a dict of testsuites from *.suite files in a path.
@@ -139,7 +142,7 @@ class Factory(utils.Factory):
             suites/example.sh           # Beeing an example testcase
         This would create a dict with two suites basic and advanced.
 
-        >>> suites = Factory.testsuites_from_path("../testcases/")
+        >>> suites = Factory.testsuites_from_path("../testcases/suites/")
         >>> suites["example"].libs()
         {'common': '../testcases/libs/common'}
         """
@@ -184,10 +187,14 @@ class Factory(utils.Factory):
             selinux.set
         """
         name = os.path.basename(filename).replace(suffix, "")
-        searchpath = os.path.dirname(filename)
+        v = {"searchpath": os.path.dirname(filename)}
+        rp = lambda line: os.path.relpath(os.path.join( \
+                            os.path.dirname(filename), \
+                            v["searchpath"], \
+                            line))
         sets = Factory._from_file(filename, {
-            None: lambda line: Factory.testset_from_file(os.path.join(searchpath, line))
-            "searchpath": lambda line: searchpath = line
+            None: lambda line: Factory.testset_from_file(rp(line)),
+            "searchpath": lambda line: v.update({"searchpath": line})
         })
         return Testsuite(name=name, testsets=sets)
 
@@ -203,13 +210,17 @@ class Factory(utils.Factory):
             check_selinux_denials.sh
         """
         name = os.path.basename(filename).replace(suffix, "")
-        searchpath = os.path.dirname(filename)
+        v = {"searchpath": os.path.dirname(filename)}
+        rp = lambda line: os.path.relpath(os.path.join( \
+                            os.path.dirname(filename), \
+                            v["searchpath"], \
+                            line))
         testcases = []
         libs = []
         cases = Factory._from_file(filename, {
-            None: lambda line: Testcase.from_line(os.path.join(searchpath, line))
-            "lib": lambda line: libs.append(os.path.join(searchpath, line))
-            "searchpath": lambda line: searchpath = line
+            None: lambda line: Testcase.from_line(rp(line)),
+            "lib": lambda line: libs.append(rp(line)),
+            "searchpath": lambda line: v.update({"searchpath": line})
         })
         return Testset(name=name, testcases=cases, libs=libs)
 
@@ -283,12 +294,15 @@ class Testsuite(object):
         0-complexexample.sh.d/mybin
         1-examplecase.sh
 
-        >>> suites = Factory.testsuites_from_path("../testcases/")
+        >>> suites = Factory.testsuites_from_path("../testcases/suites/")
         >>> suite = suites["example"]
         >>> archive = io.BytesIO(suite.get_archive().getvalue())
         >>> tarball = tarfile.open(fileobj=archive, mode="r")
-        >>> tarball.getnames()
-        ['testcases/0-installation_completed.sh', 'testcases/1-helloworld.sh', 'testcases/1-helloworld.sh.d', 'testcases/1-helloworld.sh.d/mylib.sh', 'testcases/2-initiate_reboot.sh', 'testcases/3-reboot_completed.sh', 'testcases/4-set_admin_password.sh', 'testcases/5-selinux-denials.py', 'testcases/lib/common', 'testcases/lib/common/common.sh']
+        >>> import re
+        >>> all([re.match("testcases/", n) for n in tarball.getnames()])
+        True
+        >>> any([re.match("testcases/lib/", n) for n in tarball.getnames()])
+        True
         """
         r = io.BytesIO()
         logger.debug("Preparing archive for testsuite %s" % self.name)
