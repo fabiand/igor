@@ -12,7 +12,6 @@ CURRENT_STEP=${igor_current_step}
 TESTSUITE=${igor_testsuite}
 TMPDIR=$(mktemp -d /tmp/oat.XXXXXX)
 LOGFILE=${TMPDIR}/testsuite.log
-TESTCASELOGFILE=${TMPDIR}/testcase.log
 
 # 
 # Functions
@@ -80,6 +79,7 @@ EOP
     }
 
     RETVAL=4242
+    TESTCASELOGFILE=${TMPDIR}/$TESTCASE.log
     debug "Running testcase $TESTCASE"
     {
       export IGOR_APIURL=$APIURL
@@ -93,7 +93,7 @@ EOP
       RETVAL=$?
     } > $TESTCASELOGFILE 2>&1
     debug "Testcase ended with: $RETVAL"
-    add_artifact "$TESTCASE.log" $TESTCASELOGFILE
+    add_artifact "${TESTCASE#*-}.log" $TESTCASELOGFILE
 
     if [[ $RETVAL == 0 ]];
     then
