@@ -33,11 +33,10 @@ highlight "Fetching igor client from server"
 curl --silent "${IGORCLIENTURL}" --output "igorclient.sh"
 [[ -e igorclient.sh ]]
 
-export BASENAME="${BASENAMEPREFIX}${BUILD_TAG}"       # profile and distro name later are derived from this BASENAME
-export PROFILENAME="$BASENAME-profile"                # future profile name will be BASENAME-profile
+export PROFILENAME="${BASENAMEPREFIX}${BUILD_TAG}"
 
 highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
-bash ./igorclient.sh extra_profile_add "$BASENAME" "$ISONAME"
+bash ./igorclient.sh extra_profile_add "$PROFILENAME" "$ISONAME"
 
 highlight "Create igor job"
 bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" ahost
@@ -56,7 +55,7 @@ bash ./igorclient.sh status
 bash ./igorclient.sh report | tee igor-report.txt
 
 highlight "remove cobbler distro/profile"
-bash ./igorclient.sh extra_profile_remove "$BASENAME"
+bash ./igorclient.sh extra_profile_remove "$PROFILENAME"
 
 # Passed? The exit.
 [[ "x$LAST_STATE" == "xpassed" ]] && exit 0

@@ -12,14 +12,14 @@ die() { warning $@ ; exit 1 ; }
 usage()
 {
   cat <<EOU
-$0 add <bname> <iso>
-add <bname> <iso>   - Add a cobbler distro- and profile.
-                      distro- and profile-name will be dervied from 
-                      <bname> by appending -distro and -profile.
-remove <bname>      - Remove a cobbler distro
+$0 add <profilename> <iso>
+add <profilename> <iso>   - Add a cobbler distro- and profile.
+                      distro-name will be dervied from
+                      <profilename> by appending -distro.
+remove <profilename>      - Remove a cobbler distro
 
-remote_add <host> <bname> <localiso>
-remote_remove <host> <bname>
+remote_add <host> <profilename> <localiso>
+remote_remove <host> <profilename>
 EOU
 }
 
@@ -37,11 +37,10 @@ TMPDIRPREFIX="/tmp/cobbler-import"
 
 add()
 {
-  BNAME=$1
+  PROFILENAME=$1
   ISO=$2
   TMPDIR=""
-  DISTRONAME=$BNAME-distro
-  PROFILENAME=$BNAME
+  DISTRONAME=$PROFILENAME-distro
   TMPDIR=""
   TFTPBOOTDIR=""
 
@@ -50,7 +49,7 @@ add()
   _object_exists profile $PROFILENAME && die "Profile '$PROFILENAME' already exists"
   _object_exists distro $DISTRONAME && die "Distro '$DISTRONAME' already exists"
 
-  TMPDIR="$TMPDIRPREFIX-$BNAME"
+  TMPDIR="$TMPDIRPREFIX-$PROFILENAME"
   [[ -e $TMPDIR ]] && die "Tmpdir $TMPDIR already exists. Already imported?"
   debug "Using tmpdir $TMPDIR"
   mkdir $TMPDIR
@@ -89,13 +88,12 @@ add()
 
 remove()
 {
-  BNAME=$1
-  DISTRONAME=$BNAME-distro
-  PROFILENAME=$BNAME-profile
-  TMPDIR="$TMPDIRPREFIX-$BNAME"
+  PROFILENAME=$1
+  DISTRONAME=$PROFILENAME-distro
+  TMPDIR="$TMPDIRPREFIX-$PROFILENAME"
   TFTPBOOTDIR="$TMPDIR/tftpboot"
 
-  [ -z $BNAME ] && die "<bname> needs to be given."
+  [ -z $PROFILENAME ] && die "<profilename> needs to be given."
 
   _object_exists profile $PROFILENAME && {
     cobbler profile remove --name=$PROFILENAME 
@@ -116,13 +114,6 @@ remove()
   exit 0
 }
 
-readd()
-{
-  BNAME=$1
-  ISO=$2
-  remove $ISO
-  add $BNAME $ISO
-}
 
 RTMPDIR="/tmp/ovirt_cobbler_temporary_folder_for_remote_import"
 pre_remote()
@@ -144,7 +135,7 @@ post_remote()
 remote_add()
 {
   DSTHOST=$1
-  BNAME=$2
+  PROFILENAME=$2
   ISO=$3
 
   pre_remote $DSTHOST
@@ -152,30 +143,18 @@ remote_add()
   debug "Copying ISO $ISO to remote"
   scp -C $ISO $DSTHOST:$RTMPDIR/$(basename $ISO)
   debug "Running remote"
-  ssh $DSTHOST "cd $RTMPDIR && bash $(basename $0) add $BNAME $RTMPDIR/$(basename $ISO)"
+  ssh $DSTHOST "cd $RTMPDIR && bash $(basename $0) add $PROFILENAME $RTMPDIR/$(basename $ISO)"
 
   post_remote $DSTHOST
 }
 remote_remove()
 {
   DSTHOST=$1
-  BNAME=$2
+  PROFILENAME=$2
 
   pre_remote $DSTHOST
 
-  ssh $DSTHOST "cd $RTMPDIR && bash $(basename $0) remove $BNAME"
-
-  post_remote $DSTHOST
-}
-remote_readd()
-{
-  DSTHOST=$1
-  BNAME=$2
-  ISO=$3
-
-  pre_remote $DSTHOST
-
-  ssh $DSTHOST "cd $RTMPDIR && bash $(basename $0) readd $BNAME $RTMPDIR/$(basename $ISO)"
+  ssh $DSTHOST "cd $RTMPDIR && bash $(basename $0) remove $PROFILENAME"
 
   post_remote $DSTHOST
 }
