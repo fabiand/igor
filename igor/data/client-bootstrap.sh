@@ -32,7 +32,21 @@ add_artifact()
   }
   debug "Adding artifact '$DST': '$FILENAME'"
   URL=$(api_url "job/artifact/for/$SESSION/$DST")
-  curl --silent --request PUT --upload-file "$FILENAME" "$URL"
+
+  python <<EOP
+import urllib2
+
+filename = "$FILENAME"
+url = "$URL"
+
+data = open(filename, "rb").read()
+
+opener = urllib2.build_opener(urllib2.HTTPHandler)
+request = urllib2.Request(url, data=data)
+request.add_header('Content-Type', 'text/plain')
+request.get_method = lambda: 'PUT'
+resp = opener.open(request)
+EOP
 }
 
 
