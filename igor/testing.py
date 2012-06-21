@@ -163,7 +163,9 @@ class Factory(utils.Factory):
         path is winning.
         Take a look at Factory.testsuites_from_path for more details.
 
-        >>> suites = Factory.testsuites_from_paths(["../testcases/"])
+        >>> suites = Factory.testsuites_from_paths(["../testcases/suites/"])
+        >>> "example" in suites
+        True
         """
         suites = {}
         paths = [str.strip(p) for p in paths]
@@ -187,11 +189,11 @@ class Factory(utils.Factory):
             selinux.set
         """
         name = os.path.basename(filename).replace(suffix, "")
-        v = {"searchpath": os.path.dirname(filename)}
-        rp = lambda line: os.path.relpath(os.path.join( \
+        v = {"searchpath": "."}
+        rp = lambda line: os.path.join( \
                             os.path.dirname(filename), \
                             v["searchpath"], \
-                            line))
+                            line)
         sets = Factory._from_file(filename, {
             None: lambda line: Factory.testset_from_file(rp(line)),
             "searchpath": lambda line: v.update({"searchpath": line})
@@ -210,11 +212,11 @@ class Factory(utils.Factory):
             check_selinux_denials.sh
         """
         name = os.path.basename(filename).replace(suffix, "")
-        v = {"searchpath": os.path.dirname(filename)}
-        rp = lambda line: os.path.relpath(os.path.join( \
+        v = {"searchpath": "."}
+        rp = lambda line: os.path.join( \
                             os.path.dirname(filename), \
                             v["searchpath"], \
-                            line))
+                            line)
         testcases = []
         libs = []
         cases = Factory._from_file(filename, {

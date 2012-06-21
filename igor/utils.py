@@ -289,6 +289,9 @@ class Factory(object):
             tc.should       # selector: (None)  >>   Callback: None (default)
         """
         objs = []
+        if not os.path.exists(filename):
+            raise Exception("Can't find %s rel. to %s" % (filename, \
+                                                          os.getcwd()))
         with open(filename, "r") as f:
             for line in f:
                 line = re.sub("\s*#.*$", "", line).strip()
