@@ -2,5 +2,7 @@
 # Some selinux related tests
 #
 
+searchpath:../tcs/
+
 
 selinux-denials.py              expect_failure=True

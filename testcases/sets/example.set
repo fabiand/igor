@@ -10,14 +10,19 @@
 # as a comments
 # Empty lines are ignored.
 
+
+searchpath:../
 lib:libs/common
 
-# This must take the time for installation into account
-installation_completed.sh   timeout=600
+
+# Change the searchpath for testcases:
+searchpath:../tcs/
+
+installation_completed.sh   timeout=600     # Take time for installation
 
 helloworld.sh               timeout=10
 
 initiate_reboot.sh          timeout=10
-reboot_completed.sh         timeout=120         # Rebooting takes a while
+reboot_completed.sh         timeout=120     # Rebooting takes a while
 
-set_admin_password.sh                           # Default timeout will be used
+set_admin_password.sh                       # Default timeout will be used
