@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # The following env vars are available:
 # TESTJOB - original kernelarg
@@ -79,8 +79,9 @@ EOP
       debug "Skipping testcase $TESTCASE" ; continue
     }
 
-    debug "Running testcase $TESTCASE"
+    RETVAL=4242
     {
+      debug "Running testcase $TESTCASE"
       export IGOR_APIURL=$APIURL
       export IGOR_SESSION=$SESSION
       export IGOR_CURRENT_STEP=$CURRENT_STEP
@@ -90,15 +91,15 @@ EOP
       chmod a+x $TESTCASE
       ./$TESTCASE
       RETVAL=$?
+      debug "Testcase ended with: $RETVAL"
     } 2>&1 | tee $TESTCASELOGFILE
     add_artifact "testcase.log" $TESTCASELOGFILE
-    debug "Testcase ended with: $RETVAL"
 
     if [[ $RETVAL == 0 ]];
     then
-      step_succeeded
+      step_succeeded > /dev/null
     else
-      step_failed
+      step_failed > /dev/null
       # We are not breaking here, because a failed testcase could be expected
     fi
 
