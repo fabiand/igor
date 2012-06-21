@@ -10,8 +10,9 @@
 SESSION=${igor_cookie}
 CURRENT_STEP=${igor_current_step}
 TESTSUITE=${igor_testsuite}
-TMPDIR=$(mktemp -d)
-LOGFILE=${TMPDIR}/testcases.log
+TMPDIR=$(mktemp -d /tmp/oat.XXXXXX)
+LOGFILE=${TMPDIR}/testsuite.log
+TESTCASELOGFILE=${TMPDIR}/testcase.log
 
 # 
 # Functions
@@ -40,14 +41,6 @@ add_artifact()
 # Run
 #
 {
-  [[ -e /usr/libexec/ovirt-functions ]] &&
-  {
-    debug "Loading oVirt functions"
-    . /usr/libexec/ovirt-functions
-    debug "Loading defaults"
-    . /etc/default/ovirt
-  }
-
   debug "Entering tmpdir $TMPDIR"
   cd $TMPDIR
 
@@ -83,7 +76,8 @@ add_artifact()
       chmod a+x $TESTCASE
       ./$TESTCASE
       RETVAL=$?
-    }
+    } | tee $TESTCASELOGFILE
+    add_artifact "testcase.log" $TESTCASELOGFILE
     debug "Testcase ended with: $RETVAL"
 
     if [[ $RETVAL == 0 ]];
@@ -108,7 +102,7 @@ add_artifact()
   add_artifact "job_status.json.txt" "/tmp/job_status.json"
 } 2>&1 | tee $LOGFILE
 
-add_artifact "testcases.log" $LOGFILE
+add_artifact "testsuite.log" $LOGFILE
 
 debug "Done"
 
