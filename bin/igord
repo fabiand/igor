@@ -258,17 +258,22 @@ def static_data(filename):
     return bottle.static_file(filename, root=config.DATA_DIR)
 
 
-@bottle.route('/testsuite/<name>/summary')
+@bottle.route('/testsuites')
+def get_testsuites():
+    testsuites = inventory.testsuites()
+    return to_json(testsuites)
+
+@bottle.route('/testsuites/<name>/summary')
 def get_testsuite_summary(name):
-    testsuites = load_testsuites()
+    testsuites = inventory.testsuites()
     if name not in testsuites:
         bottle.abort(404, "Unknown testsuite '%s'" % name)
     return to_json(testsuites[name])
 
 
-@bottle.route('/testsuite/<name>/download')
+@bottle.route('/testsuites/<name>/download')
 def get_testsuite_archive(name):
-    testsuites = load_testsuites()
+    testsuites = inventory.testsuites()
     if name not in testsuites:
         bottle.abort(404, "Unknown testsuite '%s'" % name)
     t = testsuites[name]
