@@ -160,17 +160,16 @@ class LogicalVolume(object):
 
 
 def parse_lvm(text, separator="|", options=None):
-    """Rudimentary LVM out parsing
-
-    >>> text = "  /dev/loop0|k7hrQX-tCOr-RFev-nmnj-y1eQ-P0Ol-aaXbeH\n"
-    >>> text += "  /dev/loop1|x278B5-WU0J-kS35-YpKW-36eM-6cgV-WFPSlv"
-    >>> parse_lvm(text, "|")
-    [['/dev/loop0', 'k7hrQX-tCOr-RFev-nmnj-y1eQ-P0Ol-aaXbeH'],
-     ['/dev/loop1', 'x278B5-WU0J-kS35-YpKW-36eM-6cgV-WFPSlv']]
-    >>> parse_lvm(text, "|", ["name", "uuid"])
-    [{'name': '/dev/loop0', 'uuid': 'k7hrQX-tCOr-RFev-nmnj-y1eQ-P0Ol-aaXbeH'},
-     {'name': '/dev/loop1', 'uuid': 'x278B5-WU0J-kS35-YpKW-36eM-6cgV-WFPSlv'}]
-    """
+#    """Rudimentary LVM out parsing
+#    >>> text = "  /dev/loop0|k7hrQX-tCOr-RFev-nmnj-y1eQ-P0Ol-aaXbeH\n"
+#    >>> text += "  /dev/loop1|x278B5-WU0J-kS35-YpKW-36eM-6cgV-WFPSlv"
+#    >>> parse_lvm(text, "|")
+#    [['/dev/loop0', 'k7hrQX-tCOr-RFev-nmnj-y1eQ-P0Ol-aaXbeH'],
+#     ['/dev/loop1', 'x278B5-WU0J-kS35-YpKW-36eM-6cgV-WFPSlv']]
+#    >>> parse_lvm(text, "|", ["name", "uuid"])
+#    [{'name': '/dev/loop0', 'uuid': 'k7hrQX-tCOr-RFev-nmnj-y1eQ-P0Ol-aaXbeH'},
+#     {'name': '/dev/loop1', 'uuid': 'x278B5-WU0J-kS35-YpKW-36eM-6cgV-WFPSlv'}]
+#    """
     lst = []
     for line in text.split("\n"):
         line = line.strip()

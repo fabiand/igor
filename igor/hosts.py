@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2012  Red Hat, Inc.
 #
@@ -16,7 +17,6 @@
 #
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
-# -*- coding: utf-8 -*-
 
 import logging
 
@@ -48,7 +48,7 @@ class RealHost(Host):
 
 
 class RealHostFactory(utils.Factory):
-  def hosts_from_file(filename, suffix=".hosts")
+  def hosts_from_file(filename, suffix=".hosts"):
     name = os.path.basename(filename).replace(suffix, "")
     searchpath = os.path.dirname(filename)
     cases = RealHostFactory._from_file(filename, {
@@ -58,6 +58,7 @@ class RealHostFactory(utils.Factory):
 
 class HostInventory(object):
   def host_from_name(name):
+    pass
 
 
 # vim: sw=2:

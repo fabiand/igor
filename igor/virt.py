@@ -227,3 +227,24 @@ class VMHostFactory:
         host.storage_pool = storage_pool
         host.network_configuration = network_configuration
         return host
+
+
+class VMAlwaysCreateHostOrigin(Origin):
+    connection_uri = None
+    storage_pool = None
+    network_configuration = None
+    def __init__(self, connection_uri, storage_pool, network_configuration):
+        self.connection_uri = connection_uri
+        self.storage_pool = storage_pool
+        self.network_configuration = network_configuration
+
+    def name(self):
+        return "VMAlwaysCreateHostOrigin(%s)" % str(self.__dict__)
+
+    def items(self):
+        return {"default": VMHostFactory.create_default_host( \
+                            connection_uri=self.connection_uri, \
+                            storage_pool=self.storage_pool, \
+                            network_configuration=self.network_configuration)
+               }
+

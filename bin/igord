@@ -10,6 +10,8 @@ import logging.config
 import time
 import re
 import bottle
+import io
+import tarfile
 from string import Template
 
 from igor.testing import *
@@ -21,60 +23,63 @@ import igor.reports as reports
 
 import igor.config as config
 
+BOTTLE_MAX_READ_SIZE=1024*1024*512
+
 #logging.config.fileConfig("logconf.ini")
 logging.basicConfig( \
     format='%(levelname)s - %(asctime)s - %(module)s - %(message)s', \
     level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+#
+# Parse the config at first
+#
 CONFIG = config.parse_config()
 
+#
+# Now define our origins, where we get the items (hosts, profiles, …) from
+#
+testsuite_origins = {
+    "fs": FilesystemTestsuitesOrigin(CONFIG["testcases.path"].split(":"))
+}
+
+profile_origins = {
+    None: cobbler.CobblerOrigin(CONFIG["cobbler.url"], \
+                             CONFIG["cobbler.username"], \
+                             CONFIG["cobbler.password"], \
+                             CONFIG["cobbler.kargs"], \
+                             CONFIG["cobbler.kargs_install"])
+}
+cobbler = profile_origins[None].cobbler
+
+host_origins = {
+    "libvirt": virt.VMAlwaysCreateHostOrigin(CONFIG["libvirtd.connection_uri"], \
+                         CONFIG["libvirtd.virt-install.storage_pool"],
+                         CONFIG["libvirtd.virt-install.network_configuration"])
+}
+
+#
+# Now prepare the essential objects
+#
 jc = JobCenter(session_path=CONFIG["session.path"])
-cobbler = Cobbler(CONFIG["cobbler.url"], (CONFIG["cobbler.username"], \
-                  CONFIG["cobbler.password"]))
+
+inventory = Inventory( \
+    plans={}, \
+    testsuites=testsuite_origins, \
+    profiles=profile_origins, \
+    hosts=host_origins)
+inventory.check()
 
 
-def list_testsuites():
-    testsuites = Factory.testsuites_from_paths( \
-                                           CONFIG["testcases.path"].split(":"))
-    logger.debug("Number of testsuites: %s" % len(testsuites))
-    return testsuites
-
-
-def list_cobbler_profiles():
-    """This is actually creating cobbler system, in cobbler terms
-    """
-    profiles = {}
-    with cobbler.new_session() as cblr_sess:
-        for cprofile in cblr_sess.profiles():
-            profiles[cprofile] = cobbler.new_profile(cprofile, {
+def create_cobbler_profile_with(pname, vmlinuz_file, initrd_file, kargs_file, \
+                        kargs_post_file):
+    profile = cobbler.new_profile(cprofile, {
               "kernel_options": " ".join([CONFIG["cobbler.kargs"], \
                                             CONFIG["cobbler.kargs_install"]]),
               "kernel_options_post": CONFIG["cobbler.kargs"],
               })
-    logger.debug("Number of profiles: %s" % len(profiles))
-#    logger.debug("Profiles: %s" % profiles)
-    return profiles
+    profile.populate_with(vmlinuz_file, initrd_file, kargs_file, kargs_post_file)
 
-
-def list_virt_hosts():
-    logger.warning("We are currently using a default host")
-    hosts = {}
-    hosts["default"] = VMHostFactory.create_default_host( \
-        connection_uri=CONFIG["libvirtd.connection_uri"], \
-        storage_pool=CONFIG["libvirtd.virt-install.storage_pool"],
-        network_configuration=CONFIG["libvirtd.virt-install" + \
-                                     ".network_configuration"])
-    logger.debug("Number of hosts: %s" % len(hosts))
-    return hosts
-
-
-inventory = Inventory( \
-    plans=[],
-    testsuites=[list_testsuites],
-    profiles=[list_cobbler_profiles],
-    hosts=[list_virt_hosts])
-inventory.check()
 
 
 class IgordJSONEncoder(json.JSONEncoder):
@@ -96,16 +101,6 @@ def to_json(obj):
         r = utils.obj2xml("result", r, as_string=True)
     bottle.response.content_type = "application/%s" % format
     return r
-
-
-def _req_cookie():
-    cookie_key = "x-igor-cookie"
-    if cookie_key not in bottle.request.headers:
-        bottle.abort("Cookie missing")
-    cookie = bottle.request.headers[cookie_keys]
-    if cookie not in jc.open_jobs:
-        bottle.abort("Unknown job")
-    return cookie
 
 
 #
@@ -197,7 +192,7 @@ def add_artifact(cookie, name):
     if "/" in name:
         bottle.abort(412, "Name may not contain slashes")
     j = jc.jobs[cookie]
-    data = bottle.request.body.read()
+    data = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
     j.add_artifact(name, data)
 
 
@@ -259,7 +254,7 @@ def static_data(filename):
 
 
 @bottle.route('/testsuites')
-def get_testsuites():
+def list_testsuites():
     testsuites = inventory.testsuites()
     return to_json(testsuites)
 
@@ -280,9 +275,28 @@ def get_testsuite_archive(name):
     r = t.get_archive()
     if not r:
         bottle.abort(404, 'No testsuite for %s' % (cookie))
-
     return r.getvalue()
 
+
+@bottle.route('/profiles')
+def list_profiles():
+    return to_json(inventory.profiles())
+
+
+@bottle.route('/profiles/<pname>', method='PUT')
+def profile_from_vmlinuz(pname):
+    with utils.TemporaryDirectory() as tmpdir:
+        logger.debug("Using tmpdir %s" % tmpdir)
+        content = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
+        with io.BytesIO(content) as data, \
+             tarfile.open(fileobj=data) as tarball:
+            reqfiles = ["vmlinuz", "initrd", "kargs", "kargs_post"]
+            files = tarball.getnames()
+            if not all([n in files for n in reqfiles]) \
+               or len(files) != len(reqfiles):
+                bottle.abort(412, "Expecting %s files" % str(reqfiles))
+            tarball.extractall(path=tmpdir)
+            inventory.create
 
 if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
     logger.info("Enabling remote ISO injection/management for cobbler")
@@ -293,7 +307,7 @@ if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
         with utils.TemporaryDirectory() as tmpdir:
             logger.debug("Writing iso file.")
             with open(os.path.join(tmpdir, isoname), "wb") as isofile:
-                isofile.write(bottle.request.body.read())
+                isofile.write(bottle.request.body.read(BOTTLE_MAX_READ_SIZE))
             logger.debug("Done writing iso file.")
             cmd = """
     cd {tmpdir}

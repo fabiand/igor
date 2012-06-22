@@ -107,7 +107,10 @@ class GenericHost(Host):
 class Profile(UpdateableObject):
     """A profile is some abstraction of an installation.
     """
+
     def get_name(self):
+        """Get the unique name of this profile
+        """
         raise Exception("Not implemented.")
 
     def assign_to(self, host):
@@ -122,6 +125,40 @@ class Profile(UpdateableObject):
     def revoke_from(self, host):
         raise Exception("Not implemented.")
 
+    def delete(self):
+        raise Exception("Not implemented.")
+
+    def populate_with(vmlinuz, initrd, kargs, kargs_post=None):
+        """Populate a profile with the data from the given arguments.
+        vmlinuz, initrd, kargs and kargs_post are expected to be paths to files
+        used to create the profile.
+        """
+        raise Exception("Not implemented.")
+
+
+class Origin(object):
+    def name(self):
+        raise Exception("Not implemented.")
+
+    def items(self):
+        """Returns a dict name:item-obj
+        """
+        raise Exception("Not implemented.")
+
+    def lookup(self, name):
+        """Returns an item-obj
+        """
+        item = None
+        items = self.items()
+        if name in items:
+            item = items[name]
+        return item
+
+    def create_item(self, origin, *args, **kwargs):
+        """Create an item at origin (or default origin if None)
+        """
+        raise Exception("Not implemented.")
+
 
 class Inventory(object):
     """Is a central repository for Igor related items.
@@ -129,9 +166,7 @@ class Inventory(object):
     Use a factory to create the objects, or pass a Factory as a callback.
     """
 
-    _sources = None
-
-    def __init__(self, plans=[], testsuites=[], profiles=[], hosts=[]):
+    def __init__(self, plans={}, testsuites={}, profiles={}, hosts={}):
         """Each parameter is a list of callbacks to list all items of that
         category.
 
@@ -141,57 +176,63 @@ class Inventory(object):
         of the category (Host, Profile, Testsuite) in question.
 
         A basic example:
-
-        >>> args = [[lambda: {"a": n, "b": n}] for n in \
-                                                      ["pl", "ts", "pr", "ho"]]
-        >>> i = Inventory(*args)
+        >>> f = Origin()
+        >>> f.items = lambda: {"item-a": "a", "item-b": "b"}
+        >>> s = Origin()
+        >>> s.items = lambda: {"item-c": "c", "item-d": "d"}
+        >>> i = Inventory(plans={"a": f, \
+                                 "b": s})
         >>> i.plans()
-        {'a': 'ho', 'b': 'ho'}
+        {'item-a': 'a', 'item-b': 'b', 'item-c': 'c', 'item-d': 'd'}
 
         Or even use a factory to populate the inventory:
-
-        >>> f = lambda: Factory.testsuites_from_path("../testcases/suites/")
-        >>> i = Inventory(testsuites=[f])
+        >>> f = FilesystemTestsuitesOrigin(["../testcases/suites/"])
+        >>> i = Inventory(testsuites={"fs": f})
         >>> "example" in i.testsuites()
         True
         """
-        self._sources = {
-            "plans": [],
-            "testsuites": [],
-            "profiles": [],
-            "hosts": []
+        self._origins = {
+            "plans": {},
+            "testsuites": {},
+            "profiles": {},
+            "hosts": {}
         }
-        for (k, cbs) in [("plans", plans), ("testsuites", testsuites), \
+        for (k, origins) in [("plans", plans), ("testsuites", testsuites), \
                          ("profiles", profiles), ("hosts", hosts)]:
-            self._add_callbacks(k, cbs)
+            self._add_origins(k, origins)
 
-    def _add_callbacks(self, k, cbs):
-        for cb in cbs:
-            if not callable(cb):
-                raise Exception("%s lookup function is not callable: %s" % ( \
-                                                                       k, cb))
-            self._sources[k].append(cb)
+    def _add_origins(self, k, origins):
+        assert type(origins) is dict
+        for name, origin in origins.items():
+            if not isinstance(origin, Origin):
+                raise Exception(("Invalid %s origin '%s': '%s'") % ( k, \
+                                                               source, origin))
+            self._origins[k][name] = origin
 
     def _items(self, k):
-        """Retrieves all items from the callbacks
+        """Retrieves all items from all origins
         """
         all_items = {}
-        for cb in self._sources[k]:
-            items = cb()
-            if type(items) is dict:
-                all_items.update(items)
-            else:
+        for name, origin in self._origins[k].items():
+            items = origin.items()
+            for item in items:
+                if item in all_items:
+                    raise Exception(("Item name is not unique over all %s " + \
+                                     "origins: %s") % (k, item))
+            if type(items) is not dict:
                 raise Exception("%s did not return a dict." % k)
+            all_items.update(items)
         return all_items
 
     def _lookup(self, k, q=None):
-        result = None
-        candidates = self._items(k)
         if q is None:
-            result = candidates
-        elif q in candidates:
-            result = candidates[q]
-        return result
+            return self._items(k)
+        item = None
+        for name, origin in self._origins[k].items():
+            item = origin.lookup(q)
+            if item is not None:
+                break
+        return item
 
     def plans(self, q=None):
         return self._lookup("plans", q)
@@ -207,10 +248,31 @@ class Inventory(object):
 
     def check(self):
         logger.debug("Self checking invetory …")
-        self.plans()
-        self.testsuites()
-        self.profiles()
-        self.hosts()
+        ps = self.plans()
+        ts = self.testsuites()
+        prs = self.profiles()
+        hs = self.hosts()
+        n = 10
+        logger.debug("Found %d plan(s): %s …" % (len(ps), ps.keys()[0:n]))
+        logger.debug("Found %d testsuite(s): %s …" % (len(ts), ts.keys()[0:n]))
+        logger.debug("Found %d profiles(s): %s …" % (len(prs), prs.keys()[0:n]))
+        logger.debug("Found %d testsuite(s): %s …" % (len(hs), hs.keys()[0:n]))
+
+
+class FilesystemTestsuitesOrigin(Origin):
+    paths = None
+    def __init__(self, paths):
+        if type(paths) is not list:
+            paths = [paths]
+        self.paths = paths
+
+    def name(self):
+        return "FilesystemOrigin(%s)" % self.paths
+
+    def items(self):
+        testsuites = Factory.testsuites_from_paths(self.paths)
+        return testsuites
+
 
 class Factory(utils.Factory):
     """A factory to build testing objects from different structures.

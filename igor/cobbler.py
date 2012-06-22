@@ -27,6 +27,41 @@ import testing
 logger = logging.getLogger(__name__)
 
 
+class CobblerOrigin(testing.Origin):
+    cobbler = None
+    kargs = None
+    kargs_post = None
+    def __init__(self, server_url, user, pw, kargs, kargs_post):
+        self.cobbler = Cobbler(server_url, (user, pw))
+        self.kargs = kargs
+        self.kargs_post = kargs_post
+
+    def name(self):
+        return "CobblerOrigin(%s)" % self.cobbler.server_url
+
+    def items(self):
+        items = {}
+        with self.cobbler.new_session() as cblr_sess:
+            for cpname in cblr_sess.profiles():
+                iprofile = self._igor_profile_from_cobbler_profile(cpname)
+                items[cpname] = iprofile
+        logger.debug("Number of profiles: %s" % len(items))
+    #    logger.debug("Profiles: %s" % profiles)
+        return items
+
+    def _igor_profile_from_cobbler_profile(self, cprofile):
+        self.cobbler.new_profile(cprofile, {
+            "kernel_options": " ".join([self.kargs, self.kargs_post]),
+            "kernel_options_post": self.kargs,
+        })
+
+    # def lookup could be done w/ cobbler native functions
+
+    def create_item(pname, vmlinuz_file, initrd_file, kargs_file, \
+                        kargs_post_file):
+        profile = self.new_profile(cprofile)
+        profile.populate_with(vmlinuz_file, initrd_file, kargs_file, kargs_post_file)
+
 #pydoc cobbler.remote
 class Cobbler(object):
     """A simple wrapper around Cobbler's XMLRPC API.
@@ -99,6 +134,9 @@ class Cobbler(object):
                     # Can happen if corresponding distro or profile was deleted
                     logger.info(("Unknown '%s' host when trying to revoke " + \
                                  "igor profile.") % name)
+
+        def populate_with(vmlinuz, initrd, kargs, kargs_post=None):
+            raise Exception("Not yet implemented")
 
     class Session:
         """Helper to login and sync
