@@ -46,11 +46,11 @@ class CobblerOrigin(testing.Origin):
                 iprofile = self._igor_profile_from_cobbler_profile(cpname)
                 items[cpname] = iprofile
         logger.debug("Number of profiles: %s" % len(items))
-    #    logger.debug("Profiles: %s" % profiles)
+#        logger.debug("Profiles: %s" % items)
         return items
 
     def _igor_profile_from_cobbler_profile(self, cprofile):
-        self.cobbler.new_profile(cprofile, {
+        return self.cobbler.new_profile(cprofile, {
             "kernel_options": " ".join([self.kargs, self.kargs_post]),
             "kernel_options_post": self.kargs,
         })
@@ -220,6 +220,9 @@ class Cobbler(object):
         def systems(self):
             return [e["name"] for e in self.server.get_systems(self.token, \
                                                         1, 1000)]
+
+        def system(self, n):
+            return self.server.get_system(self.token, n)["name"]
 
 
 def example():
