@@ -123,39 +123,94 @@ class Profile(UpdateableObject):
         raise Exception("Not implemented.")
 
 
-class Inventory(UpdateableObject):
-    _plans = None
-    _testsuites = None
-    _profiles = None
-    _hosts = None
+class Inventory(object):
+    """Is a central repository for Igor related items.
+    This inventory can be used to lookup *existsing* items.
+    Use a factory to create the objects, or pass a Factory as a callback.
+    """
 
-    def __init__(self, plan_lookup_cb={}, \
-                       testsuites_lookup_cb={}, \
-                       profiles_lookup_cb={}, \
-                       hosts_lookup_cb={}):
-        self._plans = plan_lookup_cb
-        self._testsuites = testsuite_lookup_cb
-        self._profiles = profiles_lookup_cb
-        self._hosts = hosts_lookup_cb
+    _sources = None
 
-    def plan(s):
-        return self._plans[s]
+    def __init__(self, plans=[], testsuites=[], profiles=[], hosts=[]):
+        """Each parameter is a list of callbacks to list all items of that
+        category.
 
-    def testsuite(s):
-        return self._plans[s]
+        The callbacks are expected to have the form
+            cb() => dict
+        The callback returns a dict mapping a unique identifier to an object
+        of the category (Host, Profile, Testsuite) in question.
 
-    def profile(s):
-        return self._profiles[s]
+        A basic example:
 
-    def host(s):
-        return self._hosts[s]
+        >>> args = [[lambda: {"a": n, "b": n}] for n in \
+                                                      ["pl", "ts", "pr", "ho"]]
+        >>> i = Inventory(*args)
+        >>> i.plans()
+        {'a': 'ho', 'b': 'ho'}
 
-    def load_from_path(path):
-        self.plans = Factory.testplans_from_path(path)
-        self.testsuites = Factory.testplans_from_path(path)
-#        self.profiles = Factory.testplans_from_path(path)
-#        self.hosts = Factory.testplans_from_path(path)
+        Or even use a factory to populate the inventory:
 
+        >>> f = lambda: Factory.testsuites_from_path("../testcases/suites/")
+        >>> i = Inventory(testsuites=[f])
+        >>> "example" in i.testsuites()
+        True
+        """
+        self._sources = {
+            "plans": [],
+            "testsuites": [],
+            "profiles": [],
+            "hosts": []
+        }
+        for (k, cbs) in [("plans", plans), ("testsuites", testsuites), \
+                         ("profiles", profiles), ("hosts", hosts)]:
+            self._add_callbacks(k, cbs)
+
+    def _add_callbacks(self, k, cbs):
+        for cb in cbs:
+            if not callable(cb):
+                raise Exception("%s lookup function is not callable: %s" % ( \
+                                                                       k, cb))
+            self._sources[k].append(cb)
+
+    def _items(self, k):
+        """Retrieves all items from the callbacks
+        """
+        all_items = {}
+        for cb in self._sources[k]:
+            items = cb()
+            if type(items) is dict:
+                all_items.update(items)
+            else:
+                raise Exception("%s did not return a dict." % k)
+        return all_items
+
+    def _lookup(self, k, q=None):
+        result = None
+        candidates = self._items(k)
+        if q is None:
+            result = candidates
+        elif q in candidates:
+            result = candidates[q]
+        return result
+
+    def plans(self, q=None):
+        return self._lookup("plans", q)
+
+    def testsuites(self, q=None):
+        return self._lookup("testsuites", q)
+
+    def profiles(self, q=None):
+        return self._lookup("profiles", q)
+
+    def hosts(self, q=None):
+        return self._lookup("hosts", q)
+
+    def check(self):
+        logger.debug("Self checking invetory …")
+        self.plans()
+        self.testsuites()
+        self.profiles()
+        self.hosts()
 
 class Factory(utils.Factory):
     """A factory to build testing objects from different structures.
