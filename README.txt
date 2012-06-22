@@ -45,7 +45,7 @@ Ensure to install some common components::
 
 Now run it::
 
-    $ cp data/igord.cfg.example ~/igord.cfg
+    $ cp data/igord.cfg.example ~/igord.cfg     # Or: /etc/igord/igord.conf
     $ edit ~/igord.cfg
     $ mkdir /srv/igord
     $ PYTHONPATH=. ./bin/igord
