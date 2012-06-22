@@ -30,20 +30,51 @@ logger = logging.getLogger(__name__)
 CONFIG = config.parse_config()
 
 jc = JobCenter(session_path=CONFIG["session.path"])
-cobbler = Cobbler(CONFIG["cobbler.url"], (CONFIG["cobbler.username"], CONFIG["cobbler.password"]))
+cobbler = Cobbler(CONFIG["cobbler.url"], (CONFIG["cobbler.username"], \
+                  CONFIG["cobbler.password"]))
 
 
-def load_testsuites():
-    return Factory.testsuites_from_paths(CONFIG["testcases.path"].split(":"))
-logger.debug("Current testsuites: %s" % str(load_testsuites()))
+def list_testsuites():
+    testsuites = Factory.testsuites_from_paths( \
+                                           CONFIG["testcases.path"].split(":"))
+    logger.debug("Number of testsuites: %s" % len(testsuites))
+    return testsuites
 
-def lookup_cobbler_profile(pname):
-    """This is actually looking up a cobbler system, in cobbler terms
+
+def list_cobbler_profiles():
+    """This is actually creating cobbler system, in cobbler terms
     """
-    return cobbler.new_profile(pname, {
-      "kernel_options": " ".join([CONFIG["cobbler.kargs"], CONFIG["cobbler.kargs_install"]]),
-      "kernel_options_post": CONFIG["cobbler.kargs"],
-      })
+    profiles = {}
+    with cobbler.new_session() as cblr_sess:
+        for cprofile in cblr_sess.profiles():
+            profiles[cprofile] = cobbler.new_profile(cprofile, {
+              "kernel_options": " ".join([CONFIG["cobbler.kargs"], \
+                                            CONFIG["cobbler.kargs_install"]]),
+              "kernel_options_post": CONFIG["cobbler.kargs"],
+              })
+    logger.debug("Number of profiles: %s" % len(profiles))
+#    logger.debug("Profiles: %s" % profiles)
+    return profiles
+
+
+def list_virt_hosts():
+    logger.warning("We are currently using a default host")
+    hosts = {}
+    hosts["default"] = VMHostFactory.create_default_host( \
+        connection_uri=CONFIG["libvirtd.connection_uri"], \
+        storage_pool=CONFIG["libvirtd.virt-install.storage_pool"],
+        network_configuration=CONFIG["libvirtd.virt-install" + \
+                                     ".network_configuration"])
+    logger.debug("Number of hosts: %s" % len(hosts))
+    return hosts
+
+
+inventory = Inventory( \
+    plans=[],
+    testsuites=[list_testsuites],
+    profiles=[list_cobbler_profiles],
+    hosts=[list_virt_hosts])
+inventory.check()
 
 
 class IgordJSONEncoder(json.JSONEncoder):
@@ -80,30 +111,21 @@ def _req_cookie():
 #
 # bottles
 #
-@bottle.route('/submit/<testsuite>/with/<profile>/on/<host>')
-@bottle.route('/submit/<testsuite>/with/<profile>/on/<host>/<cookiereq>')
-def submit_testsuite(testsuite, profile, host, cookiereq=None):
-    host = VMHostFactory.create_default_host( \
-        connection_uri=CONFIG["libvirtd.connection_uri"], \
-        storage_pool=CONFIG["libvirtd.virt-install.storage_pool"],
-        network_configuration=CONFIG["libvirtd.virt-install.network_configuration"])
-    logger.warning("We are currently using a default host")
+@bottle.route('/submit/<tname>/with/<pname>/on/<hname>')
+@bottle.route('/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')
+def submit_testsuite(tname, pname, hname, cookiereq=None):
+    args = ()
+    for key, name in [("testsuites", tname), \
+                      ("profiles", pname), \
+                      ("hosts", hname)]:
+        item = inventory._lookup(key, name)
+        if item is None:
+            bottle.abort(412, "Unknown %s '%s'" % (key, name))
+        args += (item,)
+    args += (cookiereq,)
+    logger.debug("Submitting with args: %s" % str(args))
+    resp = jc.submit_testsuite(*args)
 
-    testsuites = load_testsuites()
-    logger.debug("Loaded testsuites: %s" % testsuites)
-    if testsuite not in testsuites:
-        bottle.abort(412, "Unknown testsuite '%s'" % testsuite)
-
-    logger.debug("Starting cobbler session")
-    with cobbler.new_session() as cblr_sess:
-        logger.debug("Checking profile %s" % profile)
-        if profile not in cblr_sess.profiles():
-            bottle.abort(412, "Unknown profile '%s'" % profile)
-
-    logger.debug("Checks done, submitting testsuite")
-    resp = jc.submit_testsuite(testsuites[testsuite], \
-                               lookup_cobbler_profile(profile), \
-                               host, cookiereq)
     return to_json(resp)
 
 
