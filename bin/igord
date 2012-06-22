@@ -1,4 +1,5 @@
 #!/bin/env python
+# -*- coding: utf-8 -*-
 
 import json
 import os
@@ -56,8 +57,14 @@ class IgordJSONEncoder(json.JSONEncoder):
 
 
 def to_json(obj):
-    bottle.response.content_type = "application/json"
-    return json.dumps(obj, cls=IgordJSONEncoder, sort_keys=True, indent=2)
+    format = "json"
+    r = json.dumps(obj, cls=IgordJSONEncoder, sort_keys=True, indent=2)
+    if "x-igor-format-xml" in bottle.request.headers:
+        format = "xml"
+        r = json.loads(r)
+        r = utils.obj2xml("result", r, as_string=True)
+    bottle.response.content_type = "application/%s" % format
+    return r
 
 
 def _req_cookie():
@@ -248,7 +255,6 @@ def get_testsuite_archive(name):
         bottle.abort(404, 'No testsuite for %s' % (cookie))
 
     return r.getvalue()
-
 
 
 if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
