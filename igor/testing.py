@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2012  Red Hat, Inc.
 #
@@ -16,7 +17,6 @@
 #
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
-# -*- coding: utf-8 -*-
 
 import json
 import os
