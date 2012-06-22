@@ -154,7 +154,7 @@ class Origin(object):
             item = items[name]
         return item
 
-    def create_item(self, origin, *args, **kwargs):
+    def create_item(self, **kwargs):
         """Create an item at origin (or default origin if None)
         """
         raise Exception("Not implemented.")
@@ -258,6 +258,13 @@ class Inventory(object):
         logger.debug("Found %d profiles(s): %s …" % (len(prs), prs.keys()[0:n]))
         logger.debug("Found %d testsuite(s): %s …" % (len(hs), hs.keys()[0:n]))
 
+    def create_profile(self, oname, pname, vmlinuz, initrd, kargs, kargs_post=None):
+        """Create a profile in the profile origin with the name.
+        """
+        if oname not in self._origins["profiles"]:
+            raise Exception("Unknown origin: %s" % oname)
+        origin = self._origins["profiles"][oname]
+        origin.create_item(pname, vmlinuz, initrd, kargs, kargs_post)
 
 class FilesystemTestsuitesOrigin(Origin):
     paths = None

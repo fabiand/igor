@@ -138,6 +138,11 @@ class TemporaryDirectory:
         return self.tmpdir
 
     def __exit__(self, type, value, traceback):
+        pass
+
+    def clean(self):
+        rfiles = os.listdir(self.tmpdir)
+        logger.debug("Remaining files: %s" % rfiles)
         os.rmdir(self.tmpdir)
 
 

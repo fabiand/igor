@@ -57,10 +57,11 @@ class CobblerOrigin(testing.Origin):
 
     # def lookup could be done w/ cobbler native functions
 
-    def create_item(pname, vmlinuz_file, initrd_file, kargs_file, \
+    def create_item(self, pname, vmlinuz_file, initrd_file, kargs_file, \
                         kargs_post_file):
-        profile = self.new_profile(cprofile)
-        profile.populate_with(vmlinuz_file, initrd_file, kargs_file, kargs_post_file)
+        profile = self.cobbler.new_profile(pname)
+        profile.populate_with(vmlinuz_file, initrd_file, kargs_file, \
+                              kargs_post_file)
 
 #pydoc cobbler.remote
 class Cobbler(object):
@@ -135,7 +136,7 @@ class Cobbler(object):
                     logger.info(("Unknown '%s' host when trying to revoke " + \
                                  "igor profile.") % name)
 
-        def populate_with(vmlinuz, initrd, kargs, kargs_post=None):
+        def populate_with(self, vmlinuz, initrd, kargs, kargs_post=None):
             raise Exception("Not yet implemented")
 
     class Session:

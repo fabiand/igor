@@ -296,7 +296,13 @@ def profile_from_vmlinuz(pname):
                or len(files) != len(reqfiles):
                 bottle.abort(412, "Expecting %s files" % str(reqfiles))
             tarball.extractall(path=tmpdir)
-            inventory.create
+            xfiles = {f: os.path.join(tmpdir, f) for f in reqfiles}
+            inventory.create_profile(oname=None, pname=pname, **xfiles)
+            print xfiles.values()
+            for f in xfiles.values():
+                print f
+                os.remove(f)
+
 
 if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
     logger.info("Enabling remote ISO injection/management for cobbler")
