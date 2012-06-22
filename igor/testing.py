@@ -163,9 +163,6 @@ class Factory(utils.Factory):
     Files provide enough informations to build testsuites.
     """
 
-    class Variables(object):
-        pass
-
     @staticmethod
     def testsuites_from_path(path, suffix=".suite"):
         """Builds a dict of testsuites from *.suite files in a path.
