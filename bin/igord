@@ -36,8 +36,8 @@ def load_testsuites():
     return Factory.testsuites_from_paths(CONFIG["testcases.path"].split(":"))
 logger.debug("Current testsuites: %s" % str(load_testsuites()))
 
-def create_cobbler_profile(pname):
-    """This is actually creating a cobbler system, in cobbler terms
+def lookup_cobbler_profile(pname):
+    """This is actually looking up a cobbler system, in cobbler terms
     """
     return cobbler.new_profile(pname, {
       "kernel_options": " ".join([CONFIG["cobbler.kargs"], CONFIG["cobbler.kargs_install"]]),
@@ -95,7 +95,7 @@ def submit_testsuite(testsuite, profile, host, cookiereq=None):
 
     logger.debug("Checks done, submitting testsuite")
     resp = jc.submit_testsuite(testsuites[testsuite], \
-                               create_cobbler_profile(profile), \
+                               lookup_cobbler_profile(profile), \
                                host, cookiereq)
     return to_json(resp)
 
