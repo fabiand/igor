@@ -237,11 +237,11 @@ class State(object):
         return not (self == other)
 
 
-def obj2xml(root, obj):
+def obj2xml(root, obj, as_string=False):
     """Simple dict2xml mechanism
 
-    >>> a = {"abc": "ah", "b": { "one": 1, "two": "<2>" }, "c": [10,20,30]}
-    >>> root = obj2xml("root", a)
+    >>> data = {"abc": "ah", "b": { "one": 1, "two": "<2>" }, "c": [10,20,30]}
+    >>> root = obj2xml("root", data)
     >>> print(etree.tostring(root, pretty_print=True)).strip()
     <root>
       <c>10</c>
@@ -253,8 +253,13 @@ def obj2xml(root, obj):
         <one>1</one>
       </b>
     </root>
+
+    >>> a = etree.tostring(root, pretty_print=True).strip()
+    >>> b = obj2xml("root", data, True)
+    >>> a == b
+    True
     """
-    if type(root) == str:
+    if type(root) == str or type(root) == unicode:
         root = etree.Element(root)
     if type(obj) == list:
         for v in obj:
@@ -267,7 +272,11 @@ def obj2xml(root, obj):
             else:
                 root.append(obj2xml(k, v))
     else:
-        root.text = str(obj)
+        root.text = unicode(obj)
+
+    if as_string:
+        return etree.tostring(root, pretty_print=True).strip()
+
     return root
 
 
