@@ -27,6 +27,7 @@ def parse_config(fn = "igord.cfg"):
             logger.info("Loading config from '%s'" % filename)
             cfg.read(filename)
             was_read = True
+            break
     assert was_read == True, "Config file not found"
 
     return flatten_config(cfg)
