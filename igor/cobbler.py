@@ -214,10 +214,12 @@ class Cobbler(object):
             self.server.remove_system(name, self.token)
 
         def profiles(self):
-            return [e["name"] for e in self.server.get_profiles(self.token)]
+            return [e["name"] for e in self.server.get_profiles(self.token, \
+                                                        results_per_page=1000)]
 
         def systems(self):
-            return [e["name"] for e in self.server.get_systems(self.token)]
+            return [e["name"] for e in self.server.get_systems(self.token, \
+                                                        results_per_page=1000)]
 
 
 def example():
