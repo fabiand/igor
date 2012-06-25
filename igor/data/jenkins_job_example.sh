@@ -39,7 +39,7 @@ highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
 bash ./igorclient.sh extra_profile_add "$PROFILENAME" "$ISONAME"
 
 highlight "Create igor job"
-bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" ahost
+bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" "default"
 export $(bash ./igorclient.sh cookie)
 [[ -z $IGORCOOKIE ]] && { echo No Igor cookie ; return 1 ; }
 highlight "... start and wait to reach some endstate"
