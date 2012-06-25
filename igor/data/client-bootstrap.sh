@@ -93,9 +93,6 @@ EOP
       RETVAL=$?
     } > $TESTCASELOGFILE 2>&1
     debug "Testcase ended with: $RETVAL"
-    [[ -s $TESTCASELOGFILE ]] && {
-      echo "(No output from testcase $TESTCASE)" > $TESTCASELOGFILE
-    }
     add_artifact "${TESTCASE#*-}.log" $TESTCASELOGFILE
 
     if [[ $RETVAL == 0 ]];
