@@ -228,6 +228,10 @@ class VMHostFactory:
         host.network_configuration = network_configuration
         return host
 
+    @staticmethod
+    def hosts_from_configfile():
+        pass
+
 
 class VMAlwaysCreateHostOrigin(Origin):
     connection_uri = None

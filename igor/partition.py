@@ -62,18 +62,18 @@ class Layout(UpdateableObject):
             self.filename = run("mktemp --tmpdir='%s' 'vmimage-XXXX.img'" % \
                                 session_dir)
         logger.debug("Creating VM image '%s'" % self.filename)
-        self.truncate()
-        self.partition()
+        self.__truncate()
+        self.__partition()
         return self.filename
 
     def remove(self):
         logger.debug("Removing VM image '%s'" % self.filename)
         os.remove(self.filename)
 
-    def truncate(self):
+    def __truncate(self):
         run("truncate --size=%s '%s'" % (self.size, self.filename))
 
-    def partition(self):
+    def __partition(self):
         for_parted = []
 
         # Create label
@@ -86,7 +86,7 @@ class Layout(UpdateableObject):
             logger.debug("No partitions given")
         else:
             for p in self.partitions:
-                for_parted.append(p.for_parted())
+                for_parted.append(p.__to_parted__())
 
         # Quit parted
         for_parted.append("quit")
@@ -116,6 +116,6 @@ class Partition(UpdateableObject):
         self.end = end
         self.fs_type = fst
 
-    def for_parted(self):
+    def __to_parted__(self):
         return "mkpart %s %s %s %s" % (self.part_type, self.fs_type, \
                                        self.start, self.end)
