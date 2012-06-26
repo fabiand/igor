@@ -284,11 +284,13 @@ class CobblerHostsOrigin(testing.Origin):
     cobbler = None
     kargs = None
     kargs_post = None
+    prefix = None
 
-    def __init__(self, server_url, user, pw, kargs, kargs_post):
+    def __init__(self, server_url, user, pw, kargs, kargs_post, prefix=""):
         self.cobbler = Cobbler(server_url, (user, pw))
         self.kargs = kargs
         self.kargs_post = kargs_post
+        self.prefix = prefix
 
     def name(self):
         return "CobblerHostsOrigin(%s)" % self.cobbler.server_url
@@ -297,6 +299,8 @@ class CobblerHostsOrigin(testing.Origin):
         items = {}
         with self.cobbler.new_session() as cblr_sess:
             for sysname in cblr_sess.systems():
+                if not sysname.startswith(self.prefix):
+                    continue
                 host = CobblerHost()
                 host.remote = self.cobbler
                 host.name = sysname

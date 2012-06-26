@@ -52,7 +52,7 @@ testsuite_origins = {
 
 profile_origins = {
     "cobbler_profiles": \
-        cobbler.CobblerProfileOrigin(__cobbler_origin_args)
+        cobbler.CobblerProfileOrigin(*__cobbler_origin_args)
 }
 
 host_origins = {
@@ -63,7 +63,8 @@ host_origins = {
                     CONFIG["libvirtd.virt-install.network_configuration"]),
 
     "cobbler_systems": \
-        cobbler.CobblerHostsOrigin(__cobbler_origin_args),
+        # Just systems with igor- prefix
+        cobbler.CobblerHostsOrigin(*__cobbler_origin_args, "igor-"),
 
     "custom_hosts": \
         hosts.FilesystemRealHostsOrigin(CONFIG["hosts.path"].split(":"))
