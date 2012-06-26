@@ -29,6 +29,7 @@ search_paths = [".", "~/.igord", "/etc/igord"]
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
+
 def flatten_config(cfg):
     cfgdict = {}
     for section in cfg.sections():
@@ -37,7 +38,8 @@ def flatten_config(cfg):
             cfgdict[key] = value
     return cfgdict
 
-def parse_config(fn = "igord.cfg"):
+
+def parse_config(fn="igord.cfg"):
     cfg = ConfigParser.SafeConfigParser()
     was_read = False
     for sp in search_paths:

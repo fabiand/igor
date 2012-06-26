@@ -68,7 +68,7 @@ class RealHostFactory(utils.Factory):
         """
 
         if not os.path.isfile(filename):
-          raise Exception("Hosts filename does not exist: %s" % filename)
+            raise Exception("Hosts filename does not exist: %s" % filename)
 
         hostsconfig = ConfigParser.SafeConfigParser()
         hostsconfig.read(filename)
@@ -91,7 +91,7 @@ class RealHostFactory(utils.Factory):
         True
         """
         if not os.path.exists(path):
-          raise Exception("Hosts path does not exist: %s" % path)
+            raise Exception("Hosts path does not exist: %s" % path)
         hosts = {}
         pat = os.path.join(path, "*%s" % suffix)
         logger.debug("Trying to load hosts from %s" % pat)

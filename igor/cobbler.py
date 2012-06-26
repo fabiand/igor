@@ -65,6 +65,7 @@ class CobblerProfileOrigin(testing.Origin):
         profile.populate_with(vmlinuz_file, initrd_file, kargs_file, \
                               kargs_post_file)
 
+
 #pydoc cobbler.remote
 class Cobbler(object):
     """A simple wrapper around Cobbler's XMLRPC API.

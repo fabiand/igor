@@ -203,7 +203,7 @@ class Inventory(object):
         assert type(origins) is dict
         for name, origin in origins.items():
             if not isinstance(origin, Origin):
-                raise Exception(("Invalid %s origin '%s': '%s'") % ( k, \
+                raise Exception(("Invalid %s origin '%s': '%s'") % (k, \
                                                                source, origin))
             self._origins[k][name] = origin
 
@@ -252,11 +252,15 @@ class Inventory(object):
         hs = self.hosts()
         n = 10
         logger.debug("Found %d plan(s): %s …" % (len(ps), ps.keys()[0:n]))
-        logger.debug("Found %d testsuite(s): %s …" % (len(ts), ts.keys()[0:n]))
-        logger.debug("Found %d profiles(s): %s …" % (len(prs), prs.keys()[0:n]))
-        logger.debug("Found %d testsuite(s): %s …" % (len(hs), hs.keys()[0:n]))
+        logger.debug("Found %d testsuite(s): %s …" % (len(ts), \
+                                                      ts.keys()[0:n]))
+        logger.debug("Found %d profiles(s): %s …" % (len(prs), \
+                                                     prs.keys()[0:n]))
+        logger.debug("Found %d testsuite(s): %s …" % (len(hs), \
+                                                      hs.keys()[0:n]))
 
-    def create_profile(self, oname, pname, vmlinuz, initrd, kargs, kargs_post=None):
+    def create_profile(self, oname, pname, vmlinuz, initrd, kargs, \
+                       kargs_post=None):
         """Create a profile in the profile origin with the name.
         """
         if oname not in self._origins["profiles"]:
@@ -264,8 +268,10 @@ class Inventory(object):
         origin = self._origins["profiles"][oname]
         origin.create_item(pname, vmlinuz, initrd, kargs, kargs_post)
 
+
 class FilesystemTestsuitesOrigin(Origin):
     paths = None
+
     def __init__(self, paths):
         if type(paths) is not list:
             paths = [paths]

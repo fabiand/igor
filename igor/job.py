@@ -201,8 +201,8 @@ class Job(object):
             logger.debug("Finished job %s: %s" % (self.cookie, self.state()))
             self.watchdog.stop()
         else:
-            logger.debug("Awaiting results for step %s: %s" % (n+1, \
-                                            self.testsuite.testcases()[n+1]))
+            logger.debug("Awaiting results for step %s: %s" % (n + 1, \
+                                            self.testsuite.testcases()[n + 1]))
 
         self.current_step += 1
         return self.current_step
