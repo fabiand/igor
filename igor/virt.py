@@ -81,6 +81,20 @@ class VMHost(Host):
         self.prepare_images()
         self.prepare_vm()
 
+    def start(self):
+        self.boot()
+
+    def get_name(self):
+        return self._vm_name
+
+    def get_mac_address(self):
+        dom = etree.XML(self.dumpxml())
+        mac = dom.xpath("/domain/devices/interface[1]/mac")[0]
+        return mac.attrib["address"]
+
+    def purge(self):
+        self.remove()
+
     def prepare_images(self):
         logger.debug("Preparing images")
         if self.image_specs is None or len(self.image_specs) is 0:
@@ -144,20 +158,6 @@ class VMHost(Host):
         self._virsh("vol-upload --vol '%s' --file '%s' --pool '%s'" % ( \
                                                  volname, disk, self.poolname))
         return poolvol
-
-    def get_name(self):
-        return self._vm_name
-
-    def get_mac_address(self):
-        dom = etree.XML(self.dumpxml())
-        mac = dom.xpath("/domain/devices/interface[1]/mac")[0]
-        return mac.attrib["address"]
-
-    def start(self):
-        self.boot()
-
-    def purge(self):
-        self.remove()
 
     def start_vm_and_install_os(self):
         # Never reboot, even if requested by guest
