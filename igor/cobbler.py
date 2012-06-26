@@ -93,6 +93,9 @@ class Cobbler(object):
         name = None
         additional_args = None
 
+        system_existed = False
+        previous_profile = None
+
         def __init__(self, cobbler_session_cb, profile_name, additional_args):
             self.cobbler_session_cb = cobbler_session_cb
             self.name = profile_name
@@ -106,14 +109,33 @@ class Cobbler(object):
                 if self.name not in session.profiles():
                     logger.info("Available profiles: %s" % session.profiles())
                     raise Exception("Unknown profile '%s'" % (self.name))
+
                 additional_args = {}
                 for k, v in self.additional_args.items():
                     additional_args[k] = v.format(
                             igor_cookie=host.session.cookie
                         )
-                session.add_system(host.get_name(), host.get_mac_address(), \
-                                   self.name, additional_args)
+
+                system_handle = self.__get_or_create_system(session, \
+                                                            host.get_name())
+
+                session.assign_defaults(system_handle, \
+                                        name=host.get_name(), \
+                                        mac=host.get_mac_address(), \
+                                        profile=self.name, \
+                                        additional_args=additional_args)
+
                 session.set_netboot_enable(host.get_name(), True)
+
+        def __get_or_create_system(self, session, name):
+            system_handle = None
+            if name in session.systems():
+                logger.info("Reusing existing system %s" % name)
+                system_handle = session.get_system(name)
+                self.previous_profile = session.get_system(name)["profile"]
+            else:
+                system_handle = session.new_system()
+            return system_handle
 
         def enable_pxe(self, host, enable):
             with self.cobbler_session_cb() as session:
@@ -130,7 +152,15 @@ class Cobbler(object):
             logger.debug("Revoking host '%s' from cobbler " % name)
             with self.cobbler_session_cb() as session:
                 if name in session.systems():
-                    session.remove_system(name)
+                    if self.system_existed:
+                        logger.info(("Not removing system %s because it " + \
+                                     "existed before") % name)
+                        system_handle = session.get_system_handle(name)
+                        session.modify_system(system_handle, {
+                            "profile": self.previous_profile
+                        })
+                    else:
+                        session.remove_system(name)
                 else:
                     # Can happen if corresponding distro or profile was deleted
                     logger.info(("Unknown '%s' host when trying to revoke " + \
@@ -166,11 +196,8 @@ class Cobbler(object):
             logger.debug("Syncing")
             self.server.sync(self.token)
 
-        def add_system(self, name, mac, profile, additional_args=None):
-            """Add a new system.
-            """
-            logger.debug("Adding system %s" % name)
-
+        def assign_defaults(self, system_handle, name, mac, profile, \
+                            additional_args):
             args = {
                 "name": name,
                 "mac": mac,
@@ -187,13 +214,23 @@ class Cobbler(object):
                 logger.debug("Adding additional args: %s" % additional_args)
                 args.update(additional_args)
 
-            system_id = self.server.new_system(self.token)
+            self.modify_system(system_handle, args)
 
+        def new_system(self, name, mac, profile, additional_args=None):
+            """Add a new system.
+            """
+            logger.debug("Adding system %s" % name)
+            return self.server.new_system(self.token)
+
+        def get_system_handle(self, name):
+            return self.server.get_system_handle(name, self.token)
+
+        def modify_system(self, system_handle, args):
             for k, v in args.items():
                 logger.debug("Modifying system %s: %s=%s" % (name, k, v))
-                self.server.modify_system(system_id, k, v, self.token)
+                self.server.modify_system(system_handle, k, v, self.token)
 
-            self.server.save_system(system_id, self.token)
+            self.server.save_system(system_handle, self.token)
 
         def set_netboot_enable(self, name, pxe):
             """(Un-)Set netboot.
@@ -202,13 +239,8 @@ class Cobbler(object):
                 "netboot-enabled": 1 if pxe else 0
             }
 
-            system_handle = self.server.get_system_handle(name, self.token)
-
-            for k, v in args.items():
-                logger.debug("Modifying system: %s %s" % (k, v))
-                self.server.modify_system(system_handle, k, v, self.token)
-
-            self.server.save_system(system_handle, self.token)
+            system_handle = self.get_system_handle(name)
+            self.modify_system(system_handle, args)
 
         def remove_system(self, name):
             self.server.remove_system(name, self.token)
