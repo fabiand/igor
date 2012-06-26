@@ -6,6 +6,12 @@
 path = /usr/lib/igord/testcases/
 
 
+[Hosts]
+# Path to .hosts files
+# Separate multiple paths by ":"
+path = /etc/igor.d/
+
+
 [Session]
 # Path to store the sessions in
 path = /srv/igord/

@@ -23,42 +23,105 @@ import logging
 import utils
 from testing import *
 import virt
+import testing
+import ConfigParser
 
 
 logger = logging.getLogger(__name__)
 
 
-class RealHost(Host):
-  @staticmethod
-  def from_line(line):
-    # <hostname> <mac> …
-    token = line.split()
-    token.reverse()
-    assert len(token) > 1, "Hostname and MAC are mandatory"
-    hostname = token.pop()
-    mac = token.pop()
-    c = RealHost(hostname, mac)
-    return c
+class RealHost(GenericHost):
+    """Represents a real server.
+    Wich is currently just specified by a name and it's MAC address.
+    """
 
-  def __str__(self):
-    return "%s <%s>" % (self.name, self.mac)
+    poweron_script = None
+    poweroff_script = None
 
-  def __hash__(self):
-    return str(self)
+    def prepare(self, session):
+        # Not needed with real hosts
+        pass
+
+    def start(self):
+        logger.debug("Powering on %s: %s" % (self.get_name(), \
+                                             utils.run(self.poweron_script)))
+
+    def purge(self):
+        logger.debug("Powering off %s: %s" % (self.get_name(), \
+                                             utils.run(self.poweroff_script)))
+
+    def __str__(self):
+        return "%s <%s>" % (self.name, self.mac)
+
+    def __hash__(self):
+        return str(self)
 
 
 class RealHostFactory(utils.Factory):
-  def hosts_from_file(filename, suffix=".hosts"):
-    name = os.path.basename(filename).replace(suffix, "")
-    searchpath = os.path.dirname(filename)
-    cases = RealHostFactory._from_file(filename, {
-      None: lambda line: RealHost.from_line(os.path.join(searchpath, line))
-    })
-    return Testset(name=name, testcases=cases)
+    @staticmethod
+    def hosts_from_file(filename, suffix=".hosts"):
+        """Reads hosts from a cfg file.
 
-class HostInventory(object):
-  def host_from_name(name):
-    pass
+        >>> hosts = RealHostFactory.hosts_from_file("../data/example.hosts")
+        >>> hosts["ahost"].mac == "aa:bb:cc:dd:ee"
+        True
+        """
+
+        if not os.path.isfile(filename):
+          raise Exception("Hosts filename does not exist: %s" % filename)
+
+        hostsconfig = ConfigParser.SafeConfigParser()
+        hostsconfig.read(filename)
+        hosts = {}
+        for hostname in hostsconfig.sections():
+            host = RealHost()
+            props = {"name": hostname}
+            for prop in ["mac", "poweron_script", "poweroff_script"]:
+                props[prop] = hostsconfig.get(hostname, prop)
+            host.__dict__.update(props)
+            hosts[hostname] = host
+        return hosts
+
+    @staticmethod
+    def hosts_from_path(path, suffix=".hosts"):
+        """Load hosts form .hosts files in path
+
+        >>> hosts = RealHostFactory.hosts_from_path("../data/")
+        >>> hosts["ahost"].mac == "aa:bb:cc:dd:ee"
+        True
+        """
+        if not os.path.exists(path):
+          raise Exception("Hosts path does not exist: %s" % path)
+        hosts = {}
+        pat = os.path.join(path, "*%s" % suffix)
+        logger.debug("Trying to load hosts from %s" % pat)
+        for f in glob.glob(pat):
+            hosts.update(RealHostFactory.hosts_from_file(f))
+        return hosts
+
+    @staticmethod
+    def hosts_from_paths(paths, suffix=".hosts"):
+        """Builds hosts objects by reading them from files in paths
+
+        >>> hosts = RealHostFactory.hosts_from_paths(["../data/"])
+        >>> "ahost" in hosts
+        True
+        """
+        hosts = {}
+        paths = [str.strip(p) for p in paths]
+        for path in paths:
+            hosts.update(RealHostFactory.hosts_from_path(path, suffix))
+        return hosts
 
 
-# vim: sw=2:
+class FilesystemRealHostsOrigin(testing.Origin):
+    paths = None
+
+    def __init__(self, paths):
+        self.paths = paths
+
+    def name(self):
+        return "FilesystemRealHostsOrigin(%s)" % self.paths
+
+    def items(self):
+        return RealHostFactory.hosts_from_paths(self.paths)

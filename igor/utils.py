@@ -45,7 +45,6 @@ def run(cmd, with_retval=False):
         r = (proc.returncode, stdout.strip())
     return r
 
-
 def dict_to_args(d):
     return " ".join(["--%s" % k if v is None else \
                      "--%s=%s" % (k, v) \

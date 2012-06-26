@@ -60,6 +60,11 @@ class Host(UpdateableObject):
         """
         raise Exception("Not implemented.")
 
+    def start(self):
+        """Boot the host
+        """
+        raise Exception("Not implemented.")
+
     def get_name(self):
         """Get a _unique_ human readbale/understandable name for this host.
         """
@@ -87,10 +92,6 @@ class GenericHost(Host):
     name = None
     mac = None
 
-    def __init__(self, name, mac):
-        self.name = name
-        self.mac = mac
-
     def prepare(self, session):
         pass
 
@@ -99,9 +100,6 @@ class GenericHost(Host):
 
     def get_mac_address(self):
         return self.mac
-
-    def purge(self):
-        pass
 
 
 class Profile(UpdateableObject):
