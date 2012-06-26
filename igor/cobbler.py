@@ -21,23 +21,25 @@
 import logging
 import xmlrpclib
 from string import Template
+import time
 
 import testing
 
 logger = logging.getLogger(__name__)
 
 
-class CobblerOrigin(testing.Origin):
+class CobblerProfileOrigin(testing.Origin):
     cobbler = None
     kargs = None
     kargs_post = None
+
     def __init__(self, server_url, user, pw, kargs, kargs_post):
         self.cobbler = Cobbler(server_url, (user, pw))
         self.kargs = kargs
         self.kargs_post = kargs_post
 
     def name(self):
-        return "CobblerOrigin(%s)" % self.cobbler.server_url
+        return "CobblerProfilesOrigin(%s)" % self.cobbler.server_url
 
     def items(self):
         items = {}
@@ -253,8 +255,55 @@ class Cobbler(object):
             return [e["name"] for e in self.server.get_systems(self.token, \
                                                         1, 1000)]
 
-        def system(self, n):
-            return self.server.get_system(self.token, n)["name"]
+        def system(self, name):
+            return self.server.get_system(self.token, name)
+
+        def power_system(self, name, power):
+            assert power in ["on", "off"]
+            return self.server.background_power_system(power, self.token)
+
+
+class CobblerHost(hosts.RealHost):
+    remote = None
+
+    def start(self):
+        logger.debug("Powering on %s" % self.get_name())
+        with self.remote.new_session() as s:
+            s.power_system(self.get_name(), "off")
+            time.sleep(60)
+            s.power_system(self.get_name(), "on")
+
+    def purge(self):
+        logger.debug("Powering off %s" % self.get_name())
+        with self.remote.new_session() as s:
+            s.power_system(self.get_name(), "off")
+
+
+class CobblerHostsOrigin(testing.Origin):
+    cobbler = None
+    kargs = None
+    kargs_post = None
+
+    def __init__(self, server_url, user, pw, kargs, kargs_post):
+        self.cobbler = Cobbler(server_url, (user, pw))
+        self.kargs = kargs
+        self.kargs_post = kargs_post
+
+    def name(self):
+        return "CobblerHostsOrigin(%s)" % self.cobbler.server_url
+
+    def items(self):
+        items = {}
+        with self.cobbler.new_session() as cblr_sess:
+            for sysname in cblr_sess.systems():
+                host = CobblerHost()
+                host.remote = self.cobbler
+                host.name = sysname
+                host.mac = cblr_sess.system(sysname)["macaddress-eth0"]
+                items[sysname] = host
+        logger.debug("Number of cobbler hosts: %s" % len(items))
+#        logger.debug("Hosts: %s" % items)
+        return items
 
 
 def example():

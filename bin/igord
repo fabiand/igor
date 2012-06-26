@@ -36,26 +36,37 @@ logger = logging.getLogger(__name__)
 #
 CONFIG = config.parse_config()
 
+__cobbler_origin_args = (CONFIG["cobbler.url"], \
+                         CONFIG["cobbler.username"], \
+                         CONFIG["cobbler.password"], \
+                         CONFIG["cobbler.kargs"], \
+                         CONFIG["cobbler.kargs_install"])
+
 #
 # Now define our origins, where we get the items (hosts, profiles, …) from
 #
 testsuite_origins = {
-    "fs": FilesystemTestsuitesOrigin(CONFIG["testcases.path"].split(":"))
+    "filesystem": \
+        FilesystemTestsuitesOrigin(CONFIG["testcases.path"].split(":"))
 }
 
 profile_origins = {
-    None: cobbler.CobblerOrigin(CONFIG["cobbler.url"], \
-                             CONFIG["cobbler.username"], \
-                             CONFIG["cobbler.password"], \
-                             CONFIG["cobbler.kargs"], \
-                             CONFIG["cobbler.kargs_install"])
+    "cobbler_profiles": \
+        cobbler.CobblerProfileOrigin(__cobbler_origin_args)
 }
-cobbler = profile_origins[None].cobbler
 
 host_origins = {
-    "libvirt": virt.VMAlwaysCreateHostOrigin(CONFIG["libvirtd.connection_uri"], \
-                         CONFIG["libvirtd.virt-install.storage_pool"],
-                         CONFIG["libvirtd.virt-install.network_configuration"])
+    "libvirt_guests": \
+        virt.VMAlwaysCreateHostOrigin( \
+                    CONFIG["libvirtd.connection_uri"], \
+                    CONFIG["libvirtd.virt-install.storage_pool"], \
+                    CONFIG["libvirtd.virt-install.network_configuration"]),
+
+    "cobbler_systems": \
+        cobbler.CobblerHostsOrigin(__cobbler_origin_args),
+
+    "custom_hosts": \
+        hosts.FilesystemRealHostsOrigin(CONFIG["hosts.path"].split(":"))
 }
 
 #
@@ -71,9 +82,10 @@ inventory = Inventory( \
 inventory.check()
 
 
+__cobbler = profile_origins[None].cobbler
 def create_cobbler_profile_with(pname, vmlinuz_file, initrd_file, kargs_file, \
                         kargs_post_file):
-    profile = cobbler.new_profile(cprofile, {
+    profile = __cobbler.new_profile(cprofile, {
               "kernel_options": " ".join([CONFIG["cobbler.kargs"], \
                                             CONFIG["cobbler.kargs_install"]]),
               "kernel_options_post": CONFIG["cobbler.kargs"],
@@ -285,6 +297,7 @@ def list_profiles():
 
 @bottle.route('/profiles/<pname>', method='PUT')
 def profile_from_vmlinuz(pname):
+    bottle.abort(404, "NA")
     with utils.TemporaryDirectory() as tmpdir:
         logger.debug("Using tmpdir %s" % tmpdir)
         content = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
