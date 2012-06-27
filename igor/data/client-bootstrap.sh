@@ -80,6 +80,7 @@ EOP
 
     RETVAL=4242
     TESTCASELOGFILE=${TMPDIR}/$TESTCASE.log
+    :> $TESTCASELOGFILE
     debug "Running testcase $TESTCASE"
     {
       export IGOR_APIURL=$APIURL
@@ -93,7 +94,7 @@ EOP
       RETVAL=$?
     } > $TESTCASELOGFILE 2>&1
     debug "Testcase ended with: $RETVAL"
-    add_artifact "${TESTCASE#*-}.log" $TESTCASELOGFILE
+    [ -s $TESTCASELOGFILE ] && add_artifact "${TESTCASE#*-}.log" $TESTCASELOGFILE
 
     if [[ $RETVAL == 0 ]];
     then
