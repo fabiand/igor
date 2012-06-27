@@ -20,7 +20,6 @@
 
 import logging
 import xmlrpclib
-from string import Template
 import time
 
 import testing
@@ -284,13 +283,13 @@ class CobblerHostsOrigin(testing.Origin):
     cobbler = None
     kargs = None
     kargs_post = None
-    prefix = None
+    expression = None
 
-    def __init__(self, server_url, user, pw, kargs, kargs_post, prefix=""):
+    def __init__(self, server_url, user, pw, kargs, kargs_post, expression="igor-"):
         self.cobbler = Cobbler(server_url, (user, pw))
         self.kargs = kargs
         self.kargs_post = kargs_post
-        self.prefix = prefix
+        self.expression = expression
 
     def name(self):
         return "CobblerHostsOrigin(%s)" % self.cobbler.server_url
@@ -299,7 +298,8 @@ class CobblerHostsOrigin(testing.Origin):
         items = {}
         with self.cobbler.new_session() as cblr_sess:
             for sysname in cblr_sess.systems():
-                if not sysname.startswith(self.prefix):
+                if self.expression in sysname \
+                   or self.expression in cblr_sess.system(sysname)["comment"]):
                     continue
                 host = CobblerHost()
                 host.remote = self.cobbler
