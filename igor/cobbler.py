@@ -24,6 +24,7 @@ from string import Template
 import time
 
 import testing
+import hosts
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +193,6 @@ class Cobbler(object):
             pass
 
         def login(self):
-            logger.debug("Logging into cobbler")
             self.token = self.server.login(*(self.credentials))
 
         def sync(self):
@@ -219,10 +219,10 @@ class Cobbler(object):
 
             self.modify_system(system_handle, args)
 
-        def new_system(self, name, mac, profile, additional_args=None):
+        def new_system(self):
             """Add a new system.
             """
-            logger.debug("Adding system %s" % name)
+            logger.debug("Adding a new system")
             return self.server.new_system(self.token)
 
         def get_system_handle(self, name):
@@ -230,7 +230,7 @@ class Cobbler(object):
 
         def modify_system(self, system_handle, args):
             for k, v in args.items():
-                logger.debug("Modifying system %s: %s=%s" % (name, k, v))
+                logger.debug("Modifying system: %s=%s" % (k, v))
                 self.server.modify_system(system_handle, k, v, self.token)
 
             self.server.save_system(system_handle, self.token)
