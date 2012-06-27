@@ -1,0 +1,12 @@
+[DEFAULT]
+poweron_script = cobbler system poweron --name=%(cobbler_name)s
+poweroff_script = cobbler system poweroff --name=%(cobbler_name)s
+
+[ahost]
+mac = aa:bb:cc:dd:ee
+cobbler_name = ahost
+
+[bhost]
+mac = aa:bb:cc:dd:ff
+poweron_script = sometoo poweroff %(mac)s
+poweroff_script = sometool poweron %(mac)s
