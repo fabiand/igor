@@ -20,6 +20,7 @@ from igor.cobbler import Cobbler
 from igor.job import *
 import igor.utils as utils
 import igor.reports as reports
+import igor.hosts as hosts
 
 import igor.config as config
 
@@ -51,22 +52,22 @@ testsuite_origins = {
 }
 
 profile_origins = {
-    "cobbler_profiles": \
+    "cobbler": \
         cobbler.CobblerProfileOrigin(*__cobbler_origin_args)
 }
 
 host_origins = {
-    "libvirt_guests": \
+    "libvirt": \
         virt.VMAlwaysCreateHostOrigin( \
                     CONFIG["libvirtd.connection_uri"], \
                     CONFIG["libvirtd.virt-install.storage_pool"], \
                     CONFIG["libvirtd.virt-install.network_configuration"]),
 
-    "cobbler_systems": \
+    "cobbler": \
         # Just systems with igor- prefix
-        cobbler.CobblerHostsOrigin(*__cobbler_origin_args, "igor-"),
+        cobbler.CobblerHostsOrigin(*__cobbler_origin_args, prefix="igor-"),
 
-    "custom_hosts": \
+    "files": \
         hosts.FilesystemRealHostsOrigin(CONFIG["hosts.path"].split(":"))
 }
 
@@ -83,7 +84,7 @@ inventory = Inventory( \
 inventory.check()
 
 
-__cobbler = profile_origins[None].cobbler
+__cobbler = profile_origins["cobbler"].cobbler
 def create_cobbler_profile_with(pname, vmlinuz_file, initrd_file, kargs_file, \
                         kargs_post_file):
     profile = __cobbler.new_profile(cprofile, {

@@ -256,7 +256,7 @@ class Inventory(object):
                                                       ts.keys()[0:n]))
         logger.debug("Found %d profiles(s): %s …" % (len(prs), \
                                                      prs.keys()[0:n]))
-        logger.debug("Found %d testsuite(s): %s …" % (len(hs), \
+        logger.debug("Found %d hosts(s): %s …" % (len(hs), \
                                                       hs.keys()[0:n]))
 
     def create_profile(self, oname, pname, vmlinuz, initrd, kargs, \
