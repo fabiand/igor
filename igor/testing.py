@@ -135,7 +135,7 @@ class Profile(UpdateableObject):
     def delete(self):
         raise Exception("Not implemented.")
 
-    def populate_with(vmlinuz, initrd, kargs, kargs_post=None):
+    def populate_with(vmlinuz, initrd, kargs, kargs_post):
         """Populate a profile with the data from the given arguments.
         vmlinuz, initrd, kargs and kargs_post are expected to be paths to files
         used to create the profile.
@@ -183,6 +183,8 @@ class Inventory(object):
     This inventory can be used to lookup *existsing* items.
     Use a factory to create the objects, or pass a Factory as a callback.
     """
+
+    _origins = None
 
     def __init__(self, plans={}, testsuites={}, profiles={}, hosts={}):
         """Each parameter is a list of callbacks to list all items of that
@@ -280,7 +282,7 @@ class Inventory(object):
                                                       hs.keys()[0:n]))
 
     def create_profile(self, oname, pname, vmlinuz, initrd, kargs, \
-                       kargs_post=None):
+                       kargs_post):
         """Create a profile in the profile origin with the name.
         """
         if oname not in self._origins["profiles"]:

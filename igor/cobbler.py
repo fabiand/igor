@@ -21,6 +21,7 @@
 import logging
 import xmlrpclib
 import time
+import os
 
 import testing
 import hosts
@@ -170,8 +171,46 @@ class Cobbler(object):
                     logger.info(("Unknown '%s' host when trying to revoke " + \
                                  "igor profile.") % name)
 
-        def populate_with(self, vmlinuz, initrd, kargs, kargs_post=None):
-            raise Exception("Not yet implemented")
+        def populate_with(self, vmlinuz, initrd, kargs):
+            remote_path = "/tmp/"
+            self.__scp_files_to_remote(remote_path, vmlinuz, initrd, kargs)
+            self.__ssh_create_remote_distro_and_profile(remote_path, vmlinuz, initrd, kargs)
+
+        def __scp_files_to_remote(self, remote_path, vmlinuz, initrd, kargs):
+            cmd = """
+                scp {vmlinuz} {initrd} {kargs} {remote_url}/tmp/igor-{profilename}
+            """.format(
+                    profilename=self.get_name(),
+                    vmlinuz=vmlinuz,
+                    initrd=initrd,
+                    kargs=kargs,
+                    remote_url=
+                    )
+
+        def __ssh_create_remote_distro_and_profile(self, remote_path, vmlinuz, initrd, kargs):
+            cmd = """
+                cobbler distro add \
+                    --name="{profilename}-distro" \
+                    --kernel="{vmlinuz}" \
+                    --initrd="{initrd}" \
+                    --kopts="{kargs}" \
+                    --arch="{arch}" \
+                    --breed="other" \
+                    --os-version=""
+
+                cobbler profile add \
+                    --name="{profilename}" \
+                    --distro="{profilename}-distro" \
+                    --kickstart="" \
+                    --repos=""
+            """.format(
+                profilename=self.get_name(),
+                vmlinuz=os.path.join(remote_path, vmlinuz),
+                initrd=os.path.join(remote_path, initrd),
+                kargs=os.path.join(remote_path, kargs),
+                arch="x86_64"
+                )
+            logger.debug("On remote: %s" % cmd)
 
     class Session:
         """Helper to login and sync
@@ -305,7 +344,7 @@ class CobblerHostsOrigin(testing.Origin):
                 host.remote = self.cobbler
                 host.name = sysname
                 host.origin = self
-#                host.mac = cblr_sess.system(sysname)["macaddress-eth0"]
+                host.mac = None
                 items[sysname] = host
         logger.debug("Number of cobbler hosts: %s" % len(items))
 #        logger.debug("Hosts: %s" % items)

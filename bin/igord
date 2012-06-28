@@ -342,7 +342,7 @@ def testcase_source(tsname, tcname):
 
 @bottle.route('/profiles/<pname>', method='PUT')
 def profile_from_vmlinuz(pname):
-    bottle.abort(404, "NA")
+#    bottle.abort(404, "NA")
     with utils.TemporaryDirectory() as tmpdir:
         logger.debug("Using tmpdir %s" % tmpdir)
         content = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
@@ -355,10 +355,8 @@ def profile_from_vmlinuz(pname):
                 bottle.abort(412, "Expecting %s files" % str(reqfiles))
             tarball.extractall(path=tmpdir)
             xfiles = {f: os.path.join(tmpdir, f) for f in reqfiles}
-            inventory.create_profile(oname=None, pname=pname, **xfiles)
-            print xfiles.values()
+            inventory.create_profile(oname="cobbler", pname=pname, **xfiles)
             for f in xfiles.values():
-                print f
                 os.remove(f)
 
 
