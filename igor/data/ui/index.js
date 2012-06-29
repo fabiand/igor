@@ -50,4 +50,9 @@ $(document).ready(function(){
     var li = $("<li>").append(a)
     $("#toc").append(li)
   })
+
+  setTimeout(function() {
+    window.location.reload()
+  }, 60*1000)
+
 });

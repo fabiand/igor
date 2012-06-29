@@ -17,11 +17,11 @@
   <body>
     <div id="header">
         <h1>Igor</h1>
+    </div>
+    <div id="content">
         <ul id="toc">
             <li>toc:</li>
         </ul>
-    </div>
-    <div id="content">
         <h2>Jobs</h2>
         <div id="testsuites" load="/jobs?format=xml&amp;root=jobs" />
 
@@ -46,18 +46,19 @@
     <td>Profile</td>
     <td>Testsuite</td>
     <td>Runtime</td>
-    <td>Testcase</td>
-    <td/>
+    <td>State</td>
     </tr>
     </thead>
     <tbody>
-    <xsl:for-each select="/all">
+    <xsl:for-each select="all/*">
         <tr>
-            <td><xsl:value-of select ="./id"/></td>
-            <td><xsl:value-of select ="./testsuite/name"/></td>
-            <td><xsl:value-of select ="./profile"/></td>
-            <td><xsl:value-of select ="./host"/></td>
-            <td>Abort</td>
+            <td><xsl:value-of select ="name(.)"/></td>
+            <td><xsl:value-of select ="host"/></td>
+            <td><xsl:value-of select ="profile"/></td>
+            <td><xsl:value-of select ="testsuite/name"/></td>
+            <td><xsl:value-of select ="runtime"/> /
+            <xsl:value-of select ="timeout"/></td>
+            <td><xsl:value-of select ="state"/></td>
         </tr>
         <xsl:apply-templates select="testsets" />
     </xsl:for-each>
