@@ -99,7 +99,8 @@ def create_cobbler_profile_with(pname, vmlinuz_file, initrd_file, kargs_file, \
 class IgordJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Job) or isinstance(obj, Testsuite) or \
-           isinstance(obj, Testset) or isinstance(obj, Testcase):
+           isinstance(obj, Testset) or isinstance(obj, Testcase) or \
+           isinstance(obj, Profile):
             return obj.__to_dict__()
         elif isinstance(obj, utils.State):
             return str(obj)
@@ -108,11 +109,22 @@ class IgordJSONEncoder(json.JSONEncoder):
 
 def to_json(obj):
     format = "json"
+    root_tag = "result"
+
     r = json.dumps(obj, cls=IgordJSONEncoder, sort_keys=True, indent=2)
+
+    if "format" in bottle.request.query:
+        format = bottle.request.query["format"]
+    if "root" in bottle.request.query:
+        root_tag = bottle.request.query["root"]
+
     if "x-igor-format-xml" in bottle.request.headers:
         format = "xml"
-        r = json.loads(r)
-        r = utils.obj2xml("result", r, as_string=True)
+
+    if format == "xml":
+        j = json.loads(r)
+        r = "<?xml-stylesheet type='text/xsl' href='/ui/index.xsl' ?>\n"
+        r += utils.obj2xml(root_tag, j, as_string=True)
     bottle.response.content_type = "application/%s" % format
     return r
 
@@ -122,9 +134,13 @@ def to_json(obj):
 #
 @bottle.route('/')
 def index():
-    return "<?xml-stylesheet type='text/xsl' href='/ui/style.xsl' ?>"
+    bottle.response.content_type = "text/xml"
+    return "<?xml-stylesheet type='text/xsl' href='/ui/index.xsl' ?>\n<index/>"
 
 @bottle.route('/ui/<filename>')
+def ui_data(filename):
+    return bottle.static_file(filename, root=config.DATA_DIR + "/ui/")
+
 @bottle.route('/static/data/<filename>')
 def static_data(filename):
     return bottle.static_file(filename, root=config.DATA_DIR)

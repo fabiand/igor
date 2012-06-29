@@ -1,0 +1,124 @@
+
+/* vim: set sw=2: */
+
+body
+{
+  margin: 0;
+  padding: 0;
+  font-family: "Basic";
+}
+
+div#header
+{
+  position: fixed;
+  width: 100%;
+}
+
+div#content
+{
+  padding: 1em;
+  padding-top: 6em;
+  width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+h1
+{
+  padding: .5em 1em;
+  margin: 0;
+  background-color: #2C2C2C;
+  background-image: -moz-linear-gradient(center top , #333333, #222222);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.5), 0 -1px 0 rgba(0, 0, 0, 0.1) inset;
+  text-shadow: 0px 0px 3px black;
+  color: white;
+}
+
+a
+{
+  color: rgba(0, 136, 204, 1);
+  text-decoration: none;
+}
+
+ul#toc
+{
+  margin: 0;
+  padding: 0;
+  height: 2em;
+  display: block;
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+#toc li
+{
+  list-style: none;
+  float: left;
+  padding: .2em .5em;
+  margin: 0;
+}
+
+table
+{
+  border: 1px solid lightgray;
+  font-size: 0.8em;
+  border-spacing: 0;
+  width: 100%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+thead
+{
+  background: gray;
+  font-weight: lighter;
+  color: white;
+}
+
+thead td
+{
+  padding: .2em 3em;
+}
+
+tr:nth-child(odd)
+{
+  background-color: rgba(0, 0, 0, 0.0);
+}
+
+td
+{
+  padding: .2em .4em;
+  border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
+}
+
+tbody tr:hover
+{
+  background-color: rgba(0, 136, 204, 0.2);
+  border: 0;
+}
+
+.loading
+{
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  opacity: 0.5;
+  padding: 3em;
+  text-align: center;
+
+/* https://developer.mozilla.org/en/CSS/CSS_animations*/
+  -moz-animation-duration: 1s;
+  -moz-animation-name: pulsate;
+  -moz-animation-iteration-count: infinite;
+  -moz-animation-direction: alternate;  
+}
+
+@-moz-keyframes pulsate
+{
+  from {
+   opacity: 0.5;
+  }
+
+  to {
+   opacity: 0.8;
+  }
+}

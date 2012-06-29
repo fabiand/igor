@@ -133,6 +133,11 @@ class Profile(UpdateableObject):
         """
         raise Exception("Not implemented.")
 
+    def __to_dict__(self):
+        return {
+                "name": self.get_name()
+            }
+
 
 class Origin(object):
     def name(self):
