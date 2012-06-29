@@ -298,13 +298,12 @@ class CobblerHostsOrigin(testing.Origin):
         items = {}
         with self.cobbler.new_session() as cblr_sess:
             for sysname in cblr_sess.systems():
-                if self.expression in sysname \
-                   or self.expression in cblr_sess.system(sysname)["comment"]):
+                if self.expression in sysname:
                     continue
                 host = CobblerHost()
                 host.remote = self.cobbler
                 host.name = sysname
-                host.mac = cblr_sess.system(sysname)["macaddress-eth0"]
+#                host.mac = cblr_sess.system(sysname)["macaddress-eth0"]
                 items[sysname] = host
         logger.debug("Number of cobbler hosts: %s" % len(items))
 #        logger.debug("Hosts: %s" % items)
