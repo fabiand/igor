@@ -120,6 +120,15 @@ def to_json(obj):
 #
 # bottles
 #
+@bottle.route('/')
+def index():
+    return "<?xml-stylesheet type='text/xsl' href='/ui/style.xsl' ?>"
+
+@bottle.route('/ui/<filename>')
+@bottle.route('/static/data/<filename>')
+def static_data(filename):
+    return bottle.static_file(filename, root=config.DATA_DIR)
+
 @bottle.route('/submit/<tname>/with/<pname>/on/<hname>')
 @bottle.route('/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')
 def submit_testsuite(tname, pname, hname, cookiereq=None):
@@ -260,11 +269,6 @@ def get_bootstrap_script(cookie):
         bottle.abort(404, 'No testsuite for %s' % (cookie))
 
     return r
-
-
-@bottle.route('/static/data/<filename>')
-def static_data(filename):
-    return bottle.static_file(filename, root=config.DATA_DIR)
 
 
 @bottle.route('/testsuites')
