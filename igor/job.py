@@ -421,9 +421,9 @@ class JobCenter(object):
         cookie = cookie_req
         self._cookie_lock.acquire()
         while cookie is None or cookie in self.jobs.keys():
-            cookie = "i%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), \
+            cookie = "%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), \
                                  len(self.jobs.items()))
-            cookie = utils.surl(cookie.replace("-", ""))
+            cookie = utils.surl("i" + cookie.replace("-", ""))
         self._cookie_lock.release()
         assert cookie is not None, "Cookie creation failed: %s -> %s" % ( \
                                                             cookie_req, cookie)
