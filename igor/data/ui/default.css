@@ -60,11 +60,21 @@ ul#toc
 table
 {
   border: 1px solid lightgray;
-  font-size: 0.8em;
+  font-size: 0.9em;
   border-spacing: 0;
   width: 100%;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   border-radius: 3px;
+}
+
+table table
+{
+  background-color: white;
+}
+
+td table td
+{
+  padding-right: 0;
 }
 
 thead
@@ -74,9 +84,15 @@ thead
   color: white;
 }
 
-thead td
+thead td,
+tfoot td
 {
-  padding: .2em 3em;
+  padding: .2em 1em;
+}
+
+tfoot td
+{
+  font-size: .7em;
 }
 
 tr:nth-child(odd)
@@ -98,27 +114,29 @@ tbody tr:hover
 
 .loading
 {
+  opacity: 0.2;
   background-color: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 10px;
-  opacity: 0.5;
+  border: 1px solid rgba(0, 0, 0, 0.2);
   padding: 3em;
   text-align: center;
+  font-size: .7em;
 
 /* https://developer.mozilla.org/en/CSS/CSS_animations*/
   -moz-animation-duration: 1s;
   -moz-animation-name: pulsate;
   -moz-animation-iteration-count: infinite;
-  -moz-animation-direction: alternate;  
+  -moz-animation-direction: alternate;
 }
 
 @-moz-keyframes pulsate
 {
   from {
-   opacity: 0.5;
+   opacity: 0.2;
   }
 
   to {
-   opacity: 0.8;
+   opacity: 0.4;
   }
 }
+

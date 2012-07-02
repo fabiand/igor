@@ -23,7 +23,7 @@
             <li>toc:</li>
         </ul>
         <h2>Jobs</h2>
-        <div id="testsuites" load="/jobs?format=xml&amp;root=jobs" />
+        <div id="jobs" load="/jobs?format=xml&amp;root=jobs" />
 
         <h2>Testsuites</h2>
         <div id="testsuites" load="/testsuites?format=xml&amp;root=testsuites" />
@@ -45,22 +45,18 @@
     <td>Host</td>
     <td>Profile</td>
     <td>Testsuite</td>
-    <td>Runtime</td>
-    <td>State</td>
+    <td/>
     </tr>
     </thead>
     <tbody>
-    <xsl:for-each select="all/*">
+
+    <xsl:for-each select="/all">
         <tr>
-            <td><xsl:value-of select ="name(.)"/></td>
-            <td><xsl:value-of select ="host"/></td>
-            <td><xsl:value-of select ="profile"/></td>
-            <td><xsl:value-of select ="testsuite/name"/></td>
-            <td><xsl:value-of select ="runtime"/> /
-            <xsl:value-of select ="timeout"/></td>
-            <td><xsl:value-of select ="state"/></td>
+            <td><xsl:value-of select ="./id"/></td>
+            <td><xsl:value-of select ="./host"/></td>
+            <td><xsl:value-of select ="./profile"/></td>
+            <td><xsl:value-of select ="./testsuite/name"/></td>
         </tr>
-        <xsl:apply-templates select="testsets" />
     </xsl:for-each>
     </tbody>
 </table>
@@ -70,40 +66,46 @@
 <table>
     <thead>
     <tr>
-    <td>Testsuite</td>
-    <td>Testset</td>
-    <td>Testcase</td>
+    <td>Testsuites</td>
     </tr>
     </thead>
     <tbody>
     <xsl:for-each select="./*">
-        <tr>
-            <td colspan="3">
-                <xsl:value-of select ="./name"/>
-            </td>
-        </tr>
+    <tr><td>
+        <a onclick="$(this).closest('tr').next().find('div').first().slideToggle()">
+            <xsl:value-of select ="./name"/>
+        </a>
+    </td></tr>
+    <tr><td><div style="display: none">
         <xsl:apply-templates select="testsets" />
+    </div></td></tr>
     </xsl:for-each>
     </tbody>
 </table>
 </xsl:template>
 
 <xsl:template match="testsets">
-    <tr>
-        <td/>
-        <td colspan="2">
-           <xsl:value-of select ="./name"/>
-        </td>
-    </tr>
+    <table>
+    <tr><td>
+        <a onclick="$(this).closest('tr').next().find('div').first().slideToggle()">
+            <xsl:value-of select ="./name"/>
+        </a>
+    </td></tr>
+    <tr><td><div style="display: none">
+    <table>
     <xsl:apply-templates select="testcases" />
+    </table>
+    </div></td></tr>
+    </table>
 </xsl:template>
 
 <xsl:template match="testcases">
     <tr>
-        <td colspan="2" />
         <td>
-            <xsl:value-of select ="./name"/> 
-            (<xsl:value-of select ="./timeout"/>)
+            <xsl:value-of select ="./name"/>
+        </td>
+        <td>
+            <xsl:value-of select ="./timeout"/>
         </td>
     </tr>
 </xsl:template>
