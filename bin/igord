@@ -189,6 +189,7 @@ def job_report(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
+    bottle.response.content_type = "text/plain; charset=utf8"
     return str(reports.status_to_report(j.__to_dict__()))
 
 
