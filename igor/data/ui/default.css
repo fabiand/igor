@@ -84,12 +84,6 @@ thead
   color: white;
 }
 
-thead td,
-tfoot td
-{
-  padding: .2em 1em;
-}
-
 tfoot td
 {
   font-size: .7em;
