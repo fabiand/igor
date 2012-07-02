@@ -54,7 +54,7 @@ $(document).ready(function(){
 
     if ($(el).attr("on-request"))
     {
-      $(el).text("Click to load from " + url)
+      $(el).html("Click to load from url (<a href='url'>source</a>).".replace(/url/g, url))
       $(el).click(function() {
         $(el).removeAttr("on-request")
         $(el).load_xml(url)
