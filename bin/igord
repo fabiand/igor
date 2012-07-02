@@ -317,6 +317,22 @@ def list_profiles():
     return to_json(inventory.profiles())
 
 
+@bottle.route('/testsuites/<tsname>/testcases/<tcname>/source')
+def testcase_source(tsname, tcname):
+    testsuites = inventory.testsuites()
+    if name not in testsuites:
+        bottle.abort(404, "Unknown testsuite '%s'" % name)
+    t = testsuites[name]
+    source = None
+    for case in t.testcases():
+        if case.name == tcname:
+            source = case.source()
+            break
+    if source == None:
+        abort(404, "Unknown testcase '%s'" % tcname)
+    return source
+
+
 @bottle.route('/profiles/<pname>', method='PUT')
 def profile_from_vmlinuz(pname):
     bottle.abort(404, "NA")
