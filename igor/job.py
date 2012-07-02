@@ -403,7 +403,7 @@ class JobCenter(object):
 
         logger.debug("JobCenter opened in %s" % self.session_path)
 
-        self._worker = JobCenter.JobWorker(jc=self, removal_age=5 * 60)
+        self._worker = JobCenter.JobWorker(jc=self, cleanup_age=5 * 60)
         self._worker.start()
 
     def __del__(self):
@@ -496,11 +496,12 @@ class JobCenter(object):
 
     class JobWorker(utils.PollingWorkerDaemon):
         jc = None
-        removal_age = None
+        cleanup_age = None
+        max_cleaned_jobs = 10
 
-        def __init__(self, jc, removal_age):
+        def __init__(self, jc, cleanup_age):
             self.jc = jc
-            self.removal_age = removal_age
+            self.cleanup_age = cleanup_age
             utils.PollingWorkerDaemon.__init__(self)
 
         def work(self):
@@ -529,7 +530,7 @@ class JobCenter(object):
 
             # Look for jobs to remove
             for j in self.jc._queue_of_ended_jobs:
-                if j.ended_within(self.removal_age):
+                if j.ended_within(self.cleanup_age):
                     # not yet long enough ended
                     pass
                 else:
@@ -537,3 +538,20 @@ class JobCenter(object):
                     j.clean()
                     self.jc._queue_of_ended_jobs.remove(j)
                     logger.info("Job %s cleaned." % cookie)
+
+            if len(self.jc.jobs) > self.max_cleaned_jobs:
+                self._remove_oldest_job()
+
+        def _remove_oldest_job(self):
+            oldest_job = None
+
+            for cookie, job in self.jc.jobs.items():
+                if not job.reached_endstate():
+                    break
+                if oldest_job is None \
+                   or job.created_at < oldest_job.created_at:
+                    oldest_job = job
+
+            if oldest_job is not None:
+                logger.info("Removing job %s" % oldest_job.cookie)
+                del self.jc.jobs[oldest_job.cookie]
