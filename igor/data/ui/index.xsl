@@ -45,17 +45,19 @@
     <td>Host</td>
     <td>Profile</td>
     <td>Testsuite</td>
+    <td>State</td>
     <td/>
     </tr>
     </thead>
     <tbody>
 
-    <xsl:for-each select="/all">
+    <xsl:for-each select="all/*">
         <tr>
             <td><xsl:value-of select ="./id"/></td>
             <td><xsl:value-of select ="./host"/></td>
             <td><xsl:value-of select ="./profile"/></td>
             <td><xsl:value-of select ="./testsuite/name"/></td>
+            <td><xsl:value-of select ="./state"/></td>
         </tr>
     </xsl:for-each>
     </tbody>
