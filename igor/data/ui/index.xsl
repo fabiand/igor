@@ -49,7 +49,6 @@
     <td>Profile</td>
     <td>Testsuite</td>
     <td>State</td>
-    <td/>
     </tr>
     </thead>
     <tbody>
