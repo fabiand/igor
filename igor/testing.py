@@ -52,6 +52,7 @@ class Host(UpdateableObject):
         The associated test session object.
     """
     session = None
+    origin = None
 
     def prepare(self, session):
         """Prepare a host until the point where a testsuite can be submitted.
@@ -84,6 +85,12 @@ class Host(UpdateableObject):
         """
         raise Exception("Not implemented.")
 
+    def __to_dict__(self):
+        return {
+                "name": self.get_name(),
+                "origin": self.origin
+            }
+
 
 class GenericHost(Host):
     """This class can be used to map to real servers
@@ -105,6 +112,8 @@ class GenericHost(Host):
 class Profile(UpdateableObject):
     """A profile is some abstraction of an installation.
     """
+
+    origin = None
 
     def get_name(self):
         """Get the unique name of this profile
@@ -135,7 +144,8 @@ class Profile(UpdateableObject):
 
     def __to_dict__(self):
         return {
-                "name": self.get_name()
+                "name": self.get_name(),
+                "origin": self.origin
             }
 
 
@@ -161,6 +171,11 @@ class Origin(object):
         """Create an item at origin (or default origin if None)
         """
         raise Exception("Not implemented.")
+
+    def __to_dict__(self):
+        return {
+                "name": self.name(),
+            }
 
 
 class Inventory(object):
@@ -399,6 +414,7 @@ class Testsuite(object):
 
     name = None
     testsets = None
+    origin = None
 
     def __init__(self, name, testsets=[]):
         self.name = name

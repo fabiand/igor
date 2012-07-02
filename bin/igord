@@ -100,7 +100,8 @@ class IgordJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Job) or isinstance(obj, Testsuite) or \
            isinstance(obj, Testset) or isinstance(obj, Testcase) or \
-           isinstance(obj, Profile):
+           isinstance(obj, Profile) or isinstance(obj, Origin) or \
+           isinstance(obj, Host):
             return obj.__to_dict__()
         elif isinstance(obj, utils.State):
             return str(obj)
@@ -316,6 +317,11 @@ def get_testsuite_archive(name):
 @bottle.route('/profiles')
 def list_profiles():
     return to_json(inventory.profiles())
+
+
+@bottle.route('/hosts')
+def list_hosts():
+    return to_json(inventory.hosts())
 
 
 @bottle.route('/testsuites/<tsname>/testcases/<tcname>/source')

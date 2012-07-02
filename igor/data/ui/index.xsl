@@ -44,12 +44,12 @@
 <table>
     <thead>
     <tr>
-    <td>Job</td>
-    <td>Host</td>
-    <td>Profile</td>
-    <td>Testsuite</td>
-    <td>State</td>
-    <td />
+    <th>Job</th>
+    <th>Host</th>
+    <th>Profile</th>
+    <th>Testsuite</th>
+    <th>State</th>
+    <th />
     </tr>
     </thead>
     <tbody>

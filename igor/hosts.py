@@ -124,4 +124,7 @@ class FilesystemRealHostsOrigin(testing.Origin):
         return "FilesystemRealHostsOrigin(%s)" % self.paths
 
     def items(self):
-        return RealHostFactory.hosts_from_paths(self.paths)
+        hosts = RealHostFactory.hosts_from_paths(self.paths)
+        for key in hosts:
+            hosts[key].origin = self
+        return hosts

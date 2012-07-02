@@ -46,6 +46,7 @@ class CobblerProfileOrigin(testing.Origin):
         with self.cobbler.new_session() as cblr_sess:
             for cpname in cblr_sess.profiles():
                 iprofile = self._igor_profile_from_cobbler_profile(cpname)
+                iprofile.origin = self
                 items[cpname] = iprofile
         logger.debug("Number of profiles: %s" % len(items))
 #        logger.debug("Profiles: %s" % items)
@@ -303,6 +304,7 @@ class CobblerHostsOrigin(testing.Origin):
                 host = CobblerHost()
                 host.remote = self.cobbler
                 host.name = sysname
+                host.origin = self
 #                host.mac = cblr_sess.system(sysname)["macaddress-eth0"]
                 items[sysname] = host
         logger.debug("Number of cobbler hosts: %s" % len(items))

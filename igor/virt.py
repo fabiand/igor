@@ -70,7 +70,7 @@ class VMHost(Host):
 
     def __init__(self, *args, **kwargs):
         self.vm_defaults = {}
-        self._vm_name = "(not yet created)"
+        self._vm_name = "VMHost (Not yet created)"
         Host.__init__(self, *args, **kwargs)
 
     def prepare(self, session):
@@ -247,8 +247,11 @@ class VMAlwaysCreateHostOrigin(Origin):
         return "VMAlwaysCreateHostOrigin(%s)" % str(self.__dict__)
 
     def items(self):
-        return {"default": VMHostFactory.create_default_host( \
+        hosts = {"default": VMHostFactory.create_default_host( \
                             connection_uri=self.connection_uri, \
                             storage_pool=self.storage_pool, \
                             network_configuration=self.network_configuration)
                }
+        for key in hosts:
+            hosts[key].origin = self
+        return hosts
