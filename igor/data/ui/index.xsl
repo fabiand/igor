@@ -49,6 +49,7 @@
     <td>Profile</td>
     <td>Testsuite</td>
     <td>State</td>
+    <td />
     </tr>
     </thead>
     <tbody>
@@ -60,6 +61,14 @@
             <td><xsl:value-of select ="./profile"/></td>
             <td><xsl:value-of select ="./testsuite/name"/></td>
             <td><xsl:value-of select ="./state"/></td>
+            <td>
+                <a>
+                    <xsl:attribute name="href">
+                        <xsl:text>/job/report/</xsl:text><xsl:value-of select ="./id"/>
+                    </xsl:attribute>
+                    Report
+                </a>
+            </td>
         </tr>
     </xsl:for-each>
     </tbody>
