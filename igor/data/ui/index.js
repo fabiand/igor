@@ -50,7 +50,20 @@ function __load_and_transform_xml(el, url, cb)
 
 $(document).ready(function(){
   $("div[load]").each(function(index,el){
-    $(el).load_xml($(el).attr("load"))
+    var url = $(el).attr("load")
+
+    if ($(el).attr("on-request"))
+    {
+      $(el).text("Click to load from " + url)
+      $(el).click(function() {
+        $(el).removeAttr("on-request")
+        $(el).load_xml(url)
+      })
+    }
+    else
+    {
+      $(el).load_xml(url)
+    }
   })
 
   $("h2").each(function(index, el) {

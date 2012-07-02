@@ -29,7 +29,10 @@
         <div id="testsuites" load="/testsuites?format=xml&amp;root=testsuites" />
 
         <h2>Profiles</h2>
-        <div id="profiles" load="/profiles?format=xml&amp;root=profiles" />
+        <div id="profiles" on-request="true" load="/profiles?format=xml&amp;root=profiles" />
+
+        <h2>Hosts</h2>
+        <div id="hosts" on-request="true" load="/hosts?format=xml&amp;root=hosts" />
 
         <script type="text/javascript" src="/ui/index.js"></script>
     </div>
@@ -79,12 +82,15 @@
 <table>
     <thead>
     <tr>
-    <td>Testsuites</td>
+    <th>Testsuites</th>
     </tr>
     </thead>
     <tbody>
     <xsl:for-each select="./*">
     <tr><td>
+        <xsl:attribute name="title">
+            <xsl:value-of select ="./origin/name"/>
+        </xsl:attribute>
         <a onclick="$(this).closest('tr').next().find('div').first().slideToggle()">
             <xsl:value-of select ="./name"/>
         </a>
@@ -128,13 +134,39 @@
 <table>
     <thead>
     <tr>
-    <td>Name</td>
+    <th>Name</th>
     </tr>
     </thead>
     <tbody>
     <xsl:for-each select="./*">
         <tr>
             <td>
+                <xsl:attribute name="title">
+                    <xsl:value-of select ="./origin/name"/>
+                </xsl:attribute>
+                <xsl:value-of select ="./name"/>
+            </td>
+        </tr>
+    </xsl:for-each>
+    </tbody>
+</table>
+</xsl:template>
+
+
+<xsl:template match="/hosts">
+<table>
+    <thead>
+    <tr>
+    <th>Name</th>
+    </tr>
+    </thead>
+    <tbody>
+    <xsl:for-each select="./*">
+        <tr>
+            <td>
+                <xsl:attribute name="title">
+                    <xsl:value-of select ="./origin/name"/>
+                </xsl:attribute>
                 <xsl:value-of select ="./name"/>
             </td>
         </tr>

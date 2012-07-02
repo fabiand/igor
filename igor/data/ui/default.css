@@ -108,16 +108,25 @@ tbody tr:hover
   border: 0;
 }
 
-.loading
+.loading,
+div[on-request]
 {
-  opacity: 0.2;
+  opacity: 0.4;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 10px;
   border: 1px solid rgba(0, 0, 0, 0.2);
   padding: 3em;
   text-align: center;
   font-size: .7em;
+}
 
+div[on-request]
+{
+  cursor: pointer;
+}
+
+.loading
+{
 /* https://developer.mozilla.org/en/CSS/CSS_animations*/
   -moz-animation-duration: 1s;
   -moz-animation-name: pulsate;
@@ -135,6 +144,7 @@ tbody tr:hover
    opacity: 0.4;
   }
 }
+
 
 div#footer
 {
