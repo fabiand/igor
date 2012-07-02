@@ -25,13 +25,15 @@ div#content
 
 h1
 {
-  padding: .5em 1em;
+  padding: .5em 2em;
   margin: 0;
   background-color: #2C2C2C;
-  background-image: -moz-linear-gradient(center top , #333333, #222222);
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.5), 0 -1px 0 rgba(0, 0, 0, 0.1) inset;
+  background-image: -moz-linear-gradient(center top , #444, #222);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   text-shadow: 0px 0px 3px black;
   color: white;
+  font-size: 1.2em;
+  font-weight: lighter;
 }
 
 a
