@@ -8,15 +8,18 @@ function __load_and_transform_xml(el, url, cb)
       throw new Error("No stylesheet given")
 
     var xsl_proc = new XSLTProcessor ()
-    xsl_url = xml.firstChild.data.match(/href='([^']+)/)[1]
+    var xsl_url = xml.firstChild.data.match(/href='([^']+)/)[1]
     $.get(xsl_url, function(xsl) {
       xsl_proc.importStylesheet (xsl)
-      $(el).empty().append(xsl_proc.transformToFragment (xml, document))
+      var fragment = xsl_proc.transformToFragment (xml, document)
+      $(el).slideUp(function() {
+        $(el).empty().append(fragment).slideDown("slow")
+        if (cb != undefined)
+        {
+          cb(el)
+        }
+      })
     }, "xml")
-    if (cb != undefined)
-    {
-      cb()
-    }
   })
 }
 
@@ -26,14 +29,23 @@ function __load_and_transform_xml(el, url, cb)
   $.fn.load_xml = function(url) {
       this.each(function(idx, el) {
         $(el).addClass("loading")
-        $(el).text("Loading …")
-        __load_and_transform_xml(el, url, function() {
-          $(el).removeClass("loading")
+        $(el).html("Loading from <a href='url'>url</a>".replace(/url/g, url))
+        __load_and_transform_xml(el, url, function(ele) {
+          $(ele).removeClass("loading")
+//          $(ele).add_table_footer("Source: " + url)
         })
       })
     };
 
+  $.fn.add_table_footer = function(text) {
+    var footer = $("<tfoot><tr><td>abc</td></tr></tfoot>")
+    footer.find("td").html(text)
+    this.find("table").append(footer)
+  };
+
 })( jQuery );
+
+
 
 
 $(document).ready(function(){
