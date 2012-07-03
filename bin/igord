@@ -40,7 +40,7 @@ CONFIG = config.parse_config()
 __cobbler_origin_args = (CONFIG["cobbler.url"], \
                          CONFIG["cobbler.username"], \
                          CONFIG["cobbler.password"], \
-                         CONFIG["cobbler.iso_injection.ssh_uri"])
+                         CONFIG["cobbler.ssh_uri"])
 
 #
 # Now define our origins, where we get the items (hosts, profiles, …) from
