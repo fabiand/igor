@@ -132,15 +132,28 @@ def surl(number):
 
 class TemporaryDirectory:
     tmpdir = None
+    cleanfiles = None
+
+    def __init__(self, cleanfiles=[]):
+        self.tmpdir = tempfile.mkdtemp()
+        self.cleanfiles = cleanfiles
 
     def __enter__(self):
-        self.tmpdir = tempfile.mkdtemp()
         return self.tmpdir
 
     def __exit__(self, type, value, traceback):
         pass
 
+    def cleanfile(self, f):
+        if type(f) is str:
+            f = [f]
+        self.cleanfiles += f
+        print "kkk",  self.cleanfiles
+
     def clean(self):
+        for f in self.cleanfiles:
+            logger.debug("Removing %s" % f)
+            os.remove(os.path.join(self.tmpdir, f))
         rfiles = os.listdir(self.tmpdir)
         logger.debug("Remaining files: %s" % rfiles)
         os.rmdir(self.tmpdir)
