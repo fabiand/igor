@@ -341,7 +341,10 @@ def testcase_source(tsname, tcname):
 
 
 @bottle.route('/profiles/<pname>', method='PUT')
-def profile_from_vmlinuz(pname):
+@bottle.route('/profiles/<pname>/kernel', method='PUT')
+@bottle.route('/profiles/<pname>/kernel/args', method='PUT')
+@bottle.route('/profiles/<pname>/initramfs', method='PUT')
+def profile_from_vmlinuz_put(pname):
 #    bottle.abort(404, "NA")
     with utils.TemporaryDirectory() as tmpdir:
         logger.debug("Using tmpdir %s" % tmpdir)
@@ -354,11 +357,30 @@ def profile_from_vmlinuz(pname):
                or len(files) != len(reqfiles):
                 bottle.abort(412, "Expecting %s files" % str(reqfiles))
             tarball.extractall(path=tmpdir)
+            tmpdir.cleanfile(reqfiles)
             xfiles = {f: os.path.join(tmpdir, f) for f in reqfiles}
             inventory.create_profile(oname="cobbler", pname=pname, **xfiles)
-            for f in xfiles.values():
-                os.remove(f)
 
+@bottle.route('/profiles/<pname>', method='POST')
+def profile_from_vmlinuz_post(pname):
+    reqfiles = set(["kernel", "initrd", "kargs"])
+    _tmpdir = utils.TemporaryDirectory(reqfiles)
+    with _tmpdir as tmpdir:
+        logger.debug("Using tmpdir %s" % tmpdir)
+        file_dict = {field: store for field, store \
+                                  in bottle.request.files.items()}
+        if len(set(file_dict.keys()).difference(reqfiles)) != 0:
+            bottle.abort(412, "Not all required files given: %s" % reqfiles)
+        written_files = {}
+        for filename, store in file_dict.items():
+            dstn = os.path.join(tmpdir, filename)
+            with open(dstn, "wb") as d:
+                logger.debug("Writing '%s'" % d)
+                d.write(store.file.read())
+                written_files[filename] = dstn
+        inventory.create_profile(oname="cobbler", pname=pname, \
+                                 **written_files)
+    _tmpdir.clean()
 
 if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
     logger.info("Enabling remote ISO injection/management for cobbler")

@@ -61,10 +61,10 @@ class CobblerProfileOrigin(testing.Origin):
 
     # def lookup could be done w/ cobbler native functions
 
-    def create_item(self, pname, vmlinuz_file, initrd_file, kargs_file, \
+    def create_item(self, pname, kernel_file, initrd_file, kargs_file, \
                         kargs_post_file):
         profile = self.cobbler.new_profile(pname)
-        profile.populate_with(vmlinuz_file, initrd_file, kargs_file, \
+        profile.populate_with(kernel_file, initrd_file, kargs_file, \
                               kargs_post_file)
 
 
@@ -184,7 +184,7 @@ class Cobbler(object):
                     vmlinuz=vmlinuz,
                     initrd=initrd,
                     kargs=kargs,
-                    remote_url=
+                    remote_url="FIXME"
                     )
 
         def __ssh_create_remote_distro_and_profile(self, remote_path, vmlinuz, initrd, kargs):
