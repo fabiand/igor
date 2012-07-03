@@ -128,21 +128,31 @@ artifacts() # Get all artifacts for the current job
 #
 # Extra
 #
-extra_profile_add() # Add a profile to a remote cobbler server, EXTRA
+add_profile() # Add a profile from kernel, initrd and kargs files
 {
   PNAME=$1
-  ISONAME=$2
+  KERNEL=$2
+  INITRD=$3
+  KARGS=$4
   [[ -z $PNAME ]] && die "Profile name is mandatory."
-  [[ -z $ISONAME ]] && die "ISO name is mandatory."
-  [[ ! -e $ISONAME ]] && die "ISO does not exist."
-  URL=$(_api_url extra/profile/add/$PNAME/iso/$ISONAME/remote)
-  curl --silent --request PUT --upload-file "$ISONAME" "$URL"
+  [[ ! -e $KERNEL ]] && die "kernel file does not exist."
+  [[ ! -e $INITRD ]] && die "initrd file does not exist."
+  [[ ! -e $KARGS ]] && die "kargs file does not exist."
+  ARCHIVE="/tmp/$PNAME_files.tar"
+  URL=$(_api_url profile/$PNAME)
+  ln $KERNEL kernel
+  ln $INITRD initrd
+  ln $KARGS kargs
+  tar cf $ARCHIVE kernel initrd kargs
+  curl --upload-file $ARCHIVE "$URL"
+  rm -f $ARCHIVE kernel initrd kargs
+# Slow:  curl -F "kernel=@$KERNEL" -F"initrd=@$INITRD" -F"kargs=@$KARGS" "$URL"
 }
-extra_profile_remove() # Remove a profile from a remote cobbler server, EXTRA
+remove_profile() # Remove a profile
 {
   PNAME=$1
   [[ -z $PNAME ]] && die "Profile name is mandatory."
-  api extra/profile/remove/$PNAME/remote
+  api /profile/$PNAME/remove
 }
 
 

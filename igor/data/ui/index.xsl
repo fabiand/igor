@@ -13,6 +13,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script>
     <link href='http://fonts.googleapis.com/css?family=Basic' rel='stylesheet' type='text/css'/>
     <link rel="stylesheet" type="text/css" href="/ui/default.css" />
+    <link rel="stylesheet" type="text/css" href="/ui/stripes.css" />
   </head>
   <body>
     <div id="header">

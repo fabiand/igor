@@ -36,7 +36,12 @@ curl --silent "${IGORCLIENTURL}" --output "igorclient.sh"
 export PROFILENAME="${BASENAMEPREFIX}${BUILD_TAG}"
 
 highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
-bash ./igorclient.sh extra_profile_add "$PROFILENAME" "$ISONAME"
+livecd-iso-to-pxeboot "$ISONAME"
+KERNEL=tftpboot/vmlinuz*
+INITRD=tftpboot/initrd*
+KARGS=tftpboot/kargs
+sed -n "/APPEND/s/[[:space:]]*APPEND//p" txtpboot/pxelinux.cfg/default > $KARGS
+bash ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
 
 highlight "Create igor job"
 bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" "default"
@@ -55,7 +60,7 @@ bash ./igorclient.sh status
 bash ./igorclient.sh report | tee igor-report.txt
 
 highlight "remove cobbler distro/profile"
-bash ./igorclient.sh extra_profile_remove "$PROFILENAME"
+bash ./igorclient.sh remove_profile "$PROFILENAME"
 
 # Passed? The exit.
 [[ "x$LAST_STATE" == "xpassed" ]] && exit 0

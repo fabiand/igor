@@ -274,13 +274,13 @@ class Inventory(object):
         logger.debug("Found %d hosts(s): %s …" % (len(hs), \
                                                       hs.keys()[0:n]))
 
-    def create_profile(self, oname, pname, kernel, initrd, kargs, kargs_post):
+    def create_profile(self, oname, pname, kernel, initrd, kargs):
         """Create a profile in the profile origin with the name.
         """
         if oname not in self._origins["profiles"]:
             raise Exception("Unknown origin: %s" % oname)
         origin = self._origins["profiles"][oname]
-        origin.create_item(pname, kernel, initrd, kargs, kargs_post)
+        origin.create_item(pname, kernel, initrd, kargs)
 
 
 class FilesystemTestsuitesOrigin(Origin):

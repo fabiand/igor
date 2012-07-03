@@ -40,8 +40,7 @@ CONFIG = config.parse_config()
 __cobbler_origin_args = (CONFIG["cobbler.url"], \
                          CONFIG["cobbler.username"], \
                          CONFIG["cobbler.password"], \
-                         CONFIG["cobbler.kargs"], \
-                         CONFIG["cobbler.kargs_install"])
+                         CONFIG["cobbler.iso_injection.ssh_uri"])
 
 #
 # Now define our origins, where we get the items (hosts, profiles, …) from
@@ -53,7 +52,7 @@ testsuite_origins = {
 
 profile_origins = {
     "cobbler": \
-        cobbler.CobblerProfileOrigin(*__cobbler_origin_args)
+        cobbler.ProfileOrigin(*__cobbler_origin_args)
 }
 
 host_origins = {
@@ -65,7 +64,7 @@ host_origins = {
 
     "cobbler": \
         # Just systems with igor- prefix
-        cobbler.CobblerHostsOrigin(*__cobbler_origin_args, expression="igor-"),
+        cobbler.HostsOrigin(*__cobbler_origin_args, expression="igor-"),
 
     "files": \
         hosts.FilesystemRealHostsOrigin(CONFIG["hosts.path"].split(":"))
@@ -82,18 +81,6 @@ inventory = Inventory( \
     profiles=profile_origins, \
     hosts=host_origins)
 inventory.check()
-
-
-__cobbler = profile_origins["cobbler"].cobbler
-def create_cobbler_profile_with(pname, vmlinuz_file, initrd_file, kargs_file, \
-                        kargs_post_file):
-    profile = __cobbler.new_profile(cprofile, {
-              "kernel_options": " ".join([CONFIG["cobbler.kargs"], \
-                                            CONFIG["cobbler.kargs_install"]]),
-              "kernel_options_post": CONFIG["cobbler.kargs"],
-              })
-    profile.populate_with(vmlinuz_file, initrd_file, kargs_file, kargs_post_file)
-
 
 
 class IgordJSONEncoder(json.JSONEncoder):
@@ -339,27 +326,22 @@ def testcase_source(tsname, tcname):
         abort(404, "Unknown testcase '%s'" % tcname)
     return source
 
-
 @bottle.route('/profiles/<pname>', method='PUT')
-@bottle.route('/profiles/<pname>/kernel', method='PUT')
-@bottle.route('/profiles/<pname>/kernel/args', method='PUT')
-@bottle.route('/profiles/<pname>/initramfs', method='PUT')
 def profile_from_vmlinuz_put(pname):
-#    bottle.abort(404, "NA")
-    with utils.TemporaryDirectory() as tmpdir:
-        logger.debug("Using tmpdir %s" % tmpdir)
-        content = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
-        with io.BytesIO(content) as data, \
-             tarfile.open(fileobj=data) as tarball:
-            reqfiles = ["vmlinuz", "initrd", "kargs", "kargs_post"]
-            files = tarball.getnames()
-            if not all([n in files for n in reqfiles]) \
-               or len(files) != len(reqfiles):
+    reqfiles = set(["kernel", "initrd", "kargs"])
+    _tmpdir = utils.TemporaryDirectory(reqfiles)
+    with _tmpdir as tmpdir:
+        logger.debug("Using PUT tmpdir %s" % tmpdir)
+        with tarfile.open(fileobj=bottle.request.body) as tarball:
+            arcfiles = tarball.getnames()
+            logger.debug("PUT %s" % arcfiles)
+            if not all([r in arcfiles for r in reqfiles]):
                 bottle.abort(412, "Expecting %s files" % str(reqfiles))
             tarball.extractall(path=tmpdir)
-            tmpdir.cleanfile(reqfiles)
-            xfiles = {f: os.path.join(tmpdir, f) for f in reqfiles}
-            inventory.create_profile(oname="cobbler", pname=pname, **xfiles)
+        written_files = {fn: os.path.join(tmpdir, fn) for fn in reqfiles}
+        inventory.create_profile(oname="cobbler", pname=pname, \
+                                 **written_files)
+    _tmpdir.clean()
 
 @bottle.route('/profiles/<pname>', method='POST')
 def profile_from_vmlinuz_post(pname):
@@ -367,10 +349,10 @@ def profile_from_vmlinuz_post(pname):
     _tmpdir = utils.TemporaryDirectory(reqfiles)
     with _tmpdir as tmpdir:
         logger.debug("Using tmpdir %s" % tmpdir)
+        if not all([r in bottle.request.files.keys() for r in reqfiles]):
+            bottle.abort(412, "Not all required files given: %s" % reqfiles)
         file_dict = {field: store for field, store \
                                   in bottle.request.files.items()}
-        if len(set(file_dict.keys()).difference(reqfiles)) != 0:
-            bottle.abort(412, "Not all required files given: %s" % reqfiles)
         written_files = {}
         for filename, store in file_dict.items():
             dstn = os.path.join(tmpdir, filename)
@@ -382,52 +364,12 @@ def profile_from_vmlinuz_post(pname):
                                  **written_files)
     _tmpdir.clean()
 
-if utils.parse_bool(CONFIG["cobbler.iso_injection.enable"]):
-    logger.info("Enabling remote ISO injection/management for cobbler")
-
-    @bottle.route('/extra/profile/add/<pname>/iso/<isoname>/remote', method='PUT')
-    def add_iso_profile_remote(pname, isoname):
-        retval = 0
-        with utils.TemporaryDirectory() as tmpdir:
-            logger.debug("Writing iso file.")
-            with open(os.path.join(tmpdir, isoname), "wb") as isofile:
-                isofile.write(bottle.request.body.read(BOTTLE_MAX_READ_SIZE))
-            logger.debug("Done writing iso file.")
-            cmd = """
-    cd {tmpdir}
-    [[ -e "{isoname}" ]] || ( echo NO {isoname} ; exit 1; )
-    ls -lah
-    export KOPTS="{kopts}" # To reduce the number of opts
-    bash "{config_datadir}/cobbler_iso_tool.sh" remote_add "{sshuri}" "{profilename}" "{isoname}" >&2
-    RETVAL=$?
-    rm -f "{isoname}"
-    exit $RETVAL
-    """.format( \
-            config_datadir=config.DATA_DIR, \
-            tmpdir=tmpdir, \
-            sshuri=CONFIG["cobbler.iso_injection.remote_cobbler_ssh_uri"], \
-            profilename=pname, \
-            isoname=isoname,
-            kopts=CONFIG["cobbler.iso_injection.remote_cobbler_kopts"])
-            retval, stdout = run(cmd, with_retval=True)
-        return to_json((retval, stdout))
-
-    @bottle.route('/extra/profile/remove/<pname>/remote')
-    def remove_iso_profile_remote(pname):
-        retval = 0
-        with utils.TemporaryDirectory() as tmpdir:
-            cmd = """
-    cd {tmpdir}
-    bash "{config_datadir}/cobbler_iso_tool.sh" remote_remove "{sshuri}" "{profilename}"
-    exit 0
-    """.format( \
-            config_datadir=config.DATA_DIR, \
-            tmpdir=tmpdir, \
-            sshuri=CONFIG["cobbler.iso_injection.remote_cobbler_ssh_uri"], \
-            profilename=pname)
-            retval, stdout = run(cmd, with_retval=True)
-        return to_json((retval, stdout))
-
+@bottle.route('/profiles/<pname>', method='DELETE')
+@bottle.route('/profiles/<pname>/remove')
+def delete_profile(pname):
+    if pname not in inventory.profiles():
+        bottle.abort(404, "Unknown profile")
+    inventory.profiles()[pname].delete()
 
 if __name__ == "__main__":
     try:
