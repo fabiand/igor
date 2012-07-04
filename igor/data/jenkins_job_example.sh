@@ -36,7 +36,7 @@ curl --silent "${IGORCLIENTURL}" --output "igorclient.sh"
 export PROFILENAME="${BASENAMEPREFIX}${BUILD_TAG}"
 
 highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
-livecd-iso-to-pxeboot "$ISONAME"
+sudo livecd-iso-to-pxeboot "$ISONAME"
 KERNEL=tftpboot/vmlinuz*
 INITRD=tftpboot/initrd*
 KARGS=tftpboot/kargs
