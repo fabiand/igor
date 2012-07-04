@@ -354,7 +354,8 @@ def profile_from_vmlinuz_post(pname):
         file_dict = {field: store for field, store \
                                   in bottle.request.files.items()}
         written_files = {}
-        for filename, store in file_dict.items():
+        for filename in reqfiles:
+            store = file_dict[filename]
             dstn = os.path.join(tmpdir, filename)
             with open(dstn, "wb") as d:
                 logger.debug("Writing '%s'" % d)
@@ -363,6 +364,16 @@ def profile_from_vmlinuz_post(pname):
         inventory.create_profile(oname="cobbler", pname=pname, \
                                  **written_files)
     _tmpdir.clean()
+
+@bottle.route('/profiles/<pname>/kargs', method='POST')
+def delete_profile(pname):
+    if pname not in inventory.profiles():
+        bottle.abort(404, "Unknown profile")
+    kargs = bottle.request.forms.kargs
+    if kargs:
+        inventory.profiles()[pname].set_kargs(kargs)
+    else:
+        bottle.abort(412, "No kargs specified")
 
 @bottle.route('/profiles/<pname>', method='DELETE')
 @bottle.route('/profiles/<pname>/remove')

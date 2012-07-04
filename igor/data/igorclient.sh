@@ -154,6 +154,15 @@ remove_profile() # Remove a profile
   [[ -z $PNAME ]] && die "Profile name is mandatory."
   api /profile/$PNAME/remove
 }
+profile_kargs() # Set the kernel arguments of a profile
+{
+  PNAME=$1
+  KARGS=$2
+  [[ -z $PNAME ]] && die "Profile name is mandatory."
+  [[ -z $KARGS ]] && die "kargs are mandatory."
+  URL=$(_api_url profile/$PNAME)
+  curl --data "kargs=$KARGS" "$URL"
+}
 
 
 #

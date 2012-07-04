@@ -40,7 +40,8 @@ livecd-iso-to-pxeboot "$ISONAME"
 KERNEL=tftpboot/vmlinuz*
 INITRD=tftpboot/initrd*
 KARGS=tftpboot/kargs
-sed -n "/APPEND/s/[[:space:]]*APPEND//p" txtpboot/pxelinux.cfg/default > $KARGS
+echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" pxelinux.cfg/default \
+       | egrep -o "(root|ro|live|check|rhgb)[^[:space:]]*") > $KARGS
 bash ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
 
 highlight "Create igor job"

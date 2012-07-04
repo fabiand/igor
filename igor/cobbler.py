@@ -122,9 +122,9 @@ class Profile(testing.Profile):
         return self.name
 
     def assign_to(self, host):
-        with self.cobbler_session_cb() as session:
-            if self.name not in session.profiles():
-                logger.info("Available profiles: %s" % session.profiles())
+        with self.remote as remote:
+            if self.name not in remote.profiles():
+                logger.info("Available profiles: %s" % remote.profiles())
                 raise Exception("Unknown profile '%s'" % (self.name))
 
             additional_args = {}
@@ -133,45 +133,52 @@ class Profile(testing.Profile):
                         igor_cookie=host.session.cookie
                     )
 
-            system_handle = self.__get_or_create_system(session, \
+            system_handle = self.__get_or_create_system(remote, \
                                                         host.get_name())
 
-            session.assign_defaults(system_handle, \
+            remote.assign_defaults(system_handle, \
                                     name=host.get_name(), \
                                     mac=host.get_mac_address(), \
                                     profile=self.name, \
                                     additional_args=additional_args)
 
-            session.set_netboot_enable(host.get_name(), True)
+            remote.set_netboot_enable(host.get_name(), True)
 
-    def __get_or_create_system(self, session, name):
+    def __get_or_create_system(self, remote, name):
         system_handle = None
-        if name in session.systems():
+        if name in remote.systems():
             logger.info("Reusing existing system %s" % name)
-            system_handle = session.get_system(name)
-            self.previous_profile = session.get_system(name)["profile"]
+            system_handle = remote.get_system_handle(name)
+            self.previous_profile = remote.get_system(name)["profile"]
         else:
-            system_handle = session.new_system()
+            system_handle = remote.new_system()
         return system_handle
 
+    def set_kargs(self, kargs):
+        with self.remote as remote:
+            handle = remote.get_profile_handle(self.get_name())
+            remote.modify_profile(handle, {
+                    "kernel_options": kargs
+                })
+
     def enable_pxe(self, host, enable):
-        with self.cobbler_session_cb() as session:
-            session.set_netboot_enable(host.get_name(), enable)
+        with self.remote as remote:
+            remote.set_netboot_enable(host.get_name(), enable)
 
     def revoke_from(self, host):
         name = host.get_name()
         logger.debug("Revoking host '%s' from cobbler " % name)
-        with self.cobbler_session_cb() as session:
-            if name in session.systems():
+        with self.remote as remote:
+            if name in remote.systems():
                 if self.system_existed:
                     logger.info(("Not removing system %s because it " + \
                                  "existed before") % name)
-                    system_handle = session.get_system_handle(name)
-                    session.modify_system(system_handle, {
+                    system_handle = remote.get_system_handle(name)
+                    remote.modify_system(system_handle, {
                         "profile": self.previous_profile
                     })
                 else:
-                    session.remove_system(name)
+                    remote.remove_system(name)
             else:
                 # Can happen if corresponding distro or profile was deleted
                 logger.info(("Unknown '%s' host when trying to revoke " + \
@@ -320,8 +327,16 @@ class Cobbler(object):
         for k, v in args.items():
             logger.debug("Modifying system: %s=%s" % (k, v))
             self.server.modify_system(system_handle, k, v, self.token)
-
         self.server.save_system(system_handle, self.token)
+
+    def get_profile_handle(self, name):
+        return self.server.get_profile_handle(name, self.token)
+
+    def modify_profile(self, profile_handle, args):
+        for k, v in args.items():
+            logger.debug("Modifying profile: %s=%s" % (k, v))
+            self.server.modify_profile(profile_handle, k, v, self.token)
+        self.server.save_profile(profile_handle, self.token)
 
     def set_netboot_enable(self, name, pxe):
         """(Un-)Set netboot.
