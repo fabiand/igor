@@ -1,0 +1,42 @@
+
+/*
+ * http://lea.verou.me/demos/css3-patterns.html
+  class="horizontal stripes"
+  class="vertical stripes"
+  class="angled stripes"
+ */
+.stripes
+{
+/*  height: 250px;
+  width: 375px;
+  float: left;
+  margin: 10px;
+  -moz-box-shadow: 1px 1px 8px gray;
+  box-shadow: 1px 1px 8px gray;*/
+  background-size: 50px 50px;
+}
+
+.angled
+{
+  background-color: #ac0;
+  background-image: -moz-linear-gradient(45deg, rgba(255, 255, 255, .2) 25%, transparent 25%,
+            transparent 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, .2) 75%,
+            transparent 75%, transparent);
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, .2) 25%, transparent 25%,
+            transparent 50%, rgba(255, 255, 255, .2) 50%, rgba(255, 255, 255, .2) 75%,
+            transparent 75%, transparent);
+}
+
+
+.horizontal {
+  background-color: #0ae;
+  background-image: -moz-linear-gradient(rgba(255, 255, 255, .2) 50%, transparent 50%, transparent);
+  background-image: linear-gradient(rgba(255, 255, 255, .2) 50%, transparent 50%, transparent);
+}
+
+.vertical {
+  background-color: #f90;
+/*  background-image: -moz-linear-gradient(0deg, rgba(255, 255, 255, .2) 50%, transparent 50%, transparent);*/
+  background-image: linear-gradient(0deg, rgba(255, 255, 255, .2) 50%, transparent 50%, transparent);
+}
+    
