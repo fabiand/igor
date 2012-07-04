@@ -54,7 +54,7 @@ class RealHost(GenericHost):
         return "%s <%s>" % (self.name, self.mac)
 
     def __hash__(self):
-        return hash(self)
+        return hash(str(self))
 
 
 class RealHostFactory(utils.Factory):
