@@ -23,7 +23,10 @@ url = http://cobbler.example.com/cobbler_api
 username = cobbler
 password = cobbler
 
-# Needed to create profiles
+# This expression needs to be ni the hostname, so igor manages it
+host_identification_expression = igor-
+
+# SSH URI (passwordless authentication) to import profiles
 ssh_uri  = cobbler.example.com
 
 

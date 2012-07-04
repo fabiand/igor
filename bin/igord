@@ -64,7 +64,8 @@ host_origins = {
 
     "cobbler": \
         # Just systems with igor- prefix
-        cobbler.HostsOrigin(*__cobbler_origin_args, expression="igor-"),
+        cobbler.HostsOrigin(*__cobbler_origin_args, \
+                  expression=CONFIG["cobbler.host_identification_expression"]),
 
     "files": \
         hosts.FilesystemRealHostsOrigin(CONFIG["hosts.path"].split(":"))
