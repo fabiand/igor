@@ -54,7 +54,7 @@ class RealHost(GenericHost):
         return "%s <%s>" % (self.name, self.mac)
 
     def __hash__(self):
-        return str(self)
+        return hash(self)
 
 
 class RealHostFactory(utils.Factory):
@@ -94,7 +94,6 @@ class RealHostFactory(utils.Factory):
             raise Exception("Hosts path does not exist: %s" % path)
         hosts = {}
         pat = os.path.join(path, "*%s" % suffix)
-        logger.debug("Trying to load hosts from %s" % pat)
         for f in glob.glob(pat):
             hosts.update(RealHostFactory.hosts_from_file(f))
         return hosts

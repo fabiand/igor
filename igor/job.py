@@ -512,6 +512,8 @@ class JobCenter(object):
                 # FIXME this doesn't respect the order
                 for cookie in self.jc._queue_of_pending_jobs:
                     candidate = self.jc.jobs[cookie]
+                    logger.debug("Checking if host is in use: %s" % \
+                                 candidate.host)
                     if candidate.host in self.jc._pool_of_hosts_in_use:
                         self._debug("Host of candidate %s is still in use" % \
                                     cookie)
