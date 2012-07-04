@@ -18,7 +18,7 @@ CLIENT_HOST=${CLIENT_HOST:-default-libvirt}
 # ISONAME
 
 pyc() { python -c "$@" ; }
-highlight() { pyc "r='-' * len('$1'); print(r + '\n$1\n' + r);" ; }
+highlight() { pyc "r='-' * len('$1'); print(r + \"\n$1\n\" + r);" ; }
 
 highlight "Fetching igor client from server"
 curl --silent "${IGORCLIENTURL}" --output "igorclient.sh"
