@@ -72,7 +72,7 @@ class VMHost(Host):
         self._vm_name = "VMHost (Created on demand)"
         Host.__init__(self, *args, **kwargs)
 
-    def prepare(self, session):
+    def prepare(self):
         logger.debug("Preparing VMHost")
         self._vm_name = "%s%s-%s" % (self.vm_prefix, self.name, \
                                      self.session.cookie)
