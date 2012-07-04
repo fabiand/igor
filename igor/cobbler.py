@@ -175,7 +175,7 @@ class Profile(testing.Profile):
         if name in remote.systems():
             logger.info("Reusing existing system %s" % name)
             system_handle = remote.get_system_handle(name)
-            self.previous_profile = remote.get_system(name)["profile"]
+            self.previous_profile = remote.system(name)["profile"]
         else:
             system_handle = remote.new_system()
         return system_handle
