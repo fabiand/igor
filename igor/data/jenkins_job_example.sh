@@ -10,6 +10,9 @@
 [[ -z $BASENAMEPREFIX ]] && exit 1
 [[ -z $ARTIFACTSARCHIVE ]] && exit 1
 [[ -z $BUILD_TAG ]] && exit 1
+
+CLIENT_HOST=${CLIENT_HOST:-default-libvirt}
+
 # REPORT_EMAIL_TO
 # REPORT_EMAIL_FROM
 # ISONAME
@@ -47,7 +50,7 @@ bash ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
 sudo rm -rvf tftpboot
 
 highlight "Create igor job"
-bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" "default-libvirt"
+bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" "$CLIENT_HOST"
 export $(bash ./igorclient.sh cookie)
 [[ -z $IGORCOOKIE ]] && { echo No Igor cookie ; return 1 ; }
 highlight "... start and wait to reach some endstate"
