@@ -89,7 +89,7 @@ class Job(object):
         assert host is not None, "host can not be None"
         assert profile is not None, "profile can not be None"
         self.host = host
-        self.host.session = session
+        self.host.session = self.session
         self.profile = profile
 
         self.testsuite = testsuite
