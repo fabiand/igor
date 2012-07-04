@@ -42,6 +42,7 @@ INITRD=tftpboot/initrd*
 KARGS=tftpboot/kargs
 echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" pxelinux.cfg/default \
        | egrep -o "(root|ro|live|check|rhgb)[^[:space:]]*") > $KARGS
+echo " BOOTIF=link storage_init" >> $KARGS
 bash ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
 
 highlight "Create igor job"

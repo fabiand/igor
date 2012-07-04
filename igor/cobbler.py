@@ -154,12 +154,16 @@ class Profile(testing.Profile):
             system_handle = remote.new_system()
         return system_handle
 
-    def set_kargs(self, kargs):
+    def kargs(self, kargs=None):
+        n_kargs = None
         with self.remote as remote:
-            handle = remote.get_profile_handle(self.get_name())
-            remote.modify_profile(handle, {
-                    "kernel_options": kargs
-                })
+            if kargs:
+                handle = remote.get_profile_handle(self.get_name())
+                remote.modify_profile(handle, {
+                        "kernel_options": kargs
+                    })
+            n_kargs = remote.profile(self.get_name())["kernel_options"]
+        return n_kargs
 
     def enable_pxe(self, host, enable):
         with self.remote as remote:
@@ -216,14 +220,15 @@ class Profile(testing.Profile):
                     --name=\"{profilename}-distro\" \\
                     --kernel=\"{vmlinuz}\" \\
                     --initrd=\"{initrd}\" \\
-                    --kopts=\"$(cat {kargs})\" \\
                     --arch=\"{arch}\" \\
                     --breed=\"other\" \\
-                    --os-version=\"\"
+                    --os-version=\"\" \\
+                    --comment=\"{identification_tag}\"
 
                 cobbler profile add \\
                     --name=\"{profilename}\" \\
                     --distro=\"{profilename}-distro\" \\
+                    --kopts=\"$(cat {kargs})\" \\
                     --kickstart=\"\" \\
                     --repos=\"\" \\
                     --comment=\"{identification_tag}\"

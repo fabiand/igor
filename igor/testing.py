@@ -126,7 +126,7 @@ class Profile(UpdateableObject):
     def enable_pxe(self, enable):
         raise Exception("Not implemented.")
 
-    def set_kargs(self, kargs):
+    def kargs(self, kargs):
         raise Exception("Not implemented.")
 
     def revoke_from(self, host):

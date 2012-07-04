@@ -365,15 +365,21 @@ def profile_from_vmlinuz_post(pname):
                                  **written_files)
     _tmpdir.clean()
 
+@bottle.route('/profiles/<pname>/kargs', method='GET')
 @bottle.route('/profiles/<pname>/kargs', method='POST')
-def delete_profile(pname):
+def profile_kargs(pname):
     if pname not in inventory.profiles():
         bottle.abort(404, "Unknown profile")
     kargs = bottle.request.forms.kargs
+    n_kargs = "-None-"
+    print "-%s-" % kargs
     if kargs:
-        inventory.profiles()[pname].set_kargs(kargs)
+        print "bar"
+        n_kargs = inventory.profiles()[pname].kargs(kargs)
     else:
-        bottle.abort(412, "No kargs specified")
+#        bottle.abort(412, "No kargs specified")
+        n_kargs = inventory.profiles()[pname].kargs()
+    return n_kargs
 
 @bottle.route('/profiles/<pname>', method='DELETE')
 @bottle.route('/profiles/<pname>/remove')
