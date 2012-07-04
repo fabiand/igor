@@ -70,7 +70,7 @@ class VMHost(Host):
 
     def __init__(self, *args, **kwargs):
         self.vm_defaults = {}
-        self._vm_name = "VMHost (Not yet created)"
+        self._vm_name = "VMHost (Created on demand)"
         Host.__init__(self, *args, **kwargs)
 
     def prepare(self, session):
