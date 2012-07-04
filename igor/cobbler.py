@@ -123,9 +123,7 @@ class Host(hosts.RealHost):
     def start(self):
         logger.debug("Powering on %s" % self.get_name())
         with self.remote as s:
-            s.power_system(self.get_name(), "off")
-            time.sleep(60)
-            s.power_system(self.get_name(), "on")
+            s.power_system(self.get_name(), "reboot")
 
     def purge(self):
         logger.debug("Powering off %s" % self.get_name())
@@ -399,7 +397,8 @@ class Cobbler(object):
         return self.server.get_blended_data("", name)
 
     def power_system(self, name, power):
-        assert power in ["on", "off"]
+        assert power in ["on", "off", "reboot"]
+        logger.debug("Setting power '%s' on '%s'" % (power, name))
         return self.server.background_power_system(power, self.token)
 
 
