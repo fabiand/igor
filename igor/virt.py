@@ -247,7 +247,8 @@ class VMAlwaysCreateHostOrigin(Origin):
         return "VMAlwaysCreateHostOrigin(%s)" % str(self.__dict__)
 
     def items(self):
-        hosts = {"default": VMHostFactory.create_default_host( \
+        hosts = {"default-libvirt": \
+                            VMHostFactory.create_default_host( \
                             connection_uri=self.connection_uri, \
                             storage_pool=self.storage_pool, \
                             network_configuration=self.network_configuration)

@@ -46,7 +46,7 @@ echo " BOOTIF=link storage_init local_boot_trigger=$APIURL/testjob/{igor_cookie}
 bash ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
 
 highlight "Create igor job"
-bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" "default"
+bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" "default-libvirt"
 export $(bash ./igorclient.sh cookie)
 [[ -z $IGORCOOKIE ]] && { echo No Igor cookie ; return 1 ; }
 highlight "... start and wait to reach some endstate"
