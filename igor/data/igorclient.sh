@@ -142,7 +142,7 @@ add_profile() # Add a profile from kernel, initrd and kargs files
   ln $KERNEL __kernel
   ln $INITRD __initrd
   ln $KARGS __kargs
-  tar cf $ARCHIVE __kernel __initrd __kargs
+  tar -c --transform "s/^__//" -f $ARCHIVE __kernel __initrd __kargs
 
   URL=$(_api_url profiles/$PNAME)
   curl --upload-file $ARCHIVE "$URL"

@@ -157,20 +157,18 @@ class Profile(testing.Profile):
                 logger.info("Available profiles: %s" % remote.profiles())
                 raise Exception("Unknown profile '%s'" % (self.name))
 
-            additional_args = {}
-            for k, v in self.additional_args.items():
-                additional_args[k] = v.format(
-                        igor_cookie=host.session.cookie
-                    )
-
             system_handle = self.__get_or_create_system(remote, \
                                                         host.get_name())
+
+            kargs = {"kernel_options": self.kargs().format(
+                        igor_cookie=host.session.cookie)
+                    }
 
             remote.assign_defaults(system_handle, \
                                     name=host.get_name(), \
                                     mac=host.get_mac_address(), \
                                     profile=self.name, \
-                                    additional_args=additional_args)
+                                    additional_args=kargs)
 
             remote.set_netboot_enable(host.get_name(), True)
 
