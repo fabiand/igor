@@ -139,12 +139,14 @@ add_profile() # Add a profile from kernel, initrd and kargs files
   [[ ! -e $INITRD ]] && die "initrd file does not exist."
   [[ ! -e $KARGS ]] && die "kargs file does not exist."
   ARCHIVE="/tmp/$PNAME_files.tar"
-  URL=$(_api_url profile/$PNAME)
   ln $KERNEL kernel
   ln $INITRD initrd
   ln $KARGS kargs
   tar cf $ARCHIVE kernel initrd kargs
+
+  URL=$(_api_url profiles/$PNAME)
   curl --upload-file $ARCHIVE "$URL"
+
   rm -f $ARCHIVE kernel initrd kargs
 # Slow:  curl -F "kernel=@$KERNEL" -F"initrd=@$INITRD" -F"kargs=@$KARGS" "$URL"
 }
@@ -152,7 +154,7 @@ remove_profile() # Remove a profile
 {
   PNAME=$1
   [[ -z $PNAME ]] && die "Profile name is mandatory."
-  api /profile/$PNAME/remove
+  api /profiles/$PNAME/remove
 }
 profile_kargs() # Set the kernel arguments of a profile
 {
@@ -160,7 +162,7 @@ profile_kargs() # Set the kernel arguments of a profile
   KARGS=$2
   [[ -z $PNAME ]] && die "Profile name is mandatory."
   [[ -z $KARGS ]] && die "kargs are mandatory."
-  URL=$(_api_url profile/$PNAME)
+  URL=$(_api_url profiles/$PNAME)
   curl --data "kargs=$KARGS" "$URL"
 }
 
