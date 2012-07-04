@@ -49,12 +49,14 @@ class Host(UpdateableObject):
     All subclasses need to implement the functions so they  can be used.
 
     session : TestSession
-        The associated test session object.
+        The associated test session object - set when associated with a Job
+    origin : testing.Origin
+        The corresponding origin - associated by Origin
     """
     session = None
     origin = None
 
-    def prepare(self, session):
+    def prepare(self):
         """Prepare a host until the point where a testsuite can be submitted.
         This can involve preparing a VM or preparing a real server via some
         sophisticated stuff.
@@ -99,7 +101,7 @@ class GenericHost(Host):
     name = None
     mac = None
 
-    def prepare(self, session):
+    def prepare(self):
         pass
 
     def get_name(self):

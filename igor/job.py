@@ -89,6 +89,7 @@ class Job(object):
         assert host is not None, "host can not be None"
         assert profile is not None, "profile can not be None"
         self.host = host
+        self.host.session = session
         self.profile = profile
 
         self.testsuite = testsuite
@@ -133,7 +134,7 @@ class Job(object):
 
         logger.debug("Setting up job %s" % self.cookie)
         self.state(s_preparing)
-        self.host.prepare(self.session)
+        self.host.prepare()
         self.profile.assign_to(self.host)
         self.state(s_prepared)
 

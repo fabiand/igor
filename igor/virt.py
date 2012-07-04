@@ -55,7 +55,6 @@ class VMHost(Host):
     configure them.
     '''
     name = None
-    session = None
     image_specs = None
 
     poolname = "default"
@@ -75,7 +74,6 @@ class VMHost(Host):
 
     def prepare(self, session):
         logger.debug("Preparing VMHost")
-        self.session = session
         self._vm_name = "%s%s-%s" % (self.vm_prefix, self.name, \
                                      self.session.cookie)
         self.prepare_images()

@@ -89,7 +89,10 @@ class HostsOrigin(testing.Origin):
                 host.remote = remote
                 host.name = sysname
                 host.origin = self
-                host.mac = None
+                try:
+                    host.mac = remote.system(sysname)["mac_address_eth0"]
+                except:
+                    host.mac = None
                 items[sysname] = host
         logger.debug("Number of cobbler hosts: %s" % len(items))
 #        logger.debug("Hosts: %s" % items)

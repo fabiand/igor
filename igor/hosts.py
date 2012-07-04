@@ -38,7 +38,7 @@ class RealHost(GenericHost):
     poweron_script = None
     poweroff_script = None
 
-    def prepare(self, session):
+    def prepare(self):
         # Not needed with real hosts
         pass
 
