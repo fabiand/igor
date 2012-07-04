@@ -60,10 +60,12 @@ class HostsOrigin(testing.Origin):
     """
     cobbler = None
     expression = None
+    whitelist = []
 
-    def __init__(self, server_url, user, pw, ssh_uri, expression="igor-"):
+    def __init__(self, server_url, user, pw, ssh_uri, expression="igor-", whitelist=[]):
         self.cobbler = Cobbler(server_url, (user, pw), ssh_uri)
         self.expression = expression
+        self.whitelist = whitelist
 
     def name(self):
         return "CobblerHostsOrigin(%s)" % self.cobbler.server_url
@@ -72,7 +74,8 @@ class HostsOrigin(testing.Origin):
         items = {}
         with self.cobbler as remote:
             for sysname in remote.systems():
-                if self.expression in sysname:
+                if self.expression in sysname \
+                   or sysname in self.__get_whitelist():
                     continue
                 host = Host()
                 host.remote = remote
@@ -83,6 +86,27 @@ class HostsOrigin(testing.Origin):
         logger.debug("Number of cobbler hosts: %s" % len(items))
 #        logger.debug("Hosts: %s" % items)
         return items
+
+    def __get_whitelist(self):
+        w = self.whitelist
+        if type(w) is str:
+            # w is actually a filename
+            w = self.__read_whitelist(self.whitelist)
+        return w
+
+    def __read_whitelist(self, filename):
+        whitelist = []
+        with open(filename) as f:
+             for line in f:
+                line = line.strip()
+                if line.startswith("#"):
+                    # comment
+                    pass
+                else:
+                    logger.debug("Reading cobbler host '%s' from whitelist" % \
+                                 line)
+                    whitelist.append(line)
+        return whitelist
 
 
 class Host(hosts.RealHost):

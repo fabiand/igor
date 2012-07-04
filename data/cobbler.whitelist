@@ -1,0 +1,3 @@
+# One host (name) per line, must match the cobbler name
+01.example.com
+42.example.com

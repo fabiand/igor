@@ -42,6 +42,7 @@ __cobbler_origin_args = (CONFIG["cobbler.url"], \
                          CONFIG["cobbler.password"], \
                          CONFIG["cobbler.ssh_uri"])
 
+
 #
 # Now define our origins, where we get the items (hosts, profiles, …) from
 #
@@ -65,7 +66,8 @@ host_origins = {
     "cobbler": \
         # Just systems with igor- prefix
         cobbler.HostsOrigin(*__cobbler_origin_args, \
-                  expression=CONFIG["cobbler.host_identification_expression"]),
+                expression=CONFIG["cobbler.hosts.identification_expression"], \
+                whitelist=CONFIG["cobbler.hosts.whitelist"]),
 
     "files": \
         hosts.FilesystemRealHostsOrigin(CONFIG["hosts.path"].split(":"))
