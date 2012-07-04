@@ -402,7 +402,10 @@ class Cobbler(object):
     def power_system(self, name, power):
         assert power in ["on", "off", "reboot"]
         logger.debug("Setting power '%s' on '%s'" % (power, name))
-        return self.server.background_power_system(power, self.token)
+        return self.server.background_power_system({
+            "power": power,
+            "systems": name
+            }, self.token)
 
 
 def example():
