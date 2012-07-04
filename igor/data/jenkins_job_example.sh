@@ -39,7 +39,7 @@ highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
 sudo livecd-iso-to-pxeboot "$ISONAME"
 KERNEL=tftpboot/vmlinuz*
 INITRD=tftpboot/initrd*
-KARGS=tftpboot/kargs
+KARGS=kargs
 echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" pxelinux.cfg/default \
        | egrep -o "(root|ro|live|check|rhgb)[^[:space:]]*") > $KARGS
 echo " BOOTIF=link storage_init local_boot_trigger=$APIURL/testjob/{igor_cookie}" >> $KARGS

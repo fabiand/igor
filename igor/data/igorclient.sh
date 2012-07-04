@@ -139,15 +139,15 @@ add_profile() # Add a profile from kernel, initrd and kargs files
   [[ ! -e $INITRD ]] && die "initrd file does not exist."
   [[ ! -e $KARGS ]] && die "kargs file does not exist."
   ARCHIVE="/tmp/$PNAME_files.tar"
-  ln $KERNEL kernel
-  ln $INITRD initrd
-  ln $KARGS kargs
-  tar cf $ARCHIVE kernel initrd kargs
+  ln $KERNEL __kernel
+  ln $INITRD __initrd
+  ln $KARGS __kargs
+  tar cf $ARCHIVE __kernel __initrd __kargs
 
   URL=$(_api_url profiles/$PNAME)
   curl --upload-file $ARCHIVE "$URL"
 
-  rm -f $ARCHIVE kernel initrd kargs
+  rm -f $ARCHIVE __kernel __initrd __kargs
 # Slow:  curl -F "kernel=@$KERNEL" -F"initrd=@$INITRD" -F"kargs=@$KARGS" "$URL"
 }
 remove_profile() # Remove a profile
