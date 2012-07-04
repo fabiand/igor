@@ -74,9 +74,17 @@ class HostsOrigin(testing.Origin):
         items = {}
         with self.cobbler as remote:
             for sysname in remote.systems():
-                if self.expression in sysname \
-                   or sysname in self.__get_whitelist():
+                match = False
+                if self.expression in sysname:
+                    logger.debug("cobbler host '%s' matched expression" % \
+                                                                       sysname)
+                    match = True
+                if sysname in self.__get_whitelist():
+                    logger.debug("cobbler host '%s' is in whitelist" % sysname)
+                    match = True
+                if not match:
                     continue
+
                 host = Host()
                 host.remote = remote
                 host.name = sysname
@@ -103,8 +111,6 @@ class HostsOrigin(testing.Origin):
                     # comment
                     pass
                 else:
-                    logger.debug("Reading cobbler host '%s' from whitelist" % \
-                                 line)
                     whitelist.append(line)
         return whitelist
 
