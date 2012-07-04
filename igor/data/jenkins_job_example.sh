@@ -18,19 +18,7 @@ CLIENT_HOST=${CLIENT_HOST:-default-libvirt}
 # ISONAME
 
 pyc() { python -c "$@" ; }
-drawline() { pyc "print('$2' * $1);" ; }
-highlight() { L=$(drawline ${#1} -) ; echo -e "\n$L\n$@\n$L\n" ; }
-
-# This is an artifact from a previous job
-ISONAME=${ISONAME:-$(ls *.iso | tail -n1)}
-highlight "Using ISO '$ISONAME'"
-
-[[ $(ls *.iso | wc -l) -gt 1 ]] && { 
-    echo More than one iso ; 
-    ls *.iso ;
-}
-
-[[ -e $ISONAME ]]
+highlight() { pyc "r='-' * len('$1'); print(r + '\n$1\n' + r);" ; }
 
 highlight "Fetching igor client from server"
 curl --silent "${IGORCLIENTURL}" --output "igorclient.sh"
@@ -38,16 +26,37 @@ curl --silent "${IGORCLIENTURL}" --output "igorclient.sh"
 
 export PROFILENAME="${BASENAMEPREFIX}${BUILD_TAG}"
 
-highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
-sudo livecd-iso-to-pxeboot "$ISONAME"
-KERNEL=tftpboot/vmlinuz*
-INITRD=tftpboot/initrd*
-KARGS=kargs
-echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" tftpboot/pxelinux.cfg/default \
-       | egrep -o "(root|ro|live|check|rhgb)[^[:space:]]*") > $KARGS
-echo " BOOTIF=link storage_init local_boot_trigger=${APIURL}testjob/{igor_cookie}" >> $KARGS
-bash ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
-sudo rm -rvf tftpboot
+CREATE_PROFILE=true
+bash ./igorclient.sh profiles | grep -q "^$PROFILENAME\$" && {
+    highlight "Profile $PROFILENAME exists, reusing this."
+    CREATE_PROFILE=false
+}
+
+
+$CREATE_PROFILE && {
+    # This is an artifact from a previous job
+    ISONAME=${ISONAME:-$(ls *.iso | tail -n1)}
+    highlight "Using ISO '$ISONAME'"
+
+    [[ $(ls *.iso | wc -l) -gt 1 ]] && {
+        echo More than one iso ;
+        ls *.iso ;
+    }
+
+    [[ -e $ISONAME ]]
+
+    highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
+    sudo livecd-iso-to-pxeboot "$ISONAME"
+    KERNEL=tftpboot/vmlinuz*
+    INITRD=tftpboot/initrd*
+    KARGS=kargs
+    echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" tftpboot/pxelinux.cfg/default \
+           | egrep -o "(root|ro|live|check|rhgb)[^[:space:]]*") > $KARGS
+    echo " BOOTIF=link storage_init local_boot_trigger=${APIURL}testjob/{igor_cookie}" >> $KARGS
+    bash ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
+    sudo rm -rvf tftpboot
+}
+
 
 highlight "Create igor job"
 bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" "$CLIENT_HOST"
@@ -65,8 +74,10 @@ bash ./igorclient.sh status
 
 bash ./igorclient.sh report | tee igor-report.txt
 
-highlight "remove cobbler distro/profile"
-bash ./igorclient.sh remove_profile "$PROFILENAME"
+$CREATE_PROFILE && {
+    highlight "remove cobbler distro/profile"
+    bash ./igorclient.sh remove_profile "$PROFILENAME"
+}
 
 # Passed? The exit.
 [[ "x$LAST_STATE" == "xpassed" ]] && exit 0
