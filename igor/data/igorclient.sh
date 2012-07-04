@@ -125,9 +125,21 @@ artifacts() # Get all artifacts for the current job
   api job/artifact/from/$IGORCOOKIE > $ARCHIVE
 }
 
-#
-# Extra
-#
+testsuites() # List all available testsuites
+{
+  api testsuites
+}
+
+hosts() # List all available hosts
+{
+  api hosts
+}
+
+profiles() # List all available profiles
+{
+  api profiles
+}
+
 add_profile() # Add a profile from kernel, initrd and kargs files
 {
   PNAME=$1
