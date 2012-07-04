@@ -7,7 +7,7 @@
 [[ -z $IGORCLIENTURL ]] && exit 1
 [[ -z $APIURL ]] && exit 1
 [[ -z $TESTSUITE ]] && exit 1
-[[ -z $BASENAMEPREFIX ]] && exit 1
+[[ -z $PROFILENAME ]] && exit 1
 [[ -z $ARTIFACTSARCHIVE ]] && exit 1
 [[ -z $BUILD_TAG ]] && exit 1
 
@@ -23,8 +23,6 @@ highlight() { pyc "r='-' * len('$1'); print(r + '\n$1\n' + r);" ; }
 highlight "Fetching igor client from server"
 curl --silent "${IGORCLIENTURL}" --output "igorclient.sh"
 [[ -e igorclient.sh ]]
-
-export PROFILENAME="${BASENAMEPREFIX}${BUILD_TAG}"
 
 CREATE_PROFILE=true
 bash ./igorclient.sh profiles | grep -q "^$PROFILENAME\$" && {
