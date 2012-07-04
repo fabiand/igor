@@ -374,10 +374,12 @@ def profile_kargs(pname):
     if pname not in inventory.profiles():
         bottle.abort(404, "Unknown profile")
     kargs = bottle.request.forms.kargs
-    n_kargs = "-None-"
-    print "-%s-" % kargs
+    n_kargs = "NO_KARGS_FOUND"
     if kargs:
-        print "bar"
+        if "{igor_cookie}" not in kargs:
+            bottle.abort(412, "{igor_cookie} not found in kargs, this is " + \
+                              "needed to initiate the callback to Igor, " + \
+                              "e.g. boot_trigger=igor/testjob/{igor_cookie}")
         n_kargs = inventory.profiles()[pname].kargs(kargs)
     else:
 #        bottle.abort(412, "No kargs specified")
