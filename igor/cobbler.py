@@ -123,6 +123,10 @@ class Host(hosts.RealHost):
     """
     remote = None
 
+    def get_name(self):
+        # Just return the host part - if it's an url
+        return self.name.split(".")[0]
+
     def start(self):
         logger.debug("Powering on %s" % self.get_name())
         with self.remote as s:
