@@ -315,19 +315,29 @@ def list_hosts():
     return to_json(inventory.hosts())
 
 
-@bottle.route('/testsuites/<tsname>/testcases/<tcname>/source')
-def testcase_source(tsname, tcname):
+@bottle.route('/testcases/<suitename>/<setname>/<casename>/source')
+def testcase_source(suitename, setname, casename):
     testsuites = inventory.testsuites()
-    if name not in testsuites:
-        bottle.abort(404, "Unknown testsuite '%s'" % name)
-    t = testsuites[name]
-    source = None
-    for case in t.testcases():
-        if case.name == tcname:
-            source = case.source()
-            break
+    if suitename not in testsuites:
+        bottle.abort(404, "Unknown testsuite '%s'" % suitename)
+    suite = testsuites[suitename]
+    tset = None
+    for _tset in suite.testsets:
+        if _tset.name == setname:
+            tset = _tset
+    if tset is None:
+        bottle.abort(404, "Unknown testset '%s'" % setname)
+    case = None
+    for _case in tset.testcases():
+        if _case.name == casename:
+            case = _case
+    if case is None:
+        bottle.abort(404, "Unknown testcase '%s'" % casename)
+    source = case.source()
     if source == None:
-        abort(404, "Unknown testcase '%s'" % tcname)
+        abort(404, "No source '%s'" % casename)
+    else:
+        bottle.response.content_type = "text/plain"
     return source
 
 @bottle.route('/profiles/<pname>', method='PUT')

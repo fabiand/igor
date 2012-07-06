@@ -125,6 +125,18 @@
             <xsl:value-of select ="./name"/>
         </td>
         <td>
+            <a>
+                <xsl:attribute name="href">
+/testcases
+/<xsl:value-of select ="../../name"/>
+/<xsl:value-of select ="../name"/>
+/<xsl:value-of select ="./name"/>
+/source
+                </xsl:attribute>
+                Source
+            </a>
+        </td>
+        <td>
             <xsl:value-of select ="./timeout"/>
         </td>
     </tr>
