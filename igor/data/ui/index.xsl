@@ -92,13 +92,16 @@
         <xsl:attribute name="title">
             <xsl:value-of select ="./origin/name"/>
         </xsl:attribute>
-        <a onclick="$(this).closest('tr').next().find('div').first().slideToggle()">
+        <a href="javascript:void(0)" onclick="$(this).closest('td').find('div').first().slideToggle()">
             <xsl:value-of select ="./name"/>
         </a>
+        <!--a><xsl:attribute name="href">
+/testsuites/<xsl:value-of select ="./name"/>/download/<xsl:value-of select ="./name"/>.tar
+            </xsl:attribute>Download</a-->
+        <div style="display: none" class="small-margin">
+            <xsl:apply-templates select="testsets" />
+        </div>
     </td></tr>
-    <tr><td><div style="display: none">
-        <xsl:apply-templates select="testsets" />
-    </div></td></tr>
     </xsl:for-each>
     </tbody>
 </table>
@@ -107,15 +110,15 @@
 <xsl:template match="testsets">
     <table>
     <tr><td>
-        <a onclick="$(this).closest('tr').next().find('div').first().slideToggle()">
+        <a href="javascript:void(0)" onclick="$(this).closest('td').find('div').first().slideToggle()">
             <xsl:value-of select ="./name"/>
         </a>
+        <div style="display: none">
+        <table>
+        <xsl:apply-templates select="testcases" />
+        </table>
+        </div>
     </td></tr>
-    <tr><td><div style="display: none">
-    <table>
-    <xsl:apply-templates select="testcases" />
-    </table>
-    </div></td></tr>
     </table>
 </xsl:template>
 

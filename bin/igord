@@ -302,7 +302,8 @@ def get_testsuite_summary(name):
 
 
 @bottle.route('/testsuites/<name>/download')
-def get_testsuite_archive(name):
+@bottle.route('/testsuites/<name>/download/<tarball>')
+def get_testsuite_archive(name, tarball="testsuite.tar"):
     testsuites = inventory.testsuites()
     if name not in testsuites:
         bottle.abort(404, "Unknown testsuite '%s'" % name)
@@ -310,6 +311,7 @@ def get_testsuite_archive(name):
     r = t.get_archive()
     if not r:
         bottle.abort(404, 'No testsuite for %s' % (cookie))
+    bottle.response.content_type = "application/x-tar; charset=binary"
     return r.getvalue()
 
 

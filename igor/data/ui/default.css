@@ -135,6 +135,11 @@ div[on-request]
   cursor: pointer;
 }
 
+.small-margin
+{
+  margin: 6px 3px;
+}
+
 .loading
 {
 /* https://developer.mozilla.org/en/CSS/CSS_animations*/
