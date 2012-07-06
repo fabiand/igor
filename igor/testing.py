@@ -534,6 +534,16 @@ class Testsuite(object):
             logger.debug("Adding library '%s' from '%s'" % (libname, libpath))
             archive.add(libpath, arcname=arcname, recursive=True)
 
+    def validate(self):
+        """Validate that all paths and check testcases can be gathered
+        """
+        valid = True
+        try:
+            self.get_archive()
+        except:
+            valid = False
+        return valid
+
 
 class Testset(object):
     """Represents a list of testcases.

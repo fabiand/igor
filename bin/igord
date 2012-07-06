@@ -285,6 +285,14 @@ def list_testsuites():
     testsuites = inventory.testsuites()
     return to_json(testsuites)
 
+@bottle.route('/testsuites/validate')
+def validate_testsuites():
+    testsuites = inventory.testsuites().items()
+    r = {}
+    for n, suite in testsuites:
+        r[n] = suite.validate()
+    return r
+
 @bottle.route('/testsuites/<name>/summary')
 def get_testsuite_summary(name):
     testsuites = inventory.testsuites()
