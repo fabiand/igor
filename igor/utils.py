@@ -57,13 +57,13 @@ def cmdline_to_dict(cmdline):
     Expects key=value pairs.
 
     Examples:
-    >>> cmdline_to_dict("foo=bar")
-    {'foo': 'bar'}
+    >>> cmdline_to_dict("foo=bar baz")
+    {'foo': 'bar', 'baz': None}
     """
     args = {}
     for arg in shlex.split(cmdline):
-        key, value = arg.split('=', 1)
-        args[key] = value
+        pair = arg.split('=', 1)
+        args[pair[0]] = pair[1] if len(pair) == 2 else None
     return args
 
 
