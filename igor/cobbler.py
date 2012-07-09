@@ -282,7 +282,7 @@ class Profile(testing.Profile):
     def __ssh_remove_remote_distro_profile_and_files(self, remote_path):
         profile_comment = self.remote.profile(self.get_name())["comment"]
         if self.identification_tag not in profile_comment:
-            raise Exception("Profile '%s' is not managed y igor" % \
+            raise Exception("Profile '%s' is not managed by igor" % \
                             self.get_name())
         cmd = """
             ssh {remote_url} "

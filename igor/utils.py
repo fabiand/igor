@@ -59,6 +59,9 @@ def cmdline_to_dict(cmdline):
     Examples:
     >>> cmdline_to_dict("foo=bar baz")
     {'foo': 'bar', 'baz': None}
+
+    >>> cmdline_to_dict("foo kargs='storage_init BOOTIF=link'")
+    {'foo': None, 'kargs': 'storage_init BOOTIF=link'}
     """
     args = {}
     for arg in shlex.split(cmdline):

@@ -225,9 +225,9 @@ class Job(object):
         """
         if self.state() != s_running:
             raise Exception(("Can not abort step %s of job %s, it is not" + \
-                             "running anymore: %s") % (self.current_step, \
-                                                       self.cookie, \
-                                                       self.state()))
+                             "running: %s") % (self.current_step, \
+                                               self.cookie, \
+                                               self.state()))
 
         self.finish_step(self.current_step, is_success=False, note="aborted", \
                          is_abort=True)
@@ -366,6 +366,10 @@ class Job(object):
     def reached_endstate(self):
         return self.state() in endstates
 
+    def wait(self):
+        while not self.reached_endstate():
+            self.state_changed.wait()
+
     def __str__(self):
         return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.cookie, \
                 self.state(), self.current_step, self.testsuite)
@@ -397,6 +401,8 @@ class JobCenter(object):
     _queue_of_pending_jobs = []
     _queue_of_ended_jobs = []
     _pool_of_hosts_in_use = set([])
+
+    _running_plans = {}
 
     _cookie_lock = threading.Lock()
 
@@ -458,9 +464,9 @@ class JobCenter(object):
         """Enqueue a testsuite to be run against a specififc build on
         given host
         """
-        spec = JobSpec({"testsuite": testsuite,
-                        "profile": profile,
-                        "host": host})
+        spec = testing.JobSpec(testsuite=testsuite,
+                               profile=profile,
+                               host=host)
         return self.submit(spec, cookie_req)
 
     @utils.synchronized(_jobcenter_lock)
@@ -509,22 +515,57 @@ class JobCenter(object):
         logger.info("Job %s ended." % cookie)
         return "Ended job %s." % cookie
 
-    def run(self, plan):
-        for spec in plan.job_specs:
-            resp = self.submit(spec)
-            cookie, job = (resp["cookie"], resp["job"])
-            self.start_job(cookie)
-            self.jobs[cookie].wait("ended") # fixme
-            # etc
+    def submit_plan(self, plan):
+        if plan.name in self._running_plans:
+            raise Exception("Plan with same name already running: %s" % \
+                            plan.name)
+        running_plan = JobCenter.PlanWorker(self, plan)
+        running_plan.start()
+        self._running_plans[plan.name] = running_plan
+        return running_plan
 
-    def run_plan(self, plan):
-        for testsuite in plan.testsuites:
-            for host, profile in plan.hosts:
-                with host:
-                    resp = self.submit_testsuite(testsuite, profile, host)
-                    cookie, job = (resp["cookie"], resp["job"])
-                    self.start_job(cookie)
-                    # etc
+    def abort_plan(self, name):
+        if name not in self._running_plans:
+            raise Exception("Plan is not running: %s" % name)
+        self._running_plans[name].stop()
+
+    class PlanWorker(threading.Thread):
+        jc = None
+        plan = None
+        current_job = None
+
+        _do_end = False
+
+        def __init__(self, jc, plan):
+            self.jc = jc
+            self.plan = plan
+            threading.Thread.__init__(self)
+            self.daemon = True
+
+        def run(self):
+            logger.debug("Starting plan %s" % self.plan.name)
+            for jobspec in self.plan.job_specs():
+                print "%s" % jobspec
+                previous_kargs = None
+                if jobspec.kargs is not None:
+                    previous_kargs = jobspec.profile.kargs()
+                    profile.kargs(jobspec.kargs)
+                resp = self.jc.submit_testsuite(jobspec.testsuite, jobspec.profile, jobspec.host)
+                cookie, self.current_job = (resp["cookie"], resp["job"])
+                self.jc.start_job(cookie)
+                self.current_job.wait()
+                if previous_kargs is not None:
+                    jobspec.profile.kargs(previous_kargs)
+                if self._do_end:
+                    logger.debug("Plan ended untimely: %s" % self.plan.name)
+                    break
+            del self.jc._running_plans[self.plan.name]
+            logger.debug("Plan ended: %s" % self.plan.name)
+
+        def stop(self):
+            logger.debug("Request to stop plan %s" % self.plan.name)
+            self._do_end = True
+            self.jc.abort_job(self.current_job.cookie)
 
     class JobWorker(utils.PollingWorkerDaemon):
         jc = None

@@ -1,0 +1,11 @@
+#
+# An example testplan
+#
+
+# Testsuite     Profile         Host                Optional: kargs
+basic           tbd_profile     default-libvirt     kargs='storage_init BOOTIF=link'
+extended        tbd_profile     default-libvirt     kargs='storage_init BOOTIF=link'
+
+
+# A basic TUI installation
+basic_tui       tbd_profile     default-libvirt

@@ -31,6 +31,7 @@ import tarfile
 import StringIO
 import io
 import re
+import shlex
 from threading import Lock
 
 import utils
@@ -41,6 +42,9 @@ logger = logging.getLogger(__name__)
 
 class UpdateableObject(object):
     def __init__(self, **kwargs):
+        self.update_props(kwargs)
+
+    def update_props(self, kwargs):
         self.__dict__.update(kwargs)
 
 
@@ -204,7 +208,7 @@ class Inventory(object):
         Or even use a factory to populate the inventory:
         >>> f = FilesystemTestsuitesOrigin(["../testcases/suites/"])
         >>> i = Inventory(testsuites={"fs": f})
-        >>> "example" in i.testsuites()
+        >>> "examplesuite" in i.testsuites()
         True
         """
         self._origins = {
@@ -295,11 +299,27 @@ class FilesystemTestsuitesOrigin(Origin):
         self.paths = paths
 
     def name(self):
-        return "FilesystemOrigin(%s)" % self.paths
+        return "FilesystemTestsuitesOrigin(%s)" % self.paths
 
     def items(self):
         testsuites = Factory.testsuites_from_paths(self.paths)
         return testsuites
+
+
+class FilesystemTestplansOrigin(Origin):
+    paths = None
+
+    def __init__(self, paths):
+        if type(paths) is not list:
+            paths = [paths]
+        self.paths = paths
+
+    def name(self):
+        return "FilesystemPlansOrigin(%s)" % self.paths
+
+    def items(self):
+        plans = Factory.testplans_from_paths(self.paths)
+        return plans
 
 
 class Factory(utils.Factory):
@@ -309,32 +329,74 @@ class Factory(utils.Factory):
     """
 
     @staticmethod
-    def testplan_from_file(filename, inventory, suffix=".plan"):
+    def testplan_from_file(filename, suffix=".plan"):
         """Builds a Testplan from a testplan file.
         The *.plan files are expected to contain one (testsuite, profile, host)
         tuple per line.
 
         A sample tesplan could look like:
             # Some comment:
-            basic minimal_pkg_set highend_server
-            basic maximal_pkg_set highend_server
+            basic minimal_pkg_set highend_server kargs="tuiinstall"
+            basic maximal_pkg_set highend_server kargs="firstboot trigger=url"
         """
         name = os.path.basename(filename).replace(suffix, "")
-        specs = Factory._from_file(filename, \
-                       lambda line: Factory.__line_to_jobspec(inventory, line))
-        return Testplan(name=name, job_specs=specs)
+        layouts = Factory._from_file(filename, {
+                    None: lambda line: Factory._line_to_job_layout(line)
+                })
+        return Testplan(name=name, job_layouts=layouts)
 
     @staticmethod
-    def __line_to_jobspec(inventory, line):
-        """Expects a line with at least three tokens: (testsuite, profile, host)
+    def _line_to_job_layout(line):
+        """Expects a line with at least three tokens: (testsuite, profile, 
+        host), [kargs='...']
+
+        >>> Factory._line_to_job_layout("s p h")
+        {'profile': 'p', 'testsuite': 's', 'host': 'h', 'kargs': None}
+
+        >>> Factory._line_to_job_layout("s p h kargs='foo'")
+        {'profile': 'p', 'testsuite': 's', 'host': 'h', 'kargs': 'foo'}
         """
-        tokens = re.split("\s+", line)
+        tokens = shlex.split(line)
+        if len(tokens) < 3:
+            raise Exception("Not enough params in plan line: '%s'" % line)
         t, p, h = tokens[0:3]
-        return JobSpec({
-            "testsuite": inventory.testsuite(t),
-            "profile": inventory.profile(p),
-            "host": inventory.host(h)
-            })
+        layout = {
+            "testsuite": t,
+            "profile": p,
+            "host": h,
+            "kargs": None
+            }
+        if len(tokens) == 4:
+            if tokens[3].startswith("kargs="):
+                layout["kargs"] = tokens[3].replace("kargs=", "")
+        return layout
+
+    @staticmethod
+    def testplans_from_paths(paths, suffix=".plan"):
+        """Builds a dict of testplans from *.plans files in a path.
+        A filesystem layout could look like:
+            suites/basic.plan
+            suites/advanced.plan
+        This would create a dict with two plans basic and advanced.
+
+        >>> plans = Factory.testplans_from_path("../data/")
+        >>> "exampleplan" in plans
+        True
+
+        >>> plans["exampleplan"].name = "exampleplan"
+        """
+        assert type(paths) is list
+        plans = {}
+        for path in paths:
+            if not os.path.exists(path):
+                raise Exception("Testplan path does not exist: %s" % path)
+            pat = os.path.join(path, "*%s" % suffix)
+            logger.debug("Loading plan from %s" % pat)
+            for f in glob.glob(pat):
+                plan = Factory.testplan_from_file(f)
+                assert plan.name not in plans, "Only unique plan names allowed"
+                plans[plan.name] = plan
+        return plans
 
     @staticmethod
     def testsuites_from_path(path, suffix=".suite"):
@@ -347,7 +409,7 @@ class Factory(utils.Factory):
         This would create a dict with two suites basic and advanced.
 
         >>> suites = Factory.testsuites_from_path("../testcases/suites/")
-        >>> suites["example"].libs()
+        >>> suites["examplesuite"].libs()
         {'common': '../testcases/libs/common'}
         """
         if not os.path.exists(path):
@@ -368,7 +430,7 @@ class Factory(utils.Factory):
         Take a look at Factory.testsuites_from_path for more details.
 
         >>> suites = Factory.testsuites_from_paths(["../testcases/suites/"])
-        >>> "example" in suites
+        >>> "examplesuite" in suites
         True
         """
         suites = {}
@@ -437,6 +499,13 @@ class JobSpec(UpdateableObject):
     testsuite = None
     host = None
     profile = None
+    kargs = None
+
+    def __to_dict__(self):
+        return self.__dict__
+
+    def __str__(self):
+        return str(self.__to_dict__())
 
 
 class Testplan(object):
@@ -445,15 +514,43 @@ class Testplan(object):
     Attributes
     ----------
     job_specs : List of tuples
-        A list of (testsuite, profile, host) tuples to be run.
+        A list of (testsuite, profile, host, kargs) tuples to be run.
     """
     name = None
-    job_specs = None
-    def __init__(self, job_specs):
-        self.job_specs = job_specs
+    job_layouts = None
+    inventory = None
+
+    def __init__(self, name, job_layouts, inventory=None):
+        self.name = name
+        self.job_layouts = job_layouts
+        self.inventory = None
 
     def timeout(self):
-        return sum([t.timeout() for t in self.job_specs.testsuite])
+        return sum([t.timeout() for t in self.job_specs().testsuite])
+
+    def job_specs(self):
+        specs = []
+        inventory = self.inventory
+        for layout in self.job_layouts:
+            spec = JobSpec(
+                testsuite=inventory.testsuites()[layout["testsuite"]],
+                profile=inventory.profiles()[layout["profile"]],
+                host=inventory.hosts()[layout["host"]]
+            )
+            specs.append(spec)
+        return specs
+
+    def __str__(self):
+        return str(self.__to_dict__())
+
+    def __to_dict__(self):
+        return {
+                "name": self.name,
+                "job_layouts": self.job_layouts
+                }
+
+    def __hash__(self):
+        return hash(str(self.name))
 
 
 class Testsuite(object):
@@ -527,7 +624,7 @@ class Testsuite(object):
         1-examplecase.sh
 
         >>> suites = Factory.testsuites_from_path("../testcases/suites/")
-        >>> suite = suites["example"]
+        >>> suite = suites["examplesuite"]
         >>> archive = io.BytesIO(suite.get_archive().getvalue())
         >>> tarball = tarfile.open(fileobj=archive, mode="r")
         >>> import re
