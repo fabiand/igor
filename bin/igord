@@ -385,16 +385,24 @@ def testcase_source(suitename, setname, casename):
 @bottle.route('/profiles/<pname>', method='PUT')
 def profile_from_vmlinuz_put(pname):
     reqfiles = set(["kernel", "initrd", "kargs"])
-    _tmpdir = utils.TemporaryDirectory(reqfiles)
+    _tmpdir = utils.TemporaryDirectory()
     with _tmpdir as tmpdir:
         logger.debug("Using PUT tmpdir %s" % tmpdir)
         with tarfile.open(fileobj=bottle.request.body) as tarball:
             arcfiles = tarball.getnames()
             logger.debug("PUT %s" % arcfiles)
-            if not all([r in arcfiles for r in reqfiles]):
-                bottle.abort(412, "Expecting %s files" % str(reqfiles))
             tarball.extractall(path=tmpdir)
-        written_files = {fn: os.path.join(tmpdir, fn) for fn in reqfiles}
+        written_files = {}
+        for rf in reqfiles:
+            fn = rf
+            header = "x-%s-filename" % rf
+            if header in bottle.request.headers:
+                fn = bottle.request.headers[header]
+            _tmpdir.cleanfile(fn)
+            written_files[rf] = os.path.join(tmpdir, os.path.basename(fn))
+        print written_files
+        if not all([r in written_files.keys() for r in reqfiles]):
+            bottle.abort(412, "Expecting %s files" % str(reqfiles))
         inventory.create_profile(oname="cobbler", pname=pname, \
                                  **written_files)
     _tmpdir.clean()
@@ -413,7 +421,7 @@ def profile_from_vmlinuz_post(pname):
         written_files = {}
         for filename in reqfiles:
             store = file_dict[filename]
-            dstn = os.path.join(tmpdir, filename)
+            dstn = os.path.join(tmpdir, os.path.basename(store.filename))
             with open(dstn, "wb") as d:
                 logger.debug("Writing '%s'" % d)
                 d.write(store.file.read())

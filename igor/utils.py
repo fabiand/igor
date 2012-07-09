@@ -151,7 +151,6 @@ class TemporaryDirectory:
         if type(f) is str:
             f = [f]
         self.cleanfiles += f
-        print "kkk",  self.cleanfiles
 
     def clean(self):
         for f in self.cleanfiles:
