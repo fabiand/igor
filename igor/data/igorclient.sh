@@ -3,6 +3,8 @@
 IGORCOOKIEFILE=~/.igorcookie
 DEBUG=${DEBUG:-true}
 
+pyc() { echo -e "$@" | python ; }
+
 #
 # Common functions
 #
@@ -56,7 +58,17 @@ jobs() # List all jobs
 submit() # Submit a new job, e.g. submit <testsuite> <profile> <host>
 {
   TMPFILE=$(mktemp)
-  api submit/$1/with/$2/on/$3 | tee $TMPFILE
+  URL="submit/$1/with/$2/on/$3"
+  KARGS="$4"
+  [[ -z $KARGS ]] || {
+    QUERY=$(pyc "import urllib as u; print u.urlencode({
+      'additional_kargs': '$KARGS'
+    })")
+    URL="$URL?$QUERY"
+  }
+  URL=$(_api_url $URL)
+  debug "Calling $URL"
+  curl --silent $URL | tee $TMPFILE
   cookie $(cat $TMPFILE | _filter_key cookie)
   rm -f $TMPFILE
 }
@@ -252,7 +264,7 @@ abort_all() # Abort all jobs
 #
 if _is_command $1
 then
-  ${@}
+  "${@}"
 else
   error "ERROR: Unknown function '$1'"
   help
