@@ -187,6 +187,19 @@ profile_kargs() # Set the kernel arguments of a profile
   curl --data "kargs=$KARGS" "$URL"
 }
 
+testplan_submit() # Submit a testplan to be run
+{
+  PNAME=$1
+  [[ -z $PNAME ]] && die "Testplan name is mandatory."
+  api /testplans/$PNAME/submit
+}
+
+testplan_abort() # Abort a running testplan to be run
+{
+  PNAME=$1
+  [[ -z $PNAME ]] && die "Testplan name is mandatory."
+  api /testplans/$PNAME/abort
+}
 
 #
 # Convenience functions
