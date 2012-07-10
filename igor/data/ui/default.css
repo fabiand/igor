@@ -59,6 +59,11 @@ ul#toc
   margin: 0;
 }
 
+#toc li:first-child
+{
+  padding-left: 0;
+}
+
 table
 {
   border: 1px solid lightgray;
