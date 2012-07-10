@@ -58,6 +58,7 @@ $(document).ready(function(){
       $(el).click(function() {
         $(el).removeAttr("on-request")
         $(el).load_xml(url)
+        $(el).unbind("click")
       })
     }
     else
