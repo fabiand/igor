@@ -465,16 +465,6 @@ class JobCenter(object):
         return {"cookie": cookie, "job": j}
 
     @utils.synchronized(_jobcenter_lock)
-    def submit_testsuite(self, testsuite, profile, host, cookie_req=None):
-        """Enqueue a testsuite to be run against a specififc build on
-        given host
-        """
-        spec = testing.JobSpec(testsuite=testsuite,
-                               profile=profile,
-                               host=host)
-        return self.submit(spec, cookie_req)
-
-    @utils.synchronized(_jobcenter_lock)
     def start_job(self, cookie):
         self._queue_of_pending_jobs.append(cookie)
         return "Started job %s. %d in queue" % (cookie, \
