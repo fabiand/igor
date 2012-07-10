@@ -150,10 +150,12 @@ def submit_testsuite(tname, pname, hname, cookiereq=None):
         item = inventory._lookup(key, name)
         if item is None:
             bottle.abort(412, "Unknown %s '%s'" % (key, name))
-        args += (item,)
-    args += (cookiereq,)
-    logger.debug("Submitting with args: %s" % str(args))
-    resp = jc.submit_testsuite(*args)
+    spec = testing.JobSpec(testsuite=inventory.testsuites()[tname],
+               profile=inventory.profiles()[pname],
+               host=inventory.hosts()[hname],
+               additional_kargs=bottle.request.query.additional_kargs or "")
+    logger.debug("Submitting with args: %s" % str(spec))
+    resp = jc.submit(spec, cookiereq)
 
     return to_json(resp)
 

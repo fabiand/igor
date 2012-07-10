@@ -550,20 +550,16 @@ class JobCenter(object):
         def run(self):
             logger.debug("Starting plan %s" % self.plan.name)
             for jobspec in self.plan.job_specs():
-                print "%s" % jobspec
-                previous_kargs = None
-                if jobspec.kargs is not None:
-                    previous_kargs = jobspec.profile.kargs()
-                    profile.kargs(jobspec.kargs)
-                resp = self.jc.submit_testsuite(jobspec.testsuite, jobspec.profile, jobspec.host)
+
+                resp = self.jc.submit(jobspec)
                 cookie, self.current_job = (resp["cookie"], resp["job"])
                 self.jc.start_job(cookie)
                 self.current_job.wait()
-                if previous_kargs is not None:
-                    jobspec.profile.kargs(previous_kargs)
+
                 if self._do_end:
                     logger.debug("Plan ended untimely: %s" % self.plan.name)
                     break
+
             del self.jc._running_plans[self.plan.name]
             logger.debug("Plan ended: %s" % self.plan.name)
 
