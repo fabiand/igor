@@ -150,6 +150,15 @@ add_profile() # Add a profile from kernel, initrd and kargs files
   [[ ! -e $KERNEL ]] && die "kernel file does not exist."
   [[ ! -e $INITRD ]] && die "initrd file does not exist."
   [[ ! -e $KARGS ]] && die "kargs file does not exist."
+  grep -q "initrd=" $KARGS && {
+    error "Removing initrd from $KARGS, use profile_kargs() to force"
+    sed -i "s/initrd=[^[:space:]]*//" "$KARGS"
+    error "Now using: $(cat $KARGS)"
+  }
+  grep -q "testjob" $KARGS || {
+    die "'testjob' url missing in kargs $KARGS"
+  }
+
   ARCHIVE="/tmp/$PNAME_files.tar"
   tar -c -f $ARCHIVE $KERNEL $INITRD $KARGS
 
