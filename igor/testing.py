@@ -127,7 +127,7 @@ class Profile(UpdateableObject):
         """
         raise Exception("Not implemented.")
 
-    def assign_to(self, host):
+    def assign_to(self, host, additional_kargs=""):
         raise Exception("Not implemented.")
 
     def enable_pxe(self, enable):
@@ -499,7 +499,7 @@ class JobSpec(UpdateableObject):
     testsuite = None
     host = None
     profile = None
-    kargs = None
+    additional_kargs = None
 
     def __to_dict__(self):
         return self.__dict__

@@ -156,7 +156,7 @@ class Profile(testing.Profile):
     def get_name(self):
         return self.name
 
-    def assign_to(self, host):
+    def assign_to(self, host, additional_kargs=""):
         with self.remote as remote:
             if self.name not in remote.profiles():
                 logger.info("Available profiles: %s" % remote.profiles())
@@ -165,7 +165,8 @@ class Profile(testing.Profile):
             system_handle = self.__get_or_create_system(remote, \
                                                         host.get_name())
 
-            kargs = {"kernel_options": self.kargs().format(
+            kargs_txt = (self.kargs() + " " + additional_kargs)
+            kargs = {"kernel_options": kargs_txt.format(
                         igor_cookie=host.session.cookie)
                     }
 

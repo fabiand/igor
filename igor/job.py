@@ -62,6 +62,7 @@ class Job(object):
     host = None
     profile = None
     testsuite = None
+    additional_kargs = None
 
     current_step = 0
     results = None
@@ -85,8 +86,10 @@ class Job(object):
         self.cookie = cookie
         self.session = testing.TestSession(cookie, self.session_path)
 
-        testsuite, profile, host = (jobspec.testsuite, jobspec.profile, \
-                                    jobspec.host)
+        testsuite, profile, host, additional_kargs = (jobspec.testsuite, \
+                                                      jobspec.profile, \
+                                                      jobspec.host, \
+                                                      jobspec.additional_kargs)
 
         assert host is not None, "host can not be None"
         assert profile is not None, "profile can not be None"
@@ -95,6 +98,8 @@ class Job(object):
         self.profile = profile
 
         self.testsuite = testsuite
+
+        self.additional_kargs = additional_kargs
 
         self.results = []
         self._artifacts = []
@@ -138,7 +143,7 @@ class Job(object):
         logger.debug("Setting up job %s" % self.cookie)
         self.state(s_preparing)
         self.host.prepare()
-        self.profile.assign_to(self.host)
+        self.profile.assign_to(self.host, self.additional_kargs)
         self.state(s_prepared)
 
     @utils.synchronized(_high_state_change_lock)
