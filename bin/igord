@@ -334,6 +334,7 @@ def plan_info(name):
 
 @bottle.route('/testplans/<name>/submit')
 def run_plans(name):
+    abort(503, "Currently N/A") # FIXME plans need to be more flexible
     if name not in inventory.plans():
         abort(404, "Unknown plan: %s" % name)
     plan = inventory.plans()[name]
@@ -343,6 +344,7 @@ def run_plans(name):
 
 @bottle.route('/testplans/<name>/abort')
 def abort_plans(name):
+    abort(503, "Currently N/A") # FIXME plans need to be more flexible
     if name not in inventory.plans():
         abort(404, "Unknown plan: %s" % name)
     r = jc.abort_plan(name)
