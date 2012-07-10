@@ -30,7 +30,7 @@
         <div id="testsuites" on-request="true" load="/testsuites?format=xml&amp;root=testsuites" />
 
         <h2>Testplans</h2>
-        <div id="testplans" on-request="true" load="/plans?format=xml&amp;root=testplans" />
+        <div id="testplans" on-request="true" load="/testplans?format=xml&amp;root=testplans" />
 
         <h2>Profiles</h2>
         <div id="profiles" on-request="true" load="/profiles?format=xml&amp;root=profiles" />
