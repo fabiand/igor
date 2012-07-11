@@ -240,6 +240,12 @@ state() # Just get the value of the status key
   api job/status/$IGORCOOKIE | _filter_key state
 }
 
+testplan_state() # Just get the value of the testplan status key
+{
+  PNAME=$1
+  api /testplans/$PNAME | grep "state" | tail -n1 | _filter_key state
+}
+
 wait_state() # Wait until a job reaced a specific state (regex)
 {
   EXPR=$1
@@ -293,6 +299,18 @@ wait_testplan() # Wait until a testplan ended
   echo ""
   echo "Reached state $STATE"
   exit 0
+}
+
+testplan_artifacts_and_reports() # Get all artifacts and reports related to a testplan
+{
+  PNAME=$1
+  NO=1
+  for ID in $(api testplans/$PNAME | grep '"id"' | _filter_key id)
+  do
+    IGORCOOKIE=$ID artifacts "artifacts-for-$NO-$ID.tar.bz2"
+    IGORCOOKIE=$ID report > "report-for-$NO-$ID.rst.txt"
+    NO=$(($NO + 1))
+  done
 }
 
 abort_all() # Abort all jobs
