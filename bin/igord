@@ -328,25 +328,32 @@ def list_plans():
 @bottle.route('/testplans/<name>')
 def plan_info(name):
     if name not in inventory.plans():
-        abort(404, "Unknown plan: %s" % name)
+        bottle.abort(404, "Unknown plan: %s" % name)
     plan = inventory.plans()[name]
     return to_json(plan)
 
 @bottle.route('/testplans/<name>/submit')
 def run_plans(name):
-    abort(503, "Currently N/A") # FIXME plans need to be more flexible
     if name not in inventory.plans():
-        abort(404, "Unknown plan: %s" % name)
+        bottle.abort(404, "Unknown plan: %s" % name)
     plan = inventory.plans()[name]
     plan.inventory = inventory      # FIXME not very nice
+    plan.variables = {k: bottle.request.query[k] \
+                      for k in bottle.request.query.keys()}
     jc.submit_plan(plan)
     return to_json(plan)
 
+@bottle.route('/testplans/<name>')
+def status_plans(name):
+    if name not in inventory.plans():
+        bottle.abort(404, "Unknown plan: %s" % name)
+    r = jc.status_plan(name)
+    return to_json(r)
+
 @bottle.route('/testplans/<name>/abort')
 def abort_plans(name):
-    abort(503, "Currently N/A") # FIXME plans need to be more flexible
     if name not in inventory.plans():
-        abort(404, "Unknown plan: %s" % name)
+        bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.abort_plan(name)
     return to_json(r)
 
@@ -380,7 +387,7 @@ def testcase_source(suitename, setname, casename):
         bottle.abort(404, "Unknown testcase '%s'" % casename)
     source = case.source()
     if source == None:
-        abort(404, "No source '%s'" % casename)
+        bottle.abort(404, "No source '%s'" % casename)
     else:
         bottle.response.content_type = "text/plain"
     return source
