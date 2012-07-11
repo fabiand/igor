@@ -568,7 +568,7 @@ class Testplan(object):
                             ("profile", self.inventory.profiles),
                             ("host", self.inventory.hosts),
                             ("additional_kargs", lambda x: x)]:
-                if k in layout and kayout[k] is not None:
+                if k in layout and layout[k] is not None:
                     layout[k] = layout[k].format(**self.variables)
                 else:
                     layout[k] = ""
