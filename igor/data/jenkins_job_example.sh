@@ -45,8 +45,8 @@ $CREATE_PROFILE && {
 
     highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
     sudo livecd-iso-to-pxeboot "$ISONAME"
-    KERNEL=tftpboot/vmlinuz*
-    INITRD=tftpboot/initrd*
+    KERNEL=tftpboot/vmlinuz0
+    INITRD=tftpboot/initrd0.img
     KARGS=kargs
     echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" tftpboot/pxelinux.cfg/default \
            | egrep -o "(root|ro|live|check|rhgb)[^[:space:]]*") > $KARGS
