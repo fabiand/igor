@@ -3,14 +3,14 @@
 IGORCOOKIEFILE=~/.igorcookie
 DEBUG=${DEBUG:-true}
 
-pyc() { echo -e "$@" | python ; }
-
 #
 # Common functions
 #
 debug() { [[ -z $DEBUG ]] || echo "${IGORCOOKIE:-(no session)} $(date) - $@" >&2 ; }
 error() { echo -e "\n$@\n" >&2 ; }
 die() { error $@ ; exit 1 ; }
+
+pyc() { echo -e "$@" | python ; }
 
 help() # This help
 {
@@ -47,6 +47,11 @@ api()
   echo ""
 }
 
+_py_urlencode()
+{
+  pyc "import urllib as u; print u.urlencode($@);"
+}
+
 #
 # API stateless functions
 #
@@ -61,9 +66,7 @@ submit() # Submit a new job, e.g. submit <testsuite> <profile> <host>
   URL="submit/$1/with/$2/on/$3"
   KARGS="$4"
   [[ -z $KARGS ]] || {
-    QUERY=$(pyc "import urllib as u; print u.urlencode({
-      'additional_kargs': '$KARGS'
-    })")
+    QUERY=$(_py_urlencode "{'additional_kargs': '$KARGS'}")
     URL="$URL?$QUERY"
   }
   URL=$(_api_url $URL)
@@ -199,11 +202,26 @@ profile_kargs() # Set the kernel arguments of a profile
   curl --data "kargs=$KARGS" "$URL"
 }
 
-testplan_submit() # Submit a testplan to be run
+testplan_submit() # Submit a testplan to be run, optional a query param with substitutions
+{
+  PNAME=$1
+  KARGS=$2
+  [[ -z $PNAME ]] && die "Testplan name is mandatory."
+  QUERY=""
+
+  [[ -z $KARGS ]] || {
+    QUERY=?$KARGS
+  }
+
+  api /testplans/$PNAME/submit$QUERY
+}
+
+testplan_status() # Status of a testplan
 {
   PNAME=$1
   [[ -z $PNAME ]] && die "Testplan name is mandatory."
-  api /testplans/$PNAME/submit
+
+  api /testplans/$PNAME
 }
 
 testplan_abort() # Abort a running testplan to be run
@@ -222,7 +240,7 @@ state() # Just get the value of the status key
   api job/status/$IGORCOOKIE | _filter_key state
 }
 
-wait_state() # Wait until a specific state is reached (regex)
+wait_state() # Wait until a job reaced a specific state (regex)
 {
   EXPR=$1
   INTERVAL=${2:-10}
@@ -247,6 +265,33 @@ wait_state() # Wait until a specific state is reached (regex)
   done
   echo ""
   echo "Reached state '$(state)' ($STATE)"
+  exit 0
+}
+
+wait_testplan() # Wait until a testplan ended
+{
+  PNAME=$1
+  INTERVAL=${2:-10}
+  STATE=""
+  echo -n "Waiting "
+  export DEBUG=""
+  TIME_START=$(date +%s)
+  TIMEOUT=$(api testplans/$PNAME | grep timeout | tail -n1 | _filter_key timeout)
+  TIMEOUT=$(( $TIMEOUT * 2 )) # Higher timeout, because it can take time before the job ist actually started
+  while true
+  do
+    STATE=$(api testplans/$PNAME | grep status | tail -n1 | _filter_key status)
+    echo $STATE | egrep -q "stopped" && break
+    sleep $INTERVAL
+    echo -n "."
+    RUNTIME=$(( $(date +%s) - $TIME_START ))
+    [[ $RUNTIME -gt $TIMEOUT ]] && {
+      echo "Timed out ($TIMEOUT)"
+      break;
+    }
+  done
+  echo ""
+  echo "Reached state $STATE"
   exit 0
 }
 
