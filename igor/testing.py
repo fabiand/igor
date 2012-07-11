@@ -329,6 +329,22 @@ class Factory(utils.Factory):
     """
 
     @staticmethod
+    def testplan_from_string(name, txt):
+        """
+        >>> t = Factory.testplan_from_string("test", "a b c")
+        >>> str(t)
+        "{'job_layouts': [{'profile': 'b', 'testsuite': 'a', 'host': 'c', 'kargs': None}], 'name': 'test'}"
+        """
+        fileobj = tempfile.SpooledTemporaryFile()
+        fileobj.write(txt)
+        fileobj.seek(0)
+        layouts = Factory._from_file(None, {
+                    None: lambda line: Factory._line_to_job_layout(line)
+                }, \
+                fileobj=fileobj)
+        return Testplan(name=name, job_layouts=layouts)
+
+    @staticmethod
     def testplan_from_file(filename, suffix=".plan"):
         """Builds a Testplan from a testplan file.
         The *.plan files are expected to contain one (testsuite, profile, host)
@@ -379,7 +395,7 @@ class Factory(utils.Factory):
             suites/advanced.plan
         This would create a dict with two plans basic and advanced.
 
-        >>> plans = Factory.testplans_from_path("../data/")
+        >>> plans = Factory.testplans_from_paths(["../testcases/"])
         >>> "exampleplan" in plans
         True
 
@@ -391,7 +407,7 @@ class Factory(utils.Factory):
             if not os.path.exists(path):
                 raise Exception("Testplan path does not exist: %s" % path)
             pat = os.path.join(path, "*%s" % suffix)
-            logger.debug("Loading plan from %s" % pat)
+#            logger.debug("Loading plan from %s" % pat)
             for f in glob.glob(pat):
                 plan = Factory.testplan_from_file(f)
                 assert plan.name not in plans, "Only unique plan names allowed"
@@ -513,30 +529,56 @@ class Testplan(object):
 
     Attributes
     ----------
-    job_specs : List of tuples
+    job_layouts : List of tuples
         A list of (testsuite, profile, host, kargs) tuples to be run.
+
+    variables : A dict of (string, string)
+        A dict to be used with format on the layout values
+
+    inventory : An Inventory
+        A pointer to an inventory to lookup the objects
     """
     name = None
     job_layouts = None
+    variables = None
     inventory = None
+    _timeout = None
 
     def __init__(self, name, job_layouts, inventory=None):
         self.name = name
         self.job_layouts = job_layouts
         self.inventory = None
+        self.variables = {}
 
     def timeout(self):
-        return sum([t.timeout() for t in self.job_specs().testsuite])
+        return self._timeout
 
     def job_specs(self):
+        """Converts the layout into specs.
+        The layout contains the strings, here the strings are queried in the
+        inventory and objects are created.
+        """
         specs = []
-        inventory = self.inventory
+        self._timeout = 0
+        logger.debug("Replacing vars in spec %s: %s" % (self.name, \
+                                                        self.variables))
         for layout in self.job_layouts:
-            spec = JobSpec(
-                testsuite=inventory.testsuites()[layout["testsuite"]],
-                profile=inventory.profiles()[layout["profile"]],
-                host=inventory.hosts()[layout["host"]]
-            )
+            spec = JobSpec()
+            for k, func in [("testsuite", self.inventory.testsuites),
+                            ("profile", self.inventory.profiles),
+                            ("host", self.inventory.hosts),
+                            ("additional_kargs", lambda x: x)]:
+                if k in layout:
+                    layout[k] = layout[k].format(**self.variables)
+                else:
+                    layout[k] = ""
+
+                if ("{" or "}") in layout[k]:
+                    raise Exception("Variables could not be substituted " + \
+                                    "in plan %s" % self.name)
+
+                spec.update_props({k: func(layout[k])})
+            self._timeout += spec.testsuite.timeout()
             specs.append(spec)
         return specs
 
@@ -546,7 +588,8 @@ class Testplan(object):
     def __to_dict__(self):
         return {
                 "name": self.name,
-                "job_layouts": self.job_layouts
+                "job_layouts": self.job_layouts,
+                "timeout": self.timeout()
                 }
 
     def __hash__(self):
@@ -599,6 +642,7 @@ class Testsuite(object):
         """
         return { \
             "name": self.name,
+            "timeout": self.timeout(),
             "testsets": [t.__to_dict__() for t in self.testsets]
             }
 
@@ -756,6 +800,7 @@ class Testset(object):
         """
         return {
             "name": self.name,
+            "timeout": self.timeout(),
             "testcases": [c.__to_dict__() for c in self.testcases()]
         }
 
