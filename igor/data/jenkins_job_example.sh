@@ -6,30 +6,30 @@
 
 [[ -z $IGORCLIENTURL ]] && exit 1
 [[ -z $APIURL ]] && exit 1
-[[ -z $TESTSUITE ]] && exit 1
-[[ -z $PROFILENAME ]] && exit 1
-[[ -z $ARTIFACTSARCHIVE ]] && exit 1
-[[ -z $BUILD_TAG ]] && exit 1
 
-CLIENT_HOST=${CLIENT_HOST:-default-libvirt}
+[[ -z $TESTPLAN ]] && exit 1
+[[ -z $PROFILENAME ]] && exit 1
+
 
 # REPORT_EMAIL_TO
 # REPORT_EMAIL_FROM
 # ISONAME
 
 pyc() { python -c "$@" ; }
-highlight() { export TXT=$(echo $1 | tr "\"" "'") ; pyc "r='-' * len(\"$TXT\"); print(r + \"\n$TXT\n\" + r);" ; }
+highlight() { pyc "r='-' * len(\"$1\"); print(r + \"\n$@\n\" + r);" ; }
+
 
 highlight "Fetching igor client from server"
-curl --silent "${IGORCLIENTURL}" --output "igorclient.sh"
-[[ -e igorclient.sh ]]
+    curl --silent "${IGORCLIENTURL}" --output "igorclient.sh"
+    [[ -e igorclient.sh ]]
 
 CREATE_PROFILE=true
-bash ./igorclient.sh profiles | grep -q "^$PROFILENAME\$" && {
-    highlight "Profile $PROFILENAME exists, reusing this."
+bash ./igorclient.sh profiles | grep -q "\"$PROFILENAME\"" && {
+    highlight "Profile '$PROFILENAME' exists, reusing this."
     CREATE_PROFILE=false
+} || {
+    highlight "Profile '$PROFILENAME' does not exists, creating new one."
 }
-
 
 $CREATE_PROFILE && {
     # This is an artifact from a previous job
@@ -50,27 +50,22 @@ $CREATE_PROFILE && {
     KARGS=kargs
     echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" tftpboot/pxelinux.cfg/default \
            | egrep -o "(root|ro|live|check|rhgb)[^[:space:]]*") > $KARGS
-    echo " BOOTIF=link storage_init local_boot_trigger=${APIURL}testjob/{igor_cookie}" >> $KARGS
+    echo " local_boot_trigger=${APIURL}testjob/{igor_cookie}" >> $KARGS
     bash ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
-    sudo rm -rvf tftpboot
+    sudo rm -rvf tftpboot kargs
 }
 
 
-highlight "Create igor job"
-bash ./igorclient.sh submit "$TESTSUITE" "$PROFILENAME" "$CLIENT_HOST"
-export $(bash ./igorclient.sh cookie)
-[[ -z $IGORCOOKIE ]] && { echo No Igor cookie ; return 1 ; }
-highlight "... start and wait to reach some endstate"
-bash ./igorclient.sh start
-bash ./igorclient.sh wait_state "aborted|failed|timedout|passed"
+highlight "Create igor jobs by running the testplan '$TESTPLAN'"
+    bash ./igorclient.sh testplan_submit "$TESTPLAN" "tbd_profile=$PROFILENAME"
+    highlight "Wait for the testplan to finish"
+    bash ./igorclient.sh wait_testplan $TESTPLAN
 
-LAST_STATE=$(bash ./igorclient.sh state)
+LAST_STATE=$(bash ./igorclient.sh testplan_status $TESTPLAN | grep status | tail -n1 | egrep -o "stopped|passed")
 
-highlight "get artifacts archive"
-bash ./igorclient.sh artifacts $ARTIFACTSARCHIVE
-bash ./igorclient.sh status
+highlight "Getting artifacts archive"
+    bash ./igorclient.sh testplan_artifacts_and_reports $TESTPLAN
 
-bash ./igorclient.sh report | tee igor-report.txt
 
 $CREATE_PROFILE && {
     highlight "remove cobbler distro/profile"
