@@ -94,7 +94,7 @@ class HostsOrigin(testing.Origin):
                 except:
                     host.mac = ""
                 items[sysname] = host
-        logger.debug("Number of cobbler hosts: %s" % len(items))
+#        logger.debug("Number of cobbler hosts: %s" % len(items))
 #        logger.debug("Hosts: %s" % items)
         return items
 
