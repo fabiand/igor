@@ -380,11 +380,11 @@ class Factory(utils.Factory):
             "testsuite": t,
             "profile": p,
             "host": h,
-            "kargs": None
+            "additional_kargs": None
             }
         if len(tokens) == 4:
             if tokens[3].startswith("kargs="):
-                layout["kargs"] = tokens[3].replace("kargs=", "")
+                layout["additional_kargs"] = tokens[3].replace("kargs=", "")
         return layout
 
     @staticmethod
@@ -568,7 +568,7 @@ class Testplan(object):
                             ("profile", self.inventory.profiles),
                             ("host", self.inventory.hosts),
                             ("additional_kargs", lambda x: x)]:
-                if k in layout:
+                if k in layout and kayout[k] is not None:
                     layout[k] = layout[k].format(**self.variables)
                 else:
                     layout[k] = ""
