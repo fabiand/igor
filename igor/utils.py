@@ -307,7 +307,7 @@ class Factory(object):
     """
 
     @staticmethod
-    def _from_file(filename, cb_map):
+    def _from_file(filename, cb_map, fileobj=None):
         """Reads a file and calls a callback per line.
         This provides some functionality like ignoring comments and blank
         lines.
@@ -318,10 +318,14 @@ class Factory(object):
             tc.should       # selector: (None)  >>   Callback: None (default)
         """
         objs = []
-        if not os.path.exists(filename):
-            raise Exception("Can't find %s rel. to %s" % (filename, \
-                                                          os.getcwd()))
-        with open(filename, "r") as f:
+        if filename:
+            if not os.path.exists(filename):
+                raise Exception("Can't find %s rel. to %s" % (filename, \
+                                                              os.getcwd()))
+            fileobj = open(filename, "r")
+        if fileobj is None:
+            raise Exception("filename or fileobj must be given")
+        with fileobj as f:
             for line in f:
                 line = re.sub("\s*#.*$", "", line).strip()
                 if line == "":
