@@ -402,6 +402,8 @@ def profile_from_vmlinuz_put(pname):
         with tarfile.open(fileobj=bottle.request.body) as tarball:
             arcfiles = tarball.getnames()
             logger.debug("PUT %s" % arcfiles)
+            for arcfile in arcfiles:
+                assert os.path.basename(arcfile) == arcfile, "not paths allowed"
             tarball.extractall(path=tmpdir)
         written_files = {}
         for rf in reqfiles:

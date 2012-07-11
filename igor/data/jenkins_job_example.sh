@@ -45,12 +45,14 @@ $CREATE_PROFILE && {
 
     highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
     sudo livecd-iso-to-pxeboot "$ISONAME"
-    KERNEL=tftpboot/vmlinuz0
-    INITRD=tftpboot/initrd0.img
+    KERNEL=vmlinuz0
+    INITRD=initrd0.img
     KARGS=kargs
     echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" tftpboot/pxelinux.cfg/default \
            | egrep -o "(root|ro|live|check|rhgb)[^[:space:]]*") > $KARGS
     echo " local_boot_trigger=${APIURL}testjob/{igor_cookie}" >> $KARGS
+    ln tftpboot/$KERNEL $KERNEL
+    ln tftpboot/$INITRD $INITRD
     bash ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
     sudo rm -rvf tftpboot kargs
 }
