@@ -408,6 +408,7 @@ class JobCenter(object):
     _pool_of_hosts_in_use = set([])
 
     _running_plans = {}
+    _plan_results = {}
 
     _cookie_lock = threading.Lock()
 
@@ -519,6 +520,18 @@ class JobCenter(object):
         self._running_plans[plan.name] = running_plan
         return running_plan
 
+    def status_plan(self, name):
+        plan = None
+        results = None
+        status = "stopped"
+        if name in self._running_plans:
+            status = "running"
+        if name in self._plan_results:
+            results = self._plan_results[name]
+        results["status"] = status
+        return results
+
+
     def abort_plan(self, name):
         if name not in self._running_plans:
             raise Exception("Plan is not running: %s" % name)
@@ -527,6 +540,7 @@ class JobCenter(object):
     class PlanWorker(threading.Thread):
         jc = None
         plan = None
+        specs = None
         current_job = None
 
         _do_end = False
@@ -537,26 +551,43 @@ class JobCenter(object):
             threading.Thread.__init__(self)
             self.daemon = True
 
+            self.specs = self.plan.job_specs()
+
         def run(self):
             logger.debug("Starting plan %s" % self.plan.name)
-            for jobspec in self.plan.job_specs():
+            self.jc._plan_results[self.plan.name] = {
+                "plan": self.plan,
+                "job_results": [],
+                "current_job_cookie": None,
+                "passed": False
+            }
+            results = self.jc._plan_results[self.plan.name]
 
+            for jobspec in self.specs:
                 resp = self.jc.submit(jobspec)
                 cookie, self.current_job = (resp["cookie"], resp["job"])
+                results["current_job_cookie"] = cookie
                 self.jc.start_job(cookie)
                 self.current_job.wait()
+                job_result = self.current_job.__to_dict__()
+                results["job_results"].append(job_result)
 
                 if self._do_end:
                     logger.debug("Plan ended untimely: %s" % self.plan.name)
+                    results["passed"] = False
                     break
 
+            results["passed"] = all([r["state"] == "passed" \
+                                     for r in results["job_results"]])
+            results["job_results"].reverse()
             del self.jc._running_plans[self.plan.name]
             logger.debug("Plan ended: %s" % self.plan.name)
 
         def stop(self):
             logger.debug("Request to stop plan %s" % self.plan.name)
             self._do_end = True
-            self.jc.abort_job(self.current_job.cookie)
+            if self.current_job:
+                self.jc.abort_job(self.current_job.cookie)
 
     class JobWorker(utils.PollingWorkerDaemon):
         jc = None
