@@ -95,6 +95,12 @@
         <a href="javascript:void(0)" onclick="$(this).closest('td').find('div').first().slideToggle()">
             <xsl:value-of select ="./name"/>
         </a>
+        <a style="float: right">
+            <xsl:attribute name="href">
+                <xsl:text>/testplans/</xsl:text><xsl:value-of select ="./name"/>/report
+            </xsl:attribute>
+            Report
+        </a>
         <div style="display: none" class="small-margin">
             <table>
             <xsl:apply-templates select="job_layouts" />

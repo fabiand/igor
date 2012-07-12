@@ -577,7 +577,7 @@ class JobCenter(object):
 
             self.passed = all([r.state() == s_passed \
                                for r in self.jobs])
-            self.jobs.reverse()
+#            self.jobs.reverse()
             self.status = "stopped"
 
             self.jc._plan_results[self.plan.name] = self.__to_dict__()
