@@ -391,7 +391,8 @@ class Job(object):
             "timeout": self.timeout(),
             "runtime": self.runtime(),
             "created_at": self._created_at,
-            "artifacts": self._artifacts
+            "artifacts": self._artifacts,
+            "additional_kargs": self.additional_kargs
             }
 
 
@@ -521,65 +522,65 @@ class JobCenter(object):
         return running_plan
 
     def status_plan(self, name):
-        plan = None
         results = None
-        status = "stopped"
         if name in self._running_plans:
-            status = "running"
-        if name in self._plan_results:
+            results = self._running_plans[name].__to_dict__()
+        elif name in self._plan_results:
             results = self._plan_results[name]
-        results["status"] = status
         return results
-
 
     def abort_plan(self, name):
         if name not in self._running_plans:
             raise Exception("Plan is not running: %s" % name)
-        self._running_plans[name].stop()
+        return self._running_plans[name].stop()
 
     class PlanWorker(threading.Thread):
         jc = None
         plan = None
         specs = None
+
+        created_at = 0
+
+        passed = False
         current_job = None
+        jobs = None
+
+        status = None
 
         _do_end = False
 
         def __init__(self, jc, plan):
-            self.jc = jc
-            self.plan = plan
             threading.Thread.__init__(self)
             self.daemon = True
 
+            self.jc = jc
+            self.plan = plan
             self.specs = self.plan.job_specs()
+            self.created_at = time.time()
+            self.jobs = []
 
         def run(self):
             logger.debug("Starting plan %s" % self.plan.name)
-            self.jc._plan_results[self.plan.name] = {
-                "plan": self.plan,
-                "job_results": [],
-                "current_job_cookie": None,
-                "passed": False
-            }
-            results = self.jc._plan_results[self.plan.name]
+            self.status = "running"
 
             for jobspec in self.specs:
                 resp = self.jc.submit(jobspec)
                 cookie, self.current_job = (resp["cookie"], resp["job"])
-                results["current_job_cookie"] = cookie
                 self.jc.start_job(cookie)
+                self.jobs.append(self.current_job)
                 self.current_job.wait()
-                job_result = self.current_job.__to_dict__()
-                results["job_results"].append(job_result)
 
                 if self._do_end:
-                    logger.debug("Plan ended untimely: %s" % self.plan.name)
-                    results["passed"] = False
+                    logger.debug("Plan stopped: %s" % self.plan.name)
+                    self.passed = False
                     break
 
-            results["passed"] = all([r["state"] == "passed" \
-                                     for r in results["job_results"]])
-            results["job_results"].reverse()
+            self.passed = all([r.state() == s_passed \
+                               for r in self.jobs])
+            self.jobs.reverse()
+            self.status = "stopped"
+
+            self.jc._plan_results[self.plan.name] = self.__to_dict__()
             del self.jc._running_plans[self.plan.name]
             logger.debug("Plan ended: %s" % self.plan.name)
 
@@ -588,6 +589,21 @@ class JobCenter(object):
             self._do_end = True
             if self.current_job:
                 self.jc.abort_job(self.current_job.cookie)
+            return self
+
+        def runtime(self):
+            return time.time() - self.created_at
+
+        def __to_dict__(self):
+            return {
+                "plan": self.plan.__to_dict__(),
+                "jobs": [r.__to_dict__() for r in self.jobs],
+                "current_job_cookie": self.current_job.cookie,
+                "passed": self.passed,
+                "runtime": self.runtime(),
+                "created_at": self.created_at,
+                "status": self.status
+            }
 
     class JobWorker(utils.PollingWorkerDaemon):
         jc = None
