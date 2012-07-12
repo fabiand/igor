@@ -187,7 +187,7 @@ def job_report(cookie):
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
     bottle.response.content_type = "text/plain; charset=utf8"
-    return str(reports.status_to_report(j.__to_dict__()))
+    return str(reports.job_status_to_report(j.__to_dict__()))
 
 
 @bottle.route('/job/step/<cookie>/<n:int>/<result:re:success|failed>')
