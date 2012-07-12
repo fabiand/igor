@@ -344,18 +344,32 @@ def run_plans(name):
     return to_json(plan)
 
 @bottle.route('/testplans/<name>')
+def testplan_summary(name):
+    if name not in inventory.plans():
+        bottle.abort(404, "Unknown plan: %s" % name)
+    return to_json(inventory.plans()[name])
+
+@bottle.route('/testplans/<name>/status')
 def status_plans(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.status_plan(name)
     return to_json(r)
 
+@bottle.route('/testplans/<name>/report')
+def testplan_report(name):
+    if name not in inventory.plans():
+        bottle.abort(404, "Unknown plan: %s" % name)
+    r = jc.status_plan(name)
+    bottle.response.content_type = "text/plain; charset=utf8"
+    return str(reports.testplan_status_to_report(r))
+
 @bottle.route('/testplans/<name>/abort')
 def abort_plans(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.abort_plan(name)
-    return to_json(r)
+    return to_json(r.__to_dict__())
 
 @bottle.route('/profiles')
 def list_profiles():
