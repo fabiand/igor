@@ -63,7 +63,7 @@ highlight "Create igor jobs by running the testplan '$TESTPLAN'"
     highlight "Wait for the testplan to finish"
     bash ./igorclient.sh wait_testplan $TESTPLAN
 
-LAST_STATE=$(bash ./igorclient.sh testplan_status $TESTPLAN | grep status | tail -n1 | egrep -o "stopped|passed")
+PASSED=$(bash ./igorclient.sh testplan_status $TESTPLAN | grep passed | tail -n1 | egrep -o "true|false")
 
 highlight "Getting artifacts archive"
     bash ./igorclient.sh testplan_artifacts_and_reports $TESTPLAN
@@ -75,7 +75,7 @@ $CREATE_PROFILE && {
 }
 
 # Passed? The exit.
-[[ "x$LAST_STATE" == "xpassed" ]] && exit 0
+[[ "x$PASSED" == "xtrue" ]] && exit 0
 
 # Not passed. Send a mail.
 [[ ! -z $REPORT_EMAIL_TO && ! -z $REPORT_EMAIL_FROM ]] && {
