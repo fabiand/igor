@@ -224,6 +224,14 @@ testplan_status() # Status of a testplan
   api /testplans/$PNAME/status
 }
 
+testplan_report() # Report of a testplan
+{
+  PNAME=$1
+  [[ -z $PNAME ]] && die "Testplan name is mandatory."
+
+  api /testplans/$PNAME/report
+}
+
 testplan_abort() # Abort a running testplan to be run
 {
   PNAME=$1

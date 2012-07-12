@@ -66,7 +66,8 @@ highlight "Create igor jobs by running the testplan '$TESTPLAN'"
 PASSED=$(bash ./igorclient.sh testplan_status $TESTPLAN | grep passed | tail -n1 | egrep -o "true|false")
 
 highlight "Getting artifacts archive"
-    bash ./igorclient.sh testplan_artifacts_and_reports $TESTPLAN
+    bash ./igorclient.sh testplan_report $TESTPLAN > report.rst.txt
+    #bash ./igorclient.sh testplan_artifacts_and_reports $TESTPLAN
 
 
 $CREATE_PROFILE && {
