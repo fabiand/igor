@@ -641,30 +641,21 @@ class JobCenter(object):
                         self.jc._end_job(j.cookie)
                         self.jc._queue_of_ended_jobs.append(j)
 
-            # Look for jobs to remove
-            for j in self.jc._queue_of_ended_jobs:
-                if j.ended_within(self.cleanup_age):
-                    # not yet long enough ended
-                    pass
-                else:
-                    self._debug("Cleaning job %s" % cookie)
-                    j.clean()
-                    self.jc._queue_of_ended_jobs.remove(j)
-                    logger.info("Job %s cleaned." % cookie)
-
-            if len(self.jc.jobs) > self.max_cleaned_jobs:
+            while len(self.jc._queue_of_ended_jobs) > self.max_cleaned_jobs:
                 self._remove_oldest_job()
 
         def _remove_oldest_job(self):
             oldest_job = None
 
-            for cookie, job in self.jc.jobs.items():
-                if not job.reached_endstate():
-                    break
+            for job in self.jc._queue_of_ended_jobs:
                 if oldest_job is None \
-                   or job.created_at < oldest_job.created_at:
+                   or job.created_at < oldest_job.created_at \
+                   and not oldest_job.ended_within(self.cleanup_age):
                     oldest_job = job
 
             if oldest_job is not None:
-                logger.info("Removing job %s" % oldest_job.cookie)
+                self._debug("Cleaning job %s" % oldest_job.cookie)
+                oldest_job.clean()
+                self.jc._queue_of_ended_jobs.remove(oldest_job)
                 del self.jc.jobs[oldest_job.cookie]
+                logger.info("Job %s cleaned and removed." % oldest_job.cookie)
