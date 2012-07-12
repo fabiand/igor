@@ -139,7 +139,7 @@ class TemporaryDirectory:
 
     def __init__(self, cleanfiles=[]):
         self.tmpdir = tempfile.mkdtemp()
-        self.cleanfiles = cleanfiles
+        self.cleanfiles = set(cleanfiles)
 
     def __enter__(self):
         return self.tmpdir
@@ -150,7 +150,9 @@ class TemporaryDirectory:
     def cleanfile(self, f):
         if type(f) is str:
             f = [f]
-        self.cleanfiles += f
+        elif type(f) is not list:
+            raise Exception("Oy, just str or list!")
+        self.cleanfiles = self.cleanfiles.union(set(f))
 
     def clean(self):
         for f in self.cleanfiles:
