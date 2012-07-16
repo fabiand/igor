@@ -65,8 +65,18 @@
         <xsl:sort select="created_at" order="descending"/>
         <tr>
             <td><xsl:value-of select ="./id"/></td>
-            <td><xsl:value-of select ="./host"/></td>
-            <td><xsl:value-of select ="./profile"/></td>
+            <td>
+                <xsl:attribute name="title">
+                    <xsl:value-of select ="./host"/>
+                </xsl:attribute>
+                <xsl:value-of select ="./host"/>
+            </td>
+            <td>
+                <xsl:attribute name="title">
+                    <xsl:value-of select ="./profile"/>
+                </xsl:attribute>
+                <xsl:value-of select ="./profile"/>
+            </td>
             <td><xsl:value-of select ="./testsuite/name"/></td>
             <td><xsl:value-of select ="./state"/></td>
             <td>
