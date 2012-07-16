@@ -289,21 +289,12 @@ wait_testplan() # Wait until a testplan ended
   STATE=""
   echo -n "Waiting "
   export DEBUG=""
-  TIME_START=$(date +%s)
   while true
   do
-    TIMEOUT=$(api testplans/$PNAME | grep timeout | tail -n1 | _filter_key timeout)
-    TIMEOUT=$(( $TIMEOUT * 2 )) # Higher timeout, because it can take time before the job ist actually started
-
     STATE=$(api testplans/$PNAME | grep status | tail -n1 | _filter_key status)
     echo $STATE | egrep -q "stopped" && break
     sleep $INTERVAL
     echo -n "."
-    RUNTIME=$(( $(date +%s) - $TIME_START ))
-    [[ ! -z $TIMEOUT && $RUNTIME -gt $TIMEOUT ]] && {
-      echo "Timed out ($TIMEOUT)"
-      break;
-    }
   done
   echo ""
   echo "Reached state $STATE"
