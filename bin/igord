@@ -341,7 +341,7 @@ def run_plans(name):
     plan.variables = {k: bottle.request.query[k] \
                       for k in bottle.request.query.keys()}
     worker = jc.submit_plan(plan)
-    return to_json(worker)
+    return to_json(worker.__to_dict__())
 
 @bottle.route('/testplans/<name>')
 def testplan_summary(name):
