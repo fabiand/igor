@@ -157,11 +157,24 @@
         </a>
         <div style="display: none">
         <table>
+        <xsl:apply-templates select="libs" />
+        </table>
+        <table>
         <xsl:apply-templates select="testcases" />
         </table>
         </div>
     </td></tr>
     </table>
+</xsl:template>
+
+<xsl:template match="libs">
+    <xsl:for-each select="*">
+    <tr>
+        <td>
+            <i><xsl:value-of select ="name()"/></i>
+        </td>
+    </tr>
+    </xsl:for-each>
 </xsl:template>
 
 <xsl:template match="testcases">

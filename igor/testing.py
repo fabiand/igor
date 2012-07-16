@@ -643,7 +643,8 @@ class Testsuite(object):
         return { \
             "name": self.name,
             "timeout": self.timeout(),
-            "testsets": [t.__to_dict__() for t in self.testsets]
+            "testsets": [t.__to_dict__() for t in self.testsets],
+            "libs": self.libs(),
             }
 
     def get_archive(self, subdir="testcases"):
@@ -801,7 +802,8 @@ class Testset(object):
         return {
             "name": self.name,
             "timeout": self.timeout(),
-            "testcases": [c.__to_dict__() for c in self.testcases()]
+            "testcases": [c.__to_dict__() for c in self.testcases()],
+            "libs": self.libs()
         }
 
 
