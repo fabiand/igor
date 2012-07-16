@@ -341,7 +341,7 @@ class Cobbler(object):
             "name": name,
             "mac": mac,
             "profile": profile,
-            "comment": identification_tag
+            "comment": identification_tag,
             "status": "testing",
             "kernel_options": "",
             "kernel_options_post": "",
