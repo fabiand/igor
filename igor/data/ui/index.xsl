@@ -62,6 +62,7 @@
     <tbody>
 
     <xsl:for-each select="all/*">
+        <xsl:sort select="created_at" order="descending"/>
         <tr>
             <td><xsl:value-of select ="./id"/></td>
             <td><xsl:value-of select ="./host"/></td>
