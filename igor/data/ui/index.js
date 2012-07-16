@@ -33,6 +33,11 @@ function __load_and_transform_xml(el, url, cb)
         __load_and_transform_xml(el, url, function(ele) {
           $(ele).removeClass("loading")
 //          $(ele).add_table_footer("Source: " + url)
+            var relicon = $("<div class='reload'><a href='javascript:void(0)'>↻ Reload</a></div>")
+            relicon.hide()
+            relicon.find("a").click(function(){$(el).load_xml(url);})
+            $(ele).prepend(relicon)
+            relicon.delay("slow").fadeIn()
         })
       })
     };
@@ -77,8 +82,8 @@ $(document).ready(function(){
     $("#toc").append(li)
   })
 
-  setTimeout(function() {
+/*  setTimeout(function() {
     window.location.reload()
-  }, 60*1000)
+  }, 60*1000)*/
 
 });

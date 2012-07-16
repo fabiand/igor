@@ -171,6 +171,21 @@ div[on-request]
   }
 }
 
+.reload
+{
+  font-size: 0.8em;
+  padding: 4px;
+  float: right;
+  position: relative;
+  left: 80px;
+}
+.reload:hover
+{
+/*  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+  background-image: -moz-linear-gradient(center top , #fff, #eee);*/
+}
+
 
 div#footer
 {
