@@ -478,9 +478,12 @@ class Factory(utils.Factory):
                             line)))
         sets = Factory._from_file(filename, {
             None: lambda line: Factory.testset_from_file(rp(line)),
-            "searchpath": lambda line: v.update({"searchpath": line})
+            "searchpath": lambda line: v.update({"searchpath": line}),
+            "description": lambda line: v.update({"description": line})
         })
-        return Testsuite(name=name, testsets=sets)
+        suite = Testsuite(name=name, testsets=sets)
+        suite.description = v["description"]
+        return suite
 
     @staticmethod
     def testset_from_file(filename, suffix=".set"):
@@ -605,6 +608,7 @@ class Testsuite(object):
     name = None
     testsets = None
     origin = None
+    description = None
 
     def __init__(self, name, testsets=[]):
         self.name = name
@@ -645,6 +649,7 @@ class Testsuite(object):
             "timeout": self.timeout(),
             "testsets": [t.__to_dict__() for t in self.testsets],
             "libs": self.libs(),
+            "description": self.description
             }
 
     def get_archive(self, subdir="testcases"):

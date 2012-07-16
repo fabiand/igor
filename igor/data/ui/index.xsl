@@ -137,6 +137,9 @@
         <a href="javascript:void(0)" onclick="$(this).closest('td').find('div').first().slideToggle()">
             <xsl:value-of select ="./name"/>
         </a>
+        <span class="description">
+            - <xsl:value-of select ="./description"/>
+        </span>
         <!--a><xsl:attribute name="href">
 /testsuites/<xsl:value-of select ="./name"/>/download/<xsl:value-of select ="./name"/>.tar
             </xsl:attribute>Download</a-->
@@ -171,7 +174,7 @@
     <xsl:for-each select="*">
     <tr>
         <td>
-            <i><xsl:value-of select ="name()"/></i>
+            lib: <i><xsl:value-of select ="name()"/></i>
         </td>
     </tr>
     </xsl:for-each>

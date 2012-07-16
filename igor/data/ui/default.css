@@ -123,6 +123,12 @@ tbody tr:hover
   border: 0;
 }
 
+.description
+{
+  color: gray;
+  font-size: 0.8em;
+}
+
 .loading,
 div[on-request]
 {
