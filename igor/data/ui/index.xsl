@@ -176,11 +176,11 @@
 
 <xsl:template match="libs">
     <xsl:for-each select="*">
-    <tr>
+    <!--tr>
         <td>
             lib: <i><xsl:value-of select ="name()"/></i>
         </td>
-    </tr>
+    </tr-->
     </xsl:for-each>
 </xsl:template>
 
