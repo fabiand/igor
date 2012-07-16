@@ -38,6 +38,8 @@ function __load_and_transform_xml(el, url, cb)
             relicon.find("a").click(function(){$(el).load_xml(url);})
             $(ele).prepend(relicon)
             relicon.delay("slow").fadeIn()
+
+            $(document).trigger("load", ele)
         })
       })
     };
@@ -54,6 +56,8 @@ function __load_and_transform_xml(el, url, cb)
 
 
 $(document).ready(function(){
+
+  // Load all marked divs
   $("div[load]").each(function(index,el){
     var url = $(el).attr("load")
 
@@ -72,6 +76,7 @@ $(document).ready(function(){
     }
   })
 
+  // Generate TOC from h2
   $("h2").each(function(index, el) {
     var e = $(el)
     var anchor = e.text()
@@ -80,6 +85,14 @@ $(document).ready(function(){
     a.attr("href", "#" + anchor)
     var li = $("<li>").append(a)
     $("#toc").append(li)
+  })
+
+  // Replace all timestamps
+  $(document).on("load", function(ev, el) {
+    $(el).find("span#convert-timestamp").each(function(idx, x) {
+      var x = $(x)
+      x.text(new Date(1000 * x.attr("timestamp")).toLocaleString())
+    })
   })
 
 /*  setTimeout(function() {

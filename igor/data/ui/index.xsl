@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="2.0" 
-  xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:fn="http://www.w3.org/2005/xpath-functions">
 <!-- vim: sw=2 -->
 
@@ -67,7 +67,7 @@
 
 <xsl:template name="job">
 <tr>
-    <td rowspan="5"><xsl:value-of select ="./id"/></td>
+    <td rowspan="6"><xsl:value-of select ="./id"/></td>
 </tr>
 <tr>
     <th>State:</th>
@@ -79,6 +79,16 @@
             </xsl:attribute>
             Report
         </a>
+    </td>
+</tr>
+<tr>
+    <th>Created at:</th>
+    <td>
+        <span id="convert-timestamp">
+            <xsl:attribute name="timestamp">
+                <xsl:value-of select="created_at"/>
+            </xsl:attribute>
+        </span>
     </td>
 </tr>
 <tr>
