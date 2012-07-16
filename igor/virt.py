@@ -218,7 +218,7 @@ class VMHostFactory:
     def create_default_host(connection_uri="qemu:///system", \
                             storage_pool="default", \
                             network_configuration="network=default"):
-        host = VMHost(name="8g-gpt-1g", image_specs=[ \
+        host = VMHost(name="default", image_specs=[ \
                  VMImage("8G", [ \
                    Partition("pri", "1M", "1G") \
                  ]) \
