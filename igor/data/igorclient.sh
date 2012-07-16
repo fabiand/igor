@@ -291,7 +291,7 @@ wait_testplan() # Wait until a testplan ended
   export DEBUG=""
   while true
   do
-    STATE=$(api testplans/$PNAME | grep status | tail -n1 | _filter_key status)
+    STATE=$(api testplans/$PNAME/status | grep status | tail -n1 | _filter_key status)
     echo $STATE | egrep -q "stopped" && break
     sleep $INTERVAL
     echo -n "."
