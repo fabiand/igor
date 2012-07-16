@@ -50,47 +50,59 @@
 <xsl:template match="/jobs">
 <table>
     <thead>
-    <tr>
-    <th>Job</th>
-    <th>Host</th>
-    <th>Profile</th>
-    <th>Testsuite</th>
-    <th>State</th>
-    <th />
-    </tr>
+        <tr>
+            <th width="10%">Job</th>
+            <th width="10%"/>
+            <th width="75%"/>
+        </tr>
     </thead>
     <tbody>
-
     <xsl:for-each select="all/*">
         <xsl:sort select="created_at" order="descending"/>
-        <tr>
-            <td><xsl:value-of select ="./id"/></td>
-            <td>
-                <xsl:attribute name="title">
-                    <xsl:value-of select ="./host"/>
-                </xsl:attribute>
-                <xsl:value-of select ="./host"/>
-            </td>
-            <td>
-                <xsl:attribute name="title">
-                    <xsl:value-of select ="./profile"/>
-                </xsl:attribute>
-                <xsl:value-of select ="./profile"/>
-            </td>
-            <td><xsl:value-of select ="./testsuite/name"/></td>
-            <td><xsl:value-of select ="./state"/></td>
-            <td>
-                <a>
-                    <xsl:attribute name="href">
-                        <xsl:text>/job/report/</xsl:text><xsl:value-of select ="./id"/>
-                    </xsl:attribute>
-                    Report
-                </a>
-            </td>
-        </tr>
+        <xsl:call-template name="job"/>
     </xsl:for-each>
     </tbody>
 </table>
+</xsl:template>
+
+<xsl:template name="job">
+<tr>
+    <td rowspan="5"><xsl:value-of select ="./id"/></td>
+</tr>
+<tr>
+    <th>State:</th>
+    <td>
+        <xsl:value-of select ="./state"/>
+        <a style="float: right">
+            <xsl:attribute name="href">
+                <xsl:text>/job/report/</xsl:text><xsl:value-of select ="./id"/>
+            </xsl:attribute>
+            Report
+        </a>
+    </td>
+</tr>
+<tr>
+    <th>Host:</th>
+    <td>
+        <xsl:attribute name="title">
+            <xsl:value-of select ="./host"/>
+        </xsl:attribute>
+        <xsl:value-of select ="./host"/>
+    </td>
+</tr>
+<tr>
+    <th>Profile:</th>
+    <td>
+        <xsl:attribute name="title">
+            <xsl:value-of select ="./profile"/>
+        </xsl:attribute>
+        <xsl:value-of select ="./profile"/>
+    </td>
+</tr>
+<tr>
+    <th>Testsuite:</th>
+    <td><xsl:value-of select ="./testsuite/name"/></td>
+</tr>
 </xsl:template>
 
 <xsl:template match="/testplans">
