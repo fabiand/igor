@@ -30,6 +30,8 @@ import utils
 logger = logging.getLogger(__name__)
 
 
+identification_tag = "managed-by-igor"
+
 class ProfileOrigin(testing.Origin):
     """This is the source where igor retrieves cobbler profiles
     """
@@ -147,7 +149,6 @@ class Profile(testing.Profile):
     previous_profile = None
 
     remote_path = None
-    identification_tag = "managed-by-igor"
 
     def __init__(self, remote, profile_name):
         self.remote = remote
@@ -276,13 +277,13 @@ class Profile(testing.Profile):
             kargs=os.path.join(remote_path, os.path.basename(kargs)),
 #            kargs=open(kargs).read().strip(),
             arch="x86_64",
-            identification_tag=self.identification_tag
+            identification_tag=identification_tag
             )
         utils.run(cmd)
 
     def __ssh_remove_remote_distro_profile_and_files(self, remote_path):
         profile_comment = self.remote.profile(self.get_name())["comment"]
-        if self.identification_tag not in profile_comment:
+        if identification_tag not in profile_comment:
             raise Exception("Profile '%s' is not managed by igor" % \
                             self.get_name())
         cmd = """
@@ -340,6 +341,7 @@ class Cobbler(object):
             "name": name,
             "mac": mac,
             "profile": profile,
+            "comment": identification_tag
             "status": "testing",
             "kernel_options": "",
             "kernel_options_post": "",

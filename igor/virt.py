@@ -61,7 +61,8 @@ class VMHost(Host):
     network_configuration = "network=default"
     disk_bus_type = "virtio"
 
-    vm_prefix = "igor-vm-"
+    vm_prefix = "i-"
+    description = "managed-by-igor"
     vm_defaults = None
     _vm_name = None
 
@@ -110,6 +111,7 @@ class VMHost(Host):
         virtinstall_args = {
             "connect": "'%s'" % self.connection_uri,
             "name": "'%s'" % self._vm_name,
+            "description": "'%s'" % self.description,
             "vcpus": "2",
             "cpu": "host",
             "ram": "1024",
