@@ -130,7 +130,7 @@
     <tr>
         <td><xsl:value-of select ="./profile"/></td>
         <td><xsl:value-of select ="./testsuite"/></td>
-        <td><xsl:value-of select ="./kargs"/></td>
+        <td><xsl:value-of select ="./additional_kargs"/></td>
         <td><xsl:value-of select ="./host"/></td>
     </tr>
 </xsl:template>
