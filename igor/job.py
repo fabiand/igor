@@ -598,7 +598,8 @@ class JobCenter(object):
             return {
                 "plan": self.plan.__to_dict__(),
                 "jobs": [r.__to_dict__() for r in self.jobs],
-                "current_job_cookie": self.current_job.cookie,
+                "current_job_cookie": self.current_job.cookie
+                                        if self.current_job else "",
                 "passed": self.passed,
                 "runtime": self.runtime(),
                 "created_at": self.created_at,
