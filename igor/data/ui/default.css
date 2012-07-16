@@ -106,7 +106,7 @@ td
 {
   padding: .2em .4em;
   overflow: hidden;
-  white-space: nowrap;
+/*  white-space: nowrap;*/
   text-overflow: ellipsis;
 }
 
