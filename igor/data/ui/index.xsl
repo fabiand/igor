@@ -102,6 +102,9 @@
             </xsl:attribute>
             Report
         </a>
+        <span class="description">
+            - <xsl:value-of select ="./description"/>
+        </span>
         <div style="display: none" class="small-margin">
             <table>
             <xsl:apply-templates select="job_layouts" />

@@ -356,10 +356,14 @@ class Factory(utils.Factory):
             basic maximal_pkg_set highend_server kargs="firstboot trigger=url"
         """
         name = os.path.basename(filename).replace(suffix, "")
+        v = {"description": ""}
         layouts = Factory._from_file(filename, {
-                    None: lambda line: Factory._line_to_job_layout(line)
-                })
-        return Testplan(name=name, job_layouts=layouts)
+            None: lambda line: Factory._line_to_job_layout(line),
+            "description": lambda line: v.update({"description": line})
+        })
+        plan = Testplan(name=name, job_layouts=layouts)
+        plan.description = v["description"]
+        return plan
 
     @staticmethod
     def _line_to_job_layout(line):
@@ -471,7 +475,7 @@ class Factory(utils.Factory):
             selinux.set
         """
         name = os.path.basename(filename).replace(suffix, "")
-        v = {"searchpath": "."}
+        v = {"searchpath": ".", "description": ""}
         rp = lambda line: os.path.relpath(os.path.realpath(os.path.join( \
                             os.path.dirname(filename), \
                             v["searchpath"], \
@@ -542,6 +546,7 @@ class Testplan(object):
         A pointer to an inventory to lookup the objects
     """
     name = None
+    description = None
     job_layouts = None
     variables = None
     inventory = None
@@ -591,6 +596,7 @@ class Testplan(object):
     def __to_dict__(self):
         return {
                 "name": self.name,
+                "description": self.description,
                 "job_layouts": self.job_layouts,
                 "timeout": self.timeout()
                 }
