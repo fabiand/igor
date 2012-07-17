@@ -368,6 +368,14 @@ def testplan_report(name):
     bottle.response.content_type = "text/plain; charset=utf8"
     return str(reports.testplan_status_to_report(r))
 
+@bottle.route('/testplans/<name>/report/junit')
+def testplan_junit_report(name):
+    if name not in inventory.plans():
+        bottle.abort(404, "Unknown plan: %s" % name)
+    r = jc.status_plan(name)
+    bottle.response.content_type = "text/plain; charset=utf8"
+    return reports.to_xml_str(reports.testplan_status_to_junit_report(r))
+
 @bottle.route('/testplans/<name>/abort')
 def abort_plans(name):
     if name not in inventory.plans():
