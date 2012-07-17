@@ -67,3 +67,6 @@ def transform_dict(stylefile, d, rootname):
     transform = etree.XSLT(etree.parse(stylefile))
     report = transform(xml)
     return report
+
+def to_xml_str(etree_obj):
+    return etree.tostring(etree_obj, pretty_print=True)
