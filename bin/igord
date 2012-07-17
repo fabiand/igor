@@ -124,6 +124,10 @@ def to_json(obj):
     return r
 
 
+def check_authentication(user, password):
+    return user == password
+
+
 #
 # bottles
 #
