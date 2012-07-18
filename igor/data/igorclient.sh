@@ -10,7 +10,7 @@ export FUNC_USAGE=""
 #
 debug() { [[ -z $DEBUG ]] || echo "${IGORCOOKIE:-(no session)} $(date) - $@" >&2 ; }
 error() { echo -e "\n$@\n" >&2 ; }
-die() { error $@ ; echo "Function usage: $FUNC_USAGE" ; exit 1 ; }
+die() { error $@ ; echo -e "Usage: $FUNC_USAGE\n" ; exit 1 ; }
 
 pyc() { echo -e "$@" | python ; }
 
@@ -64,9 +64,17 @@ jobs() # List all jobs
 
 submit() # Submit a new job, e.g. submit <testsuite> <profile> <host>
 {
+  FUNC_USAGE="$0 $FUNCNAME <TESTSUITE> <PROFILE> <HOST> [<KARGS>]"
+  TESTSUITE=$1
+  PROFILE=$2
+  HOST=$3
+  KARGS=$4
+  [[ -z $TESTSUITE ]] && die "Testsuitename is mandatory."
+  [[ -z $PROFILE ]] && die "Profilename is mandatory."
+  [[ -z $HOST ]] && die "Hostname is mandatory."
+
   TMPFILE=$(mktemp)
-  URL="submit/$1/with/$2/on/$3"
-  KARGS="$4"
+  URL="submit/$TESTSUITE/with/$PROFILE/on/$HOST"
   [[ -z $KARGS ]] || {
     QUERY=$(_py_urlencode "{'additional_kargs': '$KARGS'}")
     URL="$URL?$QUERY"
@@ -131,6 +139,7 @@ report() # Get the rst report
 testsuite() # Get the testsuite for the current job
 {
   ARCHIVE=${1:-testsuite.tar.bz2}
+  FUNC_USAGE="$0 $FUNCNAME [<DSTARCHIVE=$ARCHIVE>]"
   has_cookie
   api /job/testsuite/for/$IGORCOOKIE > $ARCHIVE
 }
@@ -138,6 +147,7 @@ testsuite() # Get the testsuite for the current job
 artifacts() # Get all artifacts for the current job
 {
   ARCHIVE=${1:-artifacts.tar.bz2}
+  FUNC_USAGE="$0 $FUNCNAME [<DSTARCHIVE=$ARCHIVE>]"
   has_cookie
   api job/artifact/from/$IGORCOOKIE > $ARCHIVE
 }
@@ -159,6 +169,7 @@ profiles() # List all available profiles
 
 add_profile() # Add a profile from kernel, initrd and kargs files
 {
+  FUNC_USAGE="$0 $FUNCNAME <PROFILENAME> <KERNELFILE> <INITRDFILE> <KARGSFILE>"
   PNAME=$1
   KERNEL=$2
   INITRD=$3
@@ -190,12 +201,14 @@ add_profile() # Add a profile from kernel, initrd and kargs files
 }
 remove_profile() # Remove a profile
 {
+  FUNC_USAGE="$0 $FUNCNAME <PROFILENAME>"
   PNAME=$1
   [[ -z $PNAME ]] && die "Profile name is mandatory."
   api /profiles/$PNAME/remove
 }
 profile_kargs() # Set the kernel arguments of a profile
 {
+  FUNC_USAGE="$0 $FUNCNAME <PROFILENAME> <KARGS>"
   PNAME=$1
   KARGS=$2
   [[ -z $PNAME ]] && die "Profile name is mandatory."
@@ -204,8 +217,9 @@ profile_kargs() # Set the kernel arguments of a profile
   curl --data "kargs=$KARGS" "$URL"
 }
 
-testplan_submit() # Submit a testplan to be run, optional a query param with substitutions
+testplan_submit() # Submit a testplan to be run, optional a query param with substitutions in the form of "var=val"
 {
+  FUNC_USAGE="$0 $FUNCNAME <TESTPLANNAME> [<SUBSTITUTIONS>]"
   PNAME=$1
   KARGS=$2
   [[ -z $PNAME ]] && die "Testplan name is mandatory."
@@ -220,6 +234,7 @@ testplan_submit() # Submit a testplan to be run, optional a query param with sub
 
 testplan_status() # Status of a testplan
 {
+  FUNC_USAGE="$0 $FUNCNAME <TESTPLANNAME>"
   PNAME=$1
   [[ -z $PNAME ]] && die "Testplan name is mandatory."
 
@@ -228,6 +243,7 @@ testplan_status() # Status of a testplan
 
 testplan_report() # Report of a testplan
 {
+  FUNC_USAGE="$0 $FUNCNAME <TESTPLANNAME> [junit]"
   PNAME=$1
   TYPE=$2
   [[ -z $PNAME ]] && die "Testplan name is mandatory."
@@ -240,6 +256,7 @@ testplan_report() # Report of a testplan
 
 testplan_abort() # Abort a running testplan to be run
 {
+  FUNC_USAGE="$0 $FUNCNAME <TESTPLANNAME>"
   PNAME=$1
   [[ -z $PNAME ]] && die "Testplan name is mandatory."
   api /testplans/$PNAME/abort
@@ -256,6 +273,7 @@ state() # Just get the value of the status key
 
 testplan_state() # Just get the value of the testplan status key
 {
+  FUNC_USAGE="$0 $FUNCNAME <TESTPLANNAME>"
   PNAME=$1
   api /testplans/$PNAME | grep "state" | tail -n1 | _filter_key state
 }
@@ -290,6 +308,7 @@ wait_state() # Wait until a job reaced a specific state (regex)
 
 wait_testplan() # Wait until a testplan ended
 {
+  FUNC_USAGE="$0 $FUNCNAME <TESTPLANNAME>"
   PNAME=$1
   INTERVAL=${2:-10}
   STATE=""
@@ -309,6 +328,7 @@ wait_testplan() # Wait until a testplan ended
 
 testplan_artifacts_and_reports() # Get all artifacts and reports related to a testplan
 {
+  FUNC_USAGE="$0 $FUNCNAME <TESTPLANNAME>"
   PNAME=$1
   NO=1
   for ID in $(api testplans/$PNAME | grep '"id"' | _filter_key id)
