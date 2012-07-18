@@ -5,7 +5,7 @@
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   xmlns:date="http://exslt.org/dates-and-times">
 
-<xsl:output method="text" indent="no" disable-output-escaping="no"/>
+<xsl:output method="text" indent="yes" disable-output-escaping="no"/>
 <xsl:strip-space elements="" />
 <xsl:preserve-space elements="*" />
 

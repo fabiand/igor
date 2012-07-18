@@ -124,9 +124,15 @@ td
 }
 
 tr td,
-tr th
+tr th,
+tr td[rowspan]:last-child
 {
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+tr td[rowspan]
+{
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 tbody tr:hover
@@ -200,7 +206,10 @@ div[on-request]
 
 span.aborted,
 span.passed,
-span.failed
+span.failed,
+span.running,
+span.open,
+span.preparing
 {
   color: white;
   padding: .1em .5em;
@@ -209,7 +218,6 @@ span.failed
 
 span.aborted
 {
-  background-color: #fa0;
   background-color: #aaa;
 }
 
@@ -221,6 +229,18 @@ span.passed
 span.failed
 {
   background-color: #f40;
+}
+
+span.running,
+span.open,
+span.preparing
+{
+  background-color: #fa0;
+  color: black;
+  -moz-animation-duration: 1s;
+  -moz-animation-name: pulsate;
+  -moz-animation-iteration-count: infinite;
+  -moz-animation-direction: alternate;
 }
 
 div#footer
