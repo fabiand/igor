@@ -25,6 +25,7 @@ import re
 import tempfile
 import shlex
 import threading
+import uu
 from lxml import etree
 
 logger = logging.getLogger(__name__)
@@ -294,7 +295,7 @@ def obj2xml(root, obj, as_string=False):
             else:
                 root.append(obj2xml(k, v))
     else:
-        root.text = unicode(obj)
+        root.text = unicode(str(obj), errors='ignore')
 
     if as_string:
         return etree.tostring(root, pretty_print=True).strip()

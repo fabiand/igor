@@ -183,7 +183,7 @@ class Job(object):
         log = "(log output suppressed, only for failed testcases)"
         if not is_passed:
             try:
-                log = self.get_artifact("log")
+                log = unicode(str(self.get_artifact("log")), errors='ignore')
             except:
                 log = "(no log output)"
 
