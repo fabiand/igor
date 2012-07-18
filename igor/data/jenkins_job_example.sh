@@ -16,7 +16,7 @@
 # ISONAME
 
 pyc() { python -c "$@" ; }
-highlight() { pyc "r='-' * len(\"$1\"); print(r + \"\n$@\n\" + r);" ; }
+highlight() { pyc "txt=\"$1\"; r='-' * len(txt); print(\"%s\n%s\n%s\" % (r, txt, r));" ; }
 
 
 highlight "Fetching igor client from server"

@@ -367,7 +367,7 @@ add_profile_from_iso() # Add a new profile from a livecd iso <isofilename>
   echo "$ADDITIONAL_KARGS" >> $KARGS
   ln tftpboot/$KERNEL $KERNEL
   ln tftpboot/$INITRD $INITRD
-  ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
+  add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
   sudo rm -rf tftpboot $KERNEL $INITRD $KARGS
 }
 
