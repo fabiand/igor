@@ -73,7 +73,7 @@
 <testcase>
   <xsl:variable name="id" select="position()" />
   <xsl:variable name="result" select="$job/results[$id]" />
-  <xsl:attribute name="name"><xsl:value-of select="name"/></xsl:attribute>
+  <xsl:attribute name="name"><xsl:value-of select="concat($id, '-', name)"/></xsl:attribute>
   <xsl:attribute name="time"><xsl:value-of select="$result/runtime"/></xsl:attribute>
   <xsl:if test="/status/status = 'running' and count($job/results)+1 = $id">
     <error>
