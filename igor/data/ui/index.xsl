@@ -129,6 +129,7 @@
     </thead>
     <tbody>
     <xsl:for-each select="./*">
+    <xsl:sort select="name" />
     <tr><td>
         <a href="javascript:void(0)" onclick="$(this).closest('td').find('div').first().slideToggle()">
             <xsl:value-of select ="./name"/>
@@ -171,6 +172,7 @@
     </thead>
     <tbody>
     <xsl:for-each select="./*">
+    <xsl:sort select="name" />
     <tr><td>
         <xsl:attribute name="title">
             <xsl:value-of select ="./origin/name"/>
