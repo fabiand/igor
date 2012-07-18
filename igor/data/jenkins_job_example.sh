@@ -43,11 +43,12 @@ $CREATE_PROFILE && {
 
     [[ -e $ISONAME ]]
 
-    highlight "Create cobbler distro and profile by uploading the ISO '$ISONAME'"
+    highlight "Create cobbler distro and profile by uploading the kernel and initrd image and kargs from '$ISONAME'"
     sudo livecd-iso-to-pxeboot "$ISONAME"
     KERNEL=vmlinuz0
     INITRD=initrd0.img
     KARGS=kargs
+    # Get the default kargs from the isolinux cfg and remove some kargs to not exceed the 256 chars limit of pxelinux
     echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" tftpboot/pxelinux.cfg/default \
            | egrep -o "(root|ro|live|check|rhgb|quiet|rd)[^[:space:]]*") > $KARGS
     echo " local_boot_trigger=${APIURL}testjob/{igor_cookie}" >> $KARGS
