@@ -198,6 +198,29 @@ div[on-request]
   background-image: -moz-linear-gradient(center top , #fff, #eee);*/
 }
 
+span.aborted,
+span.passed,
+span.failed
+{
+  color: white;
+  padding: .1em .5em;
+  border-radius: .2em;
+}
+
+span.aborted
+{
+  background-color: #fa0;
+}
+
+span.passed
+{
+  background-color: #ac0;
+}
+
+span.failed
+{
+  background-color: #f40;
+}
 
 div#footer
 {

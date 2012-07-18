@@ -72,7 +72,12 @@
 <tr>
     <th>State:</th>
     <td>
-        <xsl:value-of select ="./state"/>
+        <span>
+            <xsl:attribute name="class">
+                <xsl:value-of select="state"/>
+            </xsl:attribute>
+            <xsl:value-of select ="./state"/>
+        </span>
         <a style="float: right">
             <xsl:attribute name="href">
                 <xsl:text>/job/report/</xsl:text><xsl:value-of select ="./id"/>
