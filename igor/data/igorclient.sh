@@ -3,12 +3,14 @@
 IGORCOOKIEFILE=~/.igorcookie
 DEBUG=${DEBUG:-true}
 
+export FUNC_USAGE=""
+
 #
 # Common functions
 #
 debug() { [[ -z $DEBUG ]] || echo "${IGORCOOKIE:-(no session)} $(date) - $@" >&2 ; }
 error() { echo -e "\n$@\n" >&2 ; }
-die() { error $@ ; exit 1 ; }
+die() { error $@ ; echo "Function usage: $FUNC_USAGE" ; exit 1 ; }
 
 pyc() { echo -e "$@" | python ; }
 
@@ -328,9 +330,12 @@ abort_all() # Abort all jobs
 
 add_profile_from_iso() # Add a new profile from a livecd iso <isofilename>
 {
-  ISONAME=$1
-  ADDITIONAL_KARGS=$2
+  FUNC_USAGE="$0 $FUNCNAME <PROFILENAME> <ISONAME> [<ADDITIONAL_KARGS>]"
+  PROFILENAME=$1
+  ISONAME=$2
+  ADDITIONAL_KARGS=$3
   # " local_boot_trigger=${APIURL}testjob/{igor_cookie}"
+  [[ -z $PROFILENAME ]] && die "Profilename name is mandatory."
   [[ -z $ISONAME ]] && die "Isoname name is mandatory."
   sudo livecd-iso-to-pxeboot "$ISONAME"
   KERNEL=vmlinuz0
