@@ -180,6 +180,13 @@ class Job(object):
         current_testcase = self.testsuite.testcases()[n]
         is_passed = not is_success == current_testcase.expect_failure
 
+        log = "(log output suppressed, only for failed testcases)"
+        if not is_passed:
+            try:
+                log = self.get_artifact("log")
+            except:
+                log = "(no log output)"
+
         self.results.append({
             "created_at": time.time(),
             "testcase": current_testcase.__to_dict__(),
@@ -187,7 +194,8 @@ class Job(object):
             "is_passed": is_passed,
             "is_abort": is_abort,
             "note": note,
-            "runtime": time.time() - last_timestamp
+            "runtime": time.time() - last_timestamp,
+            "log": log
             })
 
         if is_abort:
@@ -225,6 +233,10 @@ class Job(object):
         aname = "%s-%s" % (self.current_step, name)
         self._artifacts.append(aname)
         self.session.add_artifact(aname, data)
+
+    def get_artifact(self, name):
+        aname = "%s-%s" % (self.current_step, name)
+        return self.session.get_artifact(aname)
 
     def get_artifacts_archive(self):
         logger.debug("Creating artifacts archive for: %s" % self._artifacts)

@@ -101,6 +101,7 @@ EOP
       step_succeeded > /dev/null
     else
       step_failed > /dev/null
+      add_artifact "log" $TESTCASELOGFILE
       # We are not breaking here, because a failed testcase could be expected
     fi
 

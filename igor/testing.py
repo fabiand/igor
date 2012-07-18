@@ -908,6 +908,16 @@ class TestSession(UpdateableObject):
         with open(afilename, "wb") as afile:
             afile.write(data)
 
+    def get_artifact(self, name):
+        data = None
+        afilename = os.path.join(self.dirname, name)
+        if os.path.exists(afilename):
+            with open(afilename, "rb") as afile:
+                data = afile.read()
+        else:
+            raise Exception("Artifact '%s' does not exist." % name)
+        return data
+
     def artifacts(self, use_abs=False):
         fns = os.listdir(self.dirname)
         if use_abs:

@@ -96,7 +96,7 @@
     </skipped>
   </xsl:if>
   <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
+  <system-err><xsl:value-of select="$job/log" /></system-err>
 </testcase>
 </xsl:template>
 
