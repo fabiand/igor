@@ -84,15 +84,15 @@
     <xsl:attribute name="message">Queued</xsl:attribute>
     </error>
   </xsl:if>
-  <xsl:if test="/status/status = 'stopped' and count($job/results)+1 &lt; $id">
-    <skipped>
-    <xsl:attribute name="message">Skipped because a prior testcase failed</xsl:attribute>
-    </skipped>
-  </xsl:if>
   <xsl:if test="$result/is_passed = 'False'">
     <failure>
     <xsl:attribute name="type"><xsl:value-of select="$result/note"/></xsl:attribute>
     </failure>
+  </xsl:if>
+  <xsl:if test="/status/status = 'stopped' and count($job/results) &lt; $id">
+    <skipped>
+    <xsl:attribute name="message">Skipped because a prior testcase failed</xsl:attribute>
+    </skipped>
   </xsl:if>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
