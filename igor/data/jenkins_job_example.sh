@@ -49,7 +49,7 @@ $CREATE_PROFILE && {
     INITRD=initrd0.img
     KARGS=kargs
     echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" tftpboot/pxelinux.cfg/default \
-           | egrep -o "(root|ro|live|check|rhgb|quiet)[^[:space:]]*") > $KARGS
+           | egrep -o "(root|ro|live|check|rhgb|quiet|rd)[^[:space:]]*") > $KARGS
     echo " local_boot_trigger=${APIURL}testjob/{igor_cookie}" >> $KARGS
     ln tftpboot/$KERNEL $KERNEL
     ln tftpboot/$INITRD $INITRD
