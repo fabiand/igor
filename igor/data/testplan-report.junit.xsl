@@ -24,6 +24,7 @@
   <xsl:variable name="id" select="position()" />
   <xsl:variable name="job" select="/status/jobs[$id]" />
   <xsl:attribute name="name">     <xsl:value-of select="testsuite"/></xsl:attribute>
+  <xsl:attribute name="package">  <xsl:value-of select="/status/plan/name"/></xsl:attribute>
   <xsl:attribute name="hostname"> <xsl:value-of select="$job/host"/></xsl:attribute>
   <xsl:attribute name="id">       <xsl:value-of select="$job/id"/></xsl:attribute>
   <xsl:attribute name="time">     <xsl:value-of select="$job/runtime"/></xsl:attribute>
