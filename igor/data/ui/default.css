@@ -209,7 +209,8 @@ span.passed,
 span.failed,
 span.running,
 span.open,
-span.preparing
+span.preparing,
+span.timedout
 {
   color: white;
   padding: .1em .5em;
