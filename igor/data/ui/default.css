@@ -210,6 +210,7 @@ span.failed
 span.aborted
 {
   background-color: #fa0;
+  background-color: #aaa;
 }
 
 span.passed
