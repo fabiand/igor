@@ -326,6 +326,26 @@ abort_all() # Abort all jobs
   done
 }
 
+add_profile_from_iso() # Add a new profile from a livecd iso <isofilename>
+{
+  ISONAME=$1
+  ADDITIONAL_KARGS=$2
+  # " local_boot_trigger=${APIURL}testjob/{igor_cookie}"
+  [[ -z $ISONAME ]] && die "Isoname name is mandatory."
+  sudo livecd-iso-to-pxeboot "$ISONAME"
+  KERNEL=vmlinuz0
+  INITRD=initrd0.img
+  KARGS=kargs
+  # Get the default kargs from the isolinux cfg and remove some kargs to not exceed the 256 chars limit of pxelinux
+  echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" tftpboot/pxelinux.cfg/default \
+         | egrep -o "(root|ro|live|check|rhgb|quiet|rd)[^[:space:]]*") > $KARGS
+  echo "$ADDITIONAL_KARGS" >> $KARGS
+  ln tftpboot/$KERNEL $KERNEL
+  ln tftpboot/$INITRD $INITRD
+  ./igorclient.sh add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
+  sudo rm -rf tftpboot $KERNEL $INITRD $KARGS
+}
+
 #
 # Executive part
 #
