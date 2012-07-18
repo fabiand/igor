@@ -173,6 +173,10 @@ class Job(object):
         if self.current_step != n:
             raise Exception("Expected a different step to finish.")
 
+        last_timestamp = self.created_at
+        if len(self.results) > 0:
+            last_timestamp = self.results[n-1]["created_at"]
+
         current_testcase = self.testsuite.testcases()[n]
         is_passed = not is_success == current_testcase.expect_failure
 
@@ -182,7 +186,8 @@ class Job(object):
             "is_success": is_success,
             "is_passed": is_passed,
             "is_abort": is_abort,
-            "note": note
+            "note": note,
+            "runtime": time.time() - last_timestamp
             })
 
         if is_abort:

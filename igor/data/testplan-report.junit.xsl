@@ -21,67 +21,81 @@
 <xsl:template match="job_layouts">
 <!-- Is mapped to an Igor job -->
 <testsuite>
-<xsl:variable name="id" select="position()" />
-<xsl:variable name="job" select="/status/jobs[$id]" />
-<xsl:attribute name="name">     <xsl:value-of select="testsuite"/></xsl:attribute>
-<xsl:attribute name="hostname"> <xsl:value-of select="$job/host"/></xsl:attribute>
-<xsl:attribute name="id">       <xsl:value-of select="$job/id"/></xsl:attribute>
-<xsl:attribute name="time">     <xsl:value-of select="$job/runtime"/></xsl:attribute>
-<xsl:attribute name="timestamp"><xsl:value-of select="$job/created_at"/></xsl:attribute>
-<xsl:attribute name="tests">
-  <xsl:value-of select="count(//testcases)"/>
-</xsl:attribute>
-<xsl:attribute name="failures">
-  <xsl:value-of select="count(/status/jobs/results/is_success[text()='False'])"/>
-</xsl:attribute>
-<xsl:attribute name="errors">0</xsl:attribute>
-<properties>
-  <property name="description">
-    <xsl:attribute name="value"><xsl:value-of select="/status/plan/description"/></xsl:attribute>
-  </property>
-  <property name="host">
-    <xsl:attribute name="value"><xsl:value-of select="host"/></xsl:attribute>
-  </property>
-  <property name="profile">
-    <xsl:attribute name="value"><xsl:value-of select="profile"/></xsl:attribute>
-  </property>
-  <property name="additional_kargs">
-    <xsl:attribute name="value"><xsl:value-of select="additional_kargs"/></xsl:attribute>
-  </property>
-  <property name="timeout">
-    <xsl:attribute name="value"><xsl:value-of select="$job/timeout"/></xsl:attribute>
-  </property>
-  <property name="status">
-    <xsl:attribute name="value"><xsl:value-of select="$job/state"/></xsl:attribute>
-  </property>
-<!--xsl:value-of select="$job/id"/>
-<xsl:value-of select="$job/state"/-->
-</properties>
-<xsl:for-each select="/status/jobs/testsuite/testsets/testcases">
-  <xsl:sort select="created_at" order="descending"/>
-  <xsl:call-template name="testcase-result" select="."/>
-</xsl:for-each>
+  <xsl:variable name="id" select="position()" />
+  <xsl:variable name="job" select="/status/jobs[$id]" />
+  <xsl:attribute name="name">     <xsl:value-of select="testsuite"/></xsl:attribute>
+  <xsl:attribute name="hostname"> <xsl:value-of select="$job/host"/></xsl:attribute>
+  <xsl:attribute name="id">       <xsl:value-of select="$job/id"/></xsl:attribute>
+  <xsl:attribute name="time">     <xsl:value-of select="$job/runtime"/></xsl:attribute>
+  <xsl:attribute name="timestamp"><xsl:value-of select="$job/created_at"/></xsl:attribute>
+  <xsl:attribute name="tests">
+    <xsl:value-of select="count($job//testcases)"/>
+  </xsl:attribute>
+  <xsl:attribute name="failures">
+    <xsl:value-of select="count(/status/jobs/results/is_success[text()='False'])"/>
+  </xsl:attribute>
+  <xsl:attribute name="errors">0</xsl:attribute>
+  <properties>
+    <property name="description">
+      <xsl:attribute name="value"><xsl:value-of select="/status/plan/description"/></xsl:attribute>
+    </property>
+    <property name="host">
+      <xsl:attribute name="value"><xsl:value-of select="host"/></xsl:attribute>
+    </property>
+    <property name="profile">
+      <xsl:attribute name="value"><xsl:value-of select="profile"/></xsl:attribute>
+    </property>
+    <property name="additional_kargs">
+      <xsl:attribute name="value"><xsl:value-of select="additional_kargs"/></xsl:attribute>
+    </property>
+    <property name="timeout">
+      <xsl:attribute name="value"><xsl:value-of select="$job/timeout"/></xsl:attribute>
+    </property>
+    <property name="status">
+      <xsl:attribute name="value"><xsl:value-of select="$job/state"/></xsl:attribute>
+    </property>
+  <!--xsl:value-of select="$job/id"/>
+  <xsl:value-of select="$job/state"/-->
+  </properties>
+  <xsl:for-each select="$job/testsuite/testsets/testcases">
+    <xsl:sort select="created_at" order="descending"/>
+    <xsl:call-template name="testcase-result" select=".">
+      <xsl:with-param name="job" select="$job" />
+    </xsl:call-template>
+  </xsl:for-each>
 </testsuite>
 </xsl:template>
 
 
 <xsl:template name="testcase-result">
+<xsl:param name="job" />
 <testcase>
-<xsl:variable name="id" select="position()" />
-<xsl:variable name="result" select="//results[$id]" />
-<xsl:attribute name="name"><xsl:value-of select="name"/></xsl:attribute>
-<xsl:if test="/status/status = 'stopped' and count(//results) &lt; $id">
-  <error>
-  <xsl:attribute name="type">A prior testcase failed.</xsl:attribute>
-  </error>
-</xsl:if>
-<xsl:if test="$result/is_passed = 'False'">
-  <failure>
-  <xsl:attribute name="type"><xsl:value-of select="$result/note"/></xsl:attribute>
-  </failure>
-</xsl:if>
-<system-out><![CDATA[]]></system-out>
-<system-err><![CDATA[]]></system-err>
+  <xsl:variable name="id" select="position()" />
+  <xsl:variable name="result" select="$job/results[$id]" />
+  <xsl:attribute name="name"><xsl:value-of select="name"/></xsl:attribute>
+  <xsl:attribute name="time"><xsl:value-of select="$result/runtime"/></xsl:attribute>
+  <xsl:if test="/status/status = 'running' and count($job/results)+1 = $id">
+    <error>
+    <xsl:attribute name="message">Running, awaiting results</xsl:attribute>
+    </error>
+  </xsl:if>
+  <xsl:if test="/status/status = 'running' and count($job/results)+1 &lt; $id">
+    <error>
+    <xsl:attribute name="message">Queued</xsl:attribute>
+    </error>
+  </xsl:if>
+  <xsl:if test="/status/status = 'stopped' and count($job/results)+1 &lt; $id">
+    <skipped>
+    <xsl:attribute name="message">Skipped because a prior testcase failed</xsl:attribute>
+    </skipped>
+  </xsl:if>
+  <xsl:if test="$result/is_passed = 'False'">
+    <failure>
+    <xsl:attribute name="type"><xsl:value-of select="$result/note"/></xsl:attribute>
+    </failure>
+  </xsl:if>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
 </testcase>
 </xsl:template>
 
