@@ -226,7 +226,8 @@ span.passed
   background-color: #ac0;
 }
 
-span.failed
+span.failed,
+span.timedout
 {
   background-color: #f40;
 }
