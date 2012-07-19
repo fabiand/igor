@@ -548,7 +548,8 @@ class JobCenter(object):
 
     def abort_plan(self, name):
         if name not in self._running_plans:
-            raise Exception("Plan is not running: %s" % name)
+            #raise Exception("Plan is not running: %s" % name)
+            return None
         return self._running_plans[name].stop()
 
     class PlanWorker(threading.Thread):

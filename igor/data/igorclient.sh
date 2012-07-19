@@ -304,7 +304,7 @@ wait_state() # Wait until a job reaced a specific state (regex)
   done
   echo ""
   echo "Reached state '$(state)' ($STATE)"
-  exit 0
+  return 0
 }
 
 wait_testplan() # Wait until a testplan ended
@@ -324,7 +324,7 @@ wait_testplan() # Wait until a testplan ended
   done
   echo ""
   echo "Reached state $STATE"
-  exit 0
+  return 0
 }
 
 testplan_artifacts_and_reports() # Get all artifacts and reports related to a testplan
