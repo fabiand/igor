@@ -227,7 +227,7 @@ testplan_submit() # Submit a testplan to be run, optional a query param with sub
   QUERY=""
 
   [[ -z $KARGS ]] || {
-    QUERY=?$KARGS
+    QUERY="?$KARGS"
   }
 
   api /testplans/$PNAME/submit$QUERY
@@ -370,6 +370,31 @@ add_profile_from_iso() # Add a new profile from a livecd iso <isofilename>
   ln tftpboot/$INITRD $INITRD
   add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
   sudo rm -rf tftpboot $KERNEL $INITRD $KARGS
+}
+
+run_testplan_on_iso() # Add an ISO as a profile an test it with the given testsuite
+{
+  FUNC_USAGE="$0 $FUNCNAME <TESTPLAN> <ISONAME> [<ADDITIONAL_KARGS>]"
+  TESTPLAN=$1
+  ISONAME=$2
+  ADDITIONAL_KARGS=$3
+
+  [[ -z $TESTPLAN ]] && die "Testplan is mandatory."
+  [[ -e $ISONAME ]] || die "Isoname is mandatory."
+
+  PROFILENAME=$(basename "$ISONAME")
+
+  debug "Adding profile from ISO '$ISONAME'"
+  add_profile_from_iso "$PROFILENAME" "$ISONAME" "$ADDITIONAL_KARGS"
+
+  debug "Submitting testplan '$TESTPLAN'"
+  testplan_submit "$TESTPLAN" "tbd_profile=$PROFILENAME"
+
+  debug "Waiting for testplan '$TESTPLAN' to end"
+  wait_testplan "$TESTPLAN"
+
+  debug "Testplan '$TESTPLAN' ended, removing profile '$PROFILE'"
+  remove_profile "$PROFILENAME"
 }
 
 #
