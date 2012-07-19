@@ -188,12 +188,13 @@ add_profile() # Add a profile from kernel, initrd and kargs files
   }
 
   ARCHIVE="/tmp/$PNAME_files.tar"
-  tar -c -f $ARCHIVE $KERNEL $INITRD $KARGS
+  # Use transform to strip all leading paths
+  tar --create --transform="s#^.*/##" --file="$ARCHIVE" $KERNEL $INITRD $KARGS
 
   URL=$(_api_url profiles/$PNAME)
-  curl --header "x-kernel-filename: $KERNEL" \
-       --header "x-initrd-filename: $INITRD" \
-       --header "x-kargs-filename: $KARGS" \
+  curl --header "x-kernel-filename: $(basename $KERNEL)" \
+       --header "x-initrd-filename: $(basename $INITRD)" \
+       --header "x-kargs-filename: $(basename $KARGS)" \
        --upload-file $ARCHIVE "$URL"
 
   rm -f $ARCHIVE
