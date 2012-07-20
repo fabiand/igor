@@ -304,6 +304,7 @@ wait_state() # Wait until a job reaced a specific state (regex)
   done
   echo ""
   echo "Reached state '$(state)' ($STATE)"
+  DEBUG=true
   return 0
 }
 
@@ -324,6 +325,7 @@ wait_testplan() # Wait until a testplan ended
   done
   echo ""
   echo "Reached state $STATE"
+  DEBUG=true
   return 0
 }
 
@@ -393,7 +395,7 @@ run_testplan_on_iso() # Add an ISO as a profile an test it with the given testsu
   debug "Waiting for testplan '$TESTPLAN' to end"
   wait_testplan "$TESTPLAN"
 
-  debug "Testplan '$TESTPLAN' ended, removing profile '$PROFILE'"
+  debug "Testplan '$TESTPLAN' ended, removing profile '$PROFILENAME'"
   remove_profile "$PROFILENAME"
 }
 
