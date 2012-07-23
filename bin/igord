@@ -242,6 +242,7 @@ def get_artifacts(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
+    bottle.response.content_type = "application/x-bzip2"
     return j.get_artifacts_archive().getvalue()
 
 
