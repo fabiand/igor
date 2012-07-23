@@ -191,7 +191,8 @@ class Profile(testing.Profile):
             logger.debug("System handle: %s" % system_handle)
             system = remote.system(name)
             logger.debug("System: %s" % system)
-            self.previous_profile = system["profile"]
+            if "profile" in system:
+                self.previous_profile = system["profile"]
             self.system_existed = True
         else:
             system_handle = remote.new_system()
