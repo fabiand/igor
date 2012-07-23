@@ -188,7 +188,10 @@ class Profile(testing.Profile):
         if name in remote.systems():
             logger.info("Reusing existing system %s" % name)
             system_handle = remote.get_system_handle(name)
-            self.previous_profile = remote.system(name)["profile"]
+            logger.debug("System handle: %s" % system_handle)
+            system = remote.system(name)
+            logger.debug("System: %s" % system)
+            self.previous_profile = system["profile"]
             self.system_existed = True
         else:
             system_handle = remote.new_system()
@@ -413,6 +416,9 @@ class Cobbler(object):
                                                     1, 1000)]
 
     def system(self, name):
+        return self.server.get_system_as_rendered(name)
+
+    def system_data(self, name):
         return self.server.get_blended_data("", name)
 
     def power_system(self, name, power):
