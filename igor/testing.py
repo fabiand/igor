@@ -333,7 +333,7 @@ class Factory(utils.Factory):
         """
         >>> t = Factory.testplan_from_string("test", "a b c")
         >>> str(t)
-        "{'job_layouts': [{'profile': 'b', 'testsuite': 'a', 'host': 'c', 'kargs': None}], 'name': 'test'}"
+        "{'job_layouts': [{'profile': 'b', 'testsuite': 'a', 'host': 'c', 'additional_kargs': None}], 'name': 'test', 'timeout': None, 'description': None}"
         """
         fileobj = tempfile.SpooledTemporaryFile()
         fileobj.write(txt)
@@ -371,10 +371,10 @@ class Factory(utils.Factory):
         host), [kargs='...']
 
         >>> Factory._line_to_job_layout("s p h")
-        {'profile': 'p', 'testsuite': 's', 'host': 'h', 'kargs': None}
+        {'profile': 'p', 'testsuite': 's', 'host': 'h', 'additional_kargs': None}
 
         >>> Factory._line_to_job_layout("s p h kargs='foo'")
-        {'profile': 'p', 'testsuite': 's', 'host': 'h', 'kargs': 'foo'}
+        {'profile': 'p', 'testsuite': 's', 'host': 'h', 'additional_kargs': 'foo'}
         """
         tokens = shlex.split(line)
         if len(tokens) < 3:
