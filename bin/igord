@@ -226,7 +226,8 @@ def get_testsuite_archive(cookie):
     return r.getvalue()
 
 
-@bottle.route('/job/artifact/for/<cookie>/<name>', method='PUT')
+@bottle.route('/jobs/<cookie>/artifact/<name>', method='PUT')
+@bottle.route('/job/artifact/for/<cookie>/<name>', method='PUT')    # DEPRECTAED
 def add_artifact(cookie, name):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -237,7 +238,16 @@ def add_artifact(cookie, name):
     j.add_artifact(name, data)
 
 
-@bottle.route('/job/artifact/from/<cookie>')
+@bottle.route('/jobs/<cookie>/artifact/<name>')
+def get_artifact(cookie, name):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job '%s'" % cookie)
+    j = jc.jobs[cookie]
+    return str(j.get_artifact(name))
+
+
+@bottle.route('/jobs/<cookie>/artifacts/download')
+@bottle.route('/job/artifact/from/<cookie>')                    # DEPRECATED
 def get_artifacts(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
