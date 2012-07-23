@@ -416,10 +416,10 @@ class Cobbler(object):
                                                     1, 1000)]
 
     def system(self, name):
-        return self.server.get_system_as_rendered(name)
-
-    def system_data(self, name):
-        return self.server.get_blended_data("", name)
+        return self.server.get_system(name, True)["interfaces"]
+        # Both have problems with None profiles:
+#        return self.server.get_system_as_rendered(name)
+#        return self.server.get_blended_data("", name)
 
     def power_system(self, name, power):
         assert power in ["on", "off", "reboot"]
