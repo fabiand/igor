@@ -126,7 +126,11 @@ class Host(hosts.RealHost):
     remote = None
 
     def get_name(self):
-        # Just return the host part - if it's an url
+        """Just return the host part - if it's an fqdn
+        This is done to prevent leaking more informations than necessary.
+        but it has to be taken care of using the real name (host.name) when
+        communicating with the remote cobbler server.
+        """
         return self.name.split(".")[0]
 
     def start(self):
@@ -391,7 +395,11 @@ class Cobbler(object):
         self.modify_system(system_handle, args)
 
     def remove_system(self, name):
-        self.server.remove_system(name, self.token)
+        try:
+            self.server.remove_system(name, self.token)
+        except Exception as e:
+            logger.warning("Exception while removing host: %s" % e.message)
+            logger.warning("name: %s, token: %s" % (name, self.token))
 
     def profiles(self):
         return [e["name"] for e in self.server.get_profiles(self.token, \
