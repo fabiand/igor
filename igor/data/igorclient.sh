@@ -16,8 +16,9 @@ pyc() { echo -e "$@" | python ; }
 
 help() # This help
 {
-  echo -e "usage: $0 FUNCTION\n\nFUNCTION:"
-  grep "[[:alnum:]]() #" $0 | sort | sed "s/#/\t/ ; s/()//"
+  echo -e "\nUsage: $0 FUNCTION [<params>, ...]\n\nFUNCTION:"
+  grep "[[:alnum:]]() #" $0 | sort | sed "s/#/\t/ ; s/()//" | awk -F "\t" '{ printf "%-33s %-40s\n", $1, $2}'
+
 }
 
 _is_command() { help | egrep -q "^$1[[:space:]]" ; }
@@ -405,6 +406,10 @@ run_testplan_on_iso() # Add an ISO as a profile an test it with the given testsu
 if _is_command $1
 then
   "${@}"
+elif [[ -z $@ ]]
+then
+  help
+  exit 1
 else
   error "ERROR: Unknown function '$1'"
   help
