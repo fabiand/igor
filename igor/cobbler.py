@@ -130,14 +130,14 @@ class Host(hosts.RealHost):
         return self.name.split(".")[0]
 
     def start(self):
-        logger.debug("Powering on %s" % self.get_name())
+        logger.debug("Powering on %s" % self.name)
         with self.remote as s:
-            s.power_system(self.get_name(), "reboot")
+            s.power_system(self.name, "reboot")
 
     def purge(self):
-        logger.debug("Powering off %s" % self.get_name())
+        logger.debug("Powering off %s" % self.name)
         with self.remote as s:
-            s.power_system(self.get_name(), "off")
+            s.power_system(self.name, "off")
 
 
 class Profile(testing.Profile):
@@ -164,7 +164,7 @@ class Profile(testing.Profile):
                 raise Exception("Unknown profile '%s'" % (self.name))
 
             system_handle = self.__get_or_create_system(remote, \
-                                                        host.get_name())
+                                                        host.name)
 
             kargs_txt = (self.kargs() + " " + additional_kargs)
             kargs = {"kernel_options": kargs_txt.format(
@@ -172,12 +172,12 @@ class Profile(testing.Profile):
                     }
 
             remote.assign_defaults(system_handle, \
-                                    name=host.get_name(), \
+                                    name=host.name, \
                                     mac=host.get_mac_address(), \
                                     profile=self.name, \
                                     additional_args=kargs)
 
-            remote.set_netboot_enable(host.get_name(), True)
+            remote.set_netboot_enable(host.name, True)
 
     def __get_or_create_system(self, remote, name):
         system_handle = None
@@ -203,10 +203,10 @@ class Profile(testing.Profile):
 
     def enable_pxe(self, host, enable):
         with self.remote as remote:
-            remote.set_netboot_enable(host.get_name(), enable)
+            remote.set_netboot_enable(host.name, enable)
 
     def revoke_from(self, host):
-        name = host.get_name()
+        name = host.name
         logger.debug("Revoking host '%s' from cobbler " % name)
         with self.remote as remote:
             if name in remote.systems():
