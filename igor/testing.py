@@ -74,7 +74,7 @@ class Host(UpdateableObject):
         raise Exception("Not implemented.")
 
     def get_name(self):
-        """Get a _unique_ human readbale/understandable name for this host.
+        """Get a _unique_ name for this host.
         """
         raise Exception("Not implemented.")
 

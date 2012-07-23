@@ -125,23 +125,15 @@ class Host(hosts.RealHost):
     """
     remote = None
 
-    def get_name(self):
-        """Just return the host part - if it's an fqdn
-        This is done to prevent leaking more informations than necessary.
-        but it has to be taken care of using the real name (host.name) when
-        communicating with the remote cobbler server.
-        """
-        return self.name.split(".")[0]
-
     def start(self):
-        logger.debug("Powering on %s" % self.name)
+        logger.debug("Powering on %s" % self.get_name())
         with self.remote as s:
-            s.power_system(self.name, "reboot")
+            s.power_system(self.get_name(), "reboot")
 
     def purge(self):
-        logger.debug("Powering off %s" % self.name)
+        logger.debug("Powering off %s" % self.get_name())
         with self.remote as s:
-            s.power_system(self.name, "off")
+            s.power_system(self.get_name(), "off")
 
 
 class Profile(testing.Profile):
@@ -168,7 +160,7 @@ class Profile(testing.Profile):
                 raise Exception("Unknown profile '%s'" % (self.name))
 
             system_handle = self.__get_or_create_system(remote, \
-                                                        host.name)
+                                                        host.get_name())
 
             kargs_txt = (self.kargs() + " " + additional_kargs)
             kargs = {"kernel_options": kargs_txt.format(
@@ -176,12 +168,12 @@ class Profile(testing.Profile):
                     }
 
             remote.assign_defaults(system_handle, \
-                                    name=host.name, \
+                                    name=host.get_name(), \
                                     mac=host.get_mac_address(), \
                                     profile=self.name, \
                                     additional_args=kargs)
 
-            remote.set_netboot_enable(host.name, True)
+            remote.set_netboot_enable(host.get_name(), True)
 
     def __get_or_create_system(self, remote, name):
         system_handle = None
@@ -215,10 +207,10 @@ class Profile(testing.Profile):
 
     def enable_pxe(self, host, enable):
         with self.remote as remote:
-            remote.set_netboot_enable(host.name, enable)
+            remote.set_netboot_enable(host.get_name(), enable)
 
     def revoke_from(self, host):
-        name = host.name
+        name = host.get_name()
         logger.debug("Revoking host '%s' from cobbler " % name)
         with self.remote as remote:
             if name in remote.systems():
