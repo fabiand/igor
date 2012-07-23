@@ -25,6 +25,7 @@ import re
 import tempfile
 import shlex
 import threading
+import yaml
 from lxml import etree
 
 logger = logging.getLogger(__name__)
@@ -307,6 +308,31 @@ class Factory(object):
     """
 
     @staticmethod
+    def __open(filename, fileobj):
+        if filename:
+            if not os.path.exists(filename):
+                raise Exception("Can't find %s rel. to %s" % (filename, \
+                                                              os.getcwd()))
+            fileobj = open(filename, "r")
+        if fileobj is None:
+            raise Exception("filename or fileobj must be given")
+        return fileobj
+
+    @staticmethod
+    def _from_yaml_file(filename, cb_map, fileobj=None):
+        txt = None
+        objs = []
+        with Factory.__open(filename, fileobj) as f:
+            txt = f.read()
+        documents = yaml.load_all(txt)
+        if type(documents) is list:
+            cb = cb_map[None]
+            objs += [cb(v) for v in documents]
+        elif type(documents) is dict:
+            for cb, docs in documents.items():
+                objs += [cb(v) for v in docs]
+
+    @staticmethod
     def _from_file(filename, cb_map, fileobj=None):
         """Reads a file and calls a callback per line.
         This provides some functionality like ignoring comments and blank
@@ -318,14 +344,7 @@ class Factory(object):
             tc.should       # selector: (None)  >>   Callback: None (default)
         """
         objs = []
-        if filename:
-            if not os.path.exists(filename):
-                raise Exception("Can't find %s rel. to %s" % (filename, \
-                                                              os.getcwd()))
-            fileobj = open(filename, "r")
-        if fileobj is None:
-            raise Exception("filename or fileobj must be given")
-        with fileobj as f:
+        with Factory.__open(filename, fileobj) as f:
             for line in f:
                 line = re.sub("\s*#.*$", "", line).strip()
                 if line == "":
