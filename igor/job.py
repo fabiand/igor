@@ -140,9 +140,11 @@ class Job(object):
             raise Exception(("Can not setup job %s: %s") % (self.cookie, \
                                                            self.state()))
 
-        logger.debug("Setting up job %s" % self.cookie)
+        logger.info("Setting up job %s" % self.cookie)
         self.state(s_preparing)
+        logger.debug("Preparing host %s" % self.host.get_name())
         self.host.prepare()
+        logger.debug("Assigning profile %s" % self.profile.get_name())
         self.profile.assign_to(self.host, self.additional_kargs)
         self.state(s_prepared)
 
