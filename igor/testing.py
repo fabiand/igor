@@ -884,7 +884,8 @@ class TestSession(UpdateableObject):
         self.dirname = tempfile.mkdtemp(suffix="-" + self.cookie, \
                                         prefix="igord-session-", \
                                         dir=session_path)
-        run("chmod a+X '%s'" % self.dirname)
+        os.mkdir(self.__artifacts_path())
+        run("chmod -r a+X '%s'" % self.dirname)
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
 
     def remove(self):
@@ -901,16 +902,20 @@ class TestSession(UpdateableObject):
             logger.debug("Removing testdir '%s'" % self.dirname)
             os.rmdir(self.dirname)
 
+    def __artifacts_path(self, name=""):
+        assert self.dirname is not None
+        return os.path.join(self.dirname, "artifacts", name)
+
     def add_artifact(self, name, data):
         assert("/" not in name and "\\" not in name)
-        afilename = os.path.join(self.dirname, name)
+        afilename = self.__artifacts_path(name)
         # fixme collsisions
         with open(afilename, "wb") as afile:
             afile.write(data)
 
     def get_artifact(self, name):
         data = None
-        afilename = os.path.join(self.dirname, name)
+        afilename = self.__artifacts_path(name)
         if os.path.exists(afilename):
             with open(afilename, "rb") as afile:
                 data = afile.read()
@@ -919,9 +924,10 @@ class TestSession(UpdateableObject):
         return data
 
     def artifacts(self, use_abs=False):
-        fns = os.listdir(self.dirname)
+        dirname = self.__artifacts_path()
+        fns = os.listdir(dirname)
         if use_abs:
-            fns = [os.path.join(self.dirname, fn) \
+            fns = [os.path.join(dirname, fn) \
                    for fn in fns]
         return fns
 
@@ -935,7 +941,7 @@ class TestSession(UpdateableObject):
                 if artifact not in self.artifacts():
                     logger.debug("Artifact not here: %s" % artifact)
                 logger.debug("Adding artifact %s" % artifact)
-                archive.add(os.path.join(self.dirname, artifact), artifact)
+                archive.add(self.__artifacts_path(artifact), artifact)
         return r
 
     def __enter__(self):
