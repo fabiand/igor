@@ -337,6 +337,7 @@ class Cobbler(object):
 
     def login(self):
         self.token = self.server.login(*(self.credentials))
+        return self
 
     def sync(self):
         logger.debug("Syncing")
@@ -416,7 +417,7 @@ class Cobbler(object):
                                                     1, 1000)]
 
     def system(self, name):
-        return self.server.get_system(name, True)["interfaces"]
+        return self.server.get_system(name, True)
         # Both have problems with None profiles:
 #        return self.server.get_system_as_rendered(name)
 #        return self.server.get_blended_data("", name)
