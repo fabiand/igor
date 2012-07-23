@@ -195,7 +195,11 @@ class Profile(testing.Profile):
                 self.previous_profile = system["profile"]
             self.system_existed = True
         else:
+            logger.info("Creating new system %s" % name)
             system_handle = remote.new_system()
+            remote.modify_profile(system_handle, {
+                    "name": name
+                })
         return system_handle
 
     def kargs(self, kargs=None):
