@@ -26,9 +26,9 @@ import tempfile
 
 import libvirt
 
-from testing import *
-from utils import run, dict_to_args
-from partition import *
+import igor.main
+from igor.utils import run, dict_to_args
+from igor.partition import *
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class VMImage(Layout):
         self.format = dst_fmt
 
 
-class VMHost(Host):
+class VMHost(igor.main.Host):
     '''A host which is actually a virtual guest.
     VMHosts are not much different from other hosts, besides that we can
     configure them.

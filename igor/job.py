@@ -24,7 +24,7 @@ import time
 import zlib
 import os
 
-import testing
+import main
 import backends.libvirt as virt
 import backends.cobbler as cobbler
 import utils
@@ -84,7 +84,7 @@ class Job(object):
 
         assert cookie is not None, "Cookie can not be None"
         self.cookie = cookie
-        self.session = testing.TestSession(cookie, self.session_path)
+        self.session = main.TestSession(cookie, self.session_path)
 
         testsuite, profile, host, additional_kargs = (jobspec.testsuite, \
                                                       jobspec.profile, \

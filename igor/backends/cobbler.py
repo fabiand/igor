@@ -23,16 +23,16 @@ import xmlrpclib
 import time
 import os
 
-import testing
-import hosts
-import utils
+import igor.main
+import igor.backends.files
+import igor.utils
 
 logger = logging.getLogger(__name__)
 
 
 identification_tag = "managed-by-igor"
 
-class ProfileOrigin(testing.Origin):
+class ProfileOrigin(igor.main.Origin):
     """This is the source where igor retrieves cobbler profiles
     """
     cobbler = None
@@ -57,7 +57,7 @@ class ProfileOrigin(testing.Origin):
         profile.populate_with(kernel_file, initrd_file, kargs_file)
 
 
-class HostsOrigin(testing.Origin):
+class HostsOrigin(igor.main.Origin):
     """This is the source where igor retrieves cobbler systems as hosts
     """
     cobbler = None
@@ -120,8 +120,8 @@ class HostsOrigin(testing.Origin):
         return whitelist
 
 
-class Host(hosts.RealHost):
-    """Implemets the methods required by testing.Host
+class Host(igor.backends.files.Host):
+    """Implemets the methods required by main.Host
     """
     remote = None
 
@@ -142,7 +142,7 @@ class Host(hosts.RealHost):
         return r
 
 
-class Profile(testing.Profile):
+class Profile(igor.main.Profile):
     remote = None
     name = None
     additional_args = None

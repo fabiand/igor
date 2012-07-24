@@ -22,7 +22,7 @@ import logging
 import os
 import tempfile
 
-from testing import *
+from main import *
 from utils import run
 from partition import *
 

@@ -15,16 +15,14 @@ import tarfile
 import tempfile
 from string import Template
 
-
 import igor.log
-
-from igor.testing import *
+from igor.main import *
 from igor.backends.libvirt import *
 from igor.backends.cobbler import Cobbler
 from igor.job import *
 import igor.utils as utils
 import igor.reports as reports
-import igor.hosts as hosts
+import igor.backends.files
 
 import igor.config as config
 
@@ -50,33 +48,33 @@ __cobbler_origin_args = (CONFIG["cobbler.url"], \
 #
 plan_origins = {
     "filesystem": \
-        FilesystemTestplansOrigin(CONFIG["testplans.path"].split(":"))
+        igor.backends.files.TestplansOrigin(CONFIG["testplans.path"].split(":"))
 }
 testsuite_origins = {
     "filesystem": \
-        FilesystemTestsuitesOrigin(CONFIG["testcases.path"].split(":"))
+        igor.backends.files.TestsuitesOrigin(CONFIG["testcases.path"].split(":"))
 }
 
 profile_origins = {
     "cobbler": \
-        cobbler.ProfileOrigin(*__cobbler_origin_args)
+        igor.backends.cobbler.ProfileOrigin(*__cobbler_origin_args)
 }
 
 host_origins = {
     "libvirt": \
-        virt.VMAlwaysCreateHostOrigin( \
+        igor.backends.libvirt.VMAlwaysCreateHostOrigin( \
                     CONFIG["libvirtd.connection_uri"], \
                     CONFIG["libvirtd.virt-install.storage_pool"], \
                     CONFIG["libvirtd.virt-install.network_configuration"]),
 
     "cobbler": \
         # Just systems with igor- prefix
-        cobbler.HostsOrigin(*__cobbler_origin_args, \
+        igor.backends.cobbler.HostsOrigin(*__cobbler_origin_args, \
                 expression=CONFIG["cobbler.hosts.identification_expression"], \
                 whitelist=CONFIG["cobbler.hosts.whitelist"]),
 
     "files": \
-        hosts.FilesystemRealHostsOrigin(CONFIG["hosts.path"].split(":"))
+        igor.backends.files.HostsOrigin(CONFIG["hosts.path"].split(":"))
 }
 
 #
@@ -156,7 +154,7 @@ def submit_testsuite(tname, pname, hname, cookiereq=None):
         item = inventory._lookup(key, name)
         if item is None:
             bottle.abort(412, "Unknown %s '%s'" % (key, name))
-    spec = testing.JobSpec(testsuite=inventory.testsuites()[tname],
+    spec = main.JobSpec(testsuite=inventory.testsuites()[tname],
                profile=inventory.profiles()[pname],
                host=inventory.hosts()[hname],
                additional_kargs=bottle.request.query.additional_kargs or "")
