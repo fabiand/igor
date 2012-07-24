@@ -885,7 +885,7 @@ class TestSession(UpdateableObject):
                                         prefix="igord-session-", \
                                         dir=session_path)
         os.mkdir(self.__artifacts_path())
-        run("chmod -r a+X '%s'" % self.dirname)
+        run("chmod -R a+X '%s'" % self.dirname)
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
 
     def remove(self):
