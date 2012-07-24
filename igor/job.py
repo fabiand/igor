@@ -25,8 +25,8 @@ import zlib
 import os
 
 import testing
-import virt
-import cobbler
+import backends.libvirt as virt
+import backends.cobbler as cobbler
 import utils
 
 logger = logging.getLogger(__name__)

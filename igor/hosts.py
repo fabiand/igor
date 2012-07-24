@@ -22,7 +22,7 @@ import logging
 
 import utils
 from testing import *
-import virt
+import backends.libvirt as virt
 import testing
 import ConfigParser
 

@@ -19,8 +19,8 @@ from string import Template
 import igor.log
 
 from igor.testing import *
-from igor.virt import *
-from igor.cobbler import Cobbler
+from igor.backends.libvirt import *
+from igor.backends.cobbler import Cobbler
 from igor.job import *
 import igor.utils as utils
 import igor.reports as reports
