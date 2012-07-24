@@ -231,14 +231,17 @@ class Job(object):
         self.current_step += 1
         return self.current_step
 
-    def add_artifact(self, name, data):
+    def add_artifact_to_current_step(self, name, data):
         aname = "%s-%s" % (self.current_step, name)
-        self._artifacts.append(aname)
-        self.session.add_artifact(aname, data)
+        self.add_artifact(aname, data)
+        return aname
+
+    def add_artifact(self, name, data):
+        self._artifacts.append(name)
+        self.session.add_artifact(name, data)
 
     def get_artifact(self, name):
-        aname = "%s-%s" % (self.current_step, name)
-        return self.session.get_artifact(aname)
+        return self.session.get_artifact(name)
 
     def get_artifacts_archive(self):
         logger.debug("Creating artifacts archive for: %s" % self._artifacts)

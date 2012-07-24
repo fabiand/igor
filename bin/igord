@@ -235,14 +235,15 @@ def add_artifact(cookie, name):
         bottle.abort(412, "Name may not contain slashes")
     j = jc.jobs[cookie]
     data = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
-    j.add_artifact(name, data)
+    j.add_artifact_to_current_step(name, data)
 
 
-@bottle.route('/jobs/<cookie>/artifact/<name>')
+@bottle.route('/jobs/<cookie>/artifacts/<name>')
 def get_artifact(cookie, name):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
+    bottle.response.content_type = "text/plain; charset=utf8"
     return str(j.get_artifact(name))
 
 

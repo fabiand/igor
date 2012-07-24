@@ -67,7 +67,7 @@
 
 <xsl:template name="job">
 <tr>
-    <td rowspan="6"><xsl:value-of select ="./id"/></td>
+    <td rowspan="7"><xsl:value-of select ="./id"/></td>
 </tr>
 <tr>
     <th>State:</th>
@@ -117,6 +117,25 @@
 <tr>
     <th>Testsuite:</th>
     <td><xsl:value-of select ="./testsuite/name"/></td>
+</tr>
+<tr>
+    <th>Artifacts:</th>
+    <td>
+    <xsl:if test="count(./artifacts) &gt; 0">
+    <div class="expand-on-request"><ul>
+        <xsl:for-each select="./artifacts">
+            <li>
+            <a>
+                <xsl:attribute name="href">
+                    /jobs/<xsl:value-of select ="../id"/>/artifacts/<xsl:value-of select ="text()"/>
+                </xsl:attribute>
+                <xsl:value-of select ="text()"/>
+            </a>
+            </li>
+        </xsl:for-each>
+    </ul></div>
+    </xsl:if>
+    </td>
 </tr>
 </xsl:template>
 

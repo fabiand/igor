@@ -252,3 +252,20 @@ div#footer
   margin-top: 2em;
   font-size: 1em;
 }
+
+.expand-on-request
+{
+  height: 2em;
+  overflow: hidden;
+}
+
+.expand-on-request:hover
+{
+  height: auto;
+}
+
+.expand-on-request ul
+{
+  margin: 0;
+  padding-left: 15px;
+}
