@@ -126,16 +126,20 @@ class Host(hosts.RealHost):
     remote = None
 
     def start(self):
-        logger.debug("Powering on %s" % self.get_name())
-        with self.remote as s:
-            s.power_system(self.get_name(), "off")
-            time.sleep(15)  # FIXME reboot did not work
-            s.power_system(self.get_name(), "on")
+        self._power("on")
 
     def purge(self):
-        logger.debug("Powering off %s" % self.get_name())
+        self._power("off")
+
+    def _power(self, t):
+        r = None
+        if t != "status":
+            logger.debug("Current power status: %s" % self._power("status"))
+        else:
+            logger.debug("Setting power of %s to %s" % (self.get_name(), t))
         with self.remote as s:
-            s.power_system(self.get_name(), "off")
+            r = s.power_system(self.get_name(), t)
+        return r
 
 
 class Profile(testing.Profile):
@@ -418,11 +422,11 @@ class Cobbler(object):
 #        return self.server.get_blended_data("", name)
 
     def power_system(self, name, power):
-        assert power in ["on", "off", "reboot"]
+        assert power in ["on", "off", "status", "reboot"]
         logger.debug("Setting power '%s' on '%s'" % (power, name))
         return self.server.background_power_system({
             "power": power,
-            "systems": name
+            "systems": [name]
             }, self.token)
 
 
