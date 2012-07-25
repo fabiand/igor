@@ -23,6 +23,7 @@ import ConfigParser
 import os
 import glob
 import shlex
+import tempfile
 
 import igor.main
 import igor.utils
@@ -193,7 +194,7 @@ class Factory(igor.utils.Factory):
             suites/advanced.plan
         This would create a dict with two plans basic and advanced.
 
-        >>> plans = Factory.testplans_from_paths(["../testcases/"])
+        >>> plans = Factory.testplans_from_paths(["testcases/"])
         >>> "exampleplan" in plans
         True
 
@@ -222,9 +223,9 @@ class Factory(igor.utils.Factory):
             suites/example.sh           # Beeing an example testcase
         This would create a dict with two suites basic and advanced.
 
-        >>> suites = Factory.testsuites_from_path("../testcases/suites/")
+        >>> suites = Factory.testsuites_from_path("testcases/suites/")
         >>> suites["examplesuite"].libs()
-        {'common': '../testcases/libs/common'}
+        {'common': 'testcases/libs/common'}
         """
         if not os.path.exists(path):
             raise Exception("Testsuites path does not exist: %s" % path)
@@ -243,7 +244,7 @@ class Factory(igor.utils.Factory):
         path is winning.
         Take a look at Factory.testsuites_from_path for more details.
 
-        >>> suites = Factory.testsuites_from_paths(["../testcases/suites/"])
+        >>> suites = Factory.testsuites_from_paths(["testcases/suites/"])
         >>> "examplesuite" in suites
         True
         """
@@ -314,7 +315,7 @@ class Factory(igor.utils.Factory):
     def hosts_from_file(filename, suffix=".hosts"):
         """Reads hosts from a cfg file.
 
-        >>> hosts = Factory.hosts_from_file("../data/example.hosts")
+        >>> hosts = Factory.hosts_from_file("data/example.hosts")
         >>> hosts["ahost"].mac == "aa:bb:cc:dd:ee"
         True
         """
@@ -338,7 +339,7 @@ class Factory(igor.utils.Factory):
     def hosts_from_path(path, suffix=".hosts"):
         """Load hosts form .hosts files in path
 
-        >>> hosts = Factory.hosts_from_path("../data/")
+        >>> hosts = Factory.hosts_from_path("data/")
         >>> hosts["ahost"].mac == "aa:bb:cc:dd:ee"
         True
         """
@@ -354,7 +355,7 @@ class Factory(igor.utils.Factory):
     def hosts_from_paths(paths, suffix=".hosts"):
         """Builds hosts objects by reading them from files in paths
 
-        >>> hosts = Factory.hosts_from_paths(["../data/"])
+        >>> hosts = Factory.hosts_from_paths(["data/"])
         >>> "ahost" in hosts
         True
         """

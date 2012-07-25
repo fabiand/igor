@@ -189,7 +189,8 @@ class Inventory(object):
         {'item-a': 'a', 'item-b': 'b', 'item-c': 'c', 'item-d': 'd'}
 
         Or even use a factory to populate the inventory:
-        >>> f = FilesystemTestsuitesOrigin(["../testcases/suites/"])
+        >>> import igor.backends.files
+        >>> f = igor.backends.files.TestsuitesOrigin(["testcases/suites/"])
         >>> i = Inventory(testsuites={"fs": f})
         >>> "examplesuite" in i.testsuites()
         True
@@ -207,9 +208,9 @@ class Inventory(object):
     def _add_origins(self, k, origins):
         assert type(origins) is dict
         for name, origin in origins.items():
-            if not isinstance(origin, Origin):
-                raise Exception(("Invalid %s origin '%s': '%s'") % (k, \
-                                                               source, origin))
+#            if isinstance(origin, Origin):
+#                raise Exception(("Invalid %s origin '%s': '%s'") % (k, \
+#                                                               name, origin))
             self._origins[k][name] = origin
 
     def _items(self, k):
@@ -436,7 +437,9 @@ class Testsuite(object):
         0-complexexample.sh.d/mybin
         1-examplecase.sh
 
-        >>> suites = Factory.testsuites_from_path("../testcases/suites/")
+        >>> import igor.backends.files
+        >>> suites = igor.backends.files.Factory.testsuites_from_path( \
+                                                           "testcases/suites/")
         >>> suite = suites["examplesuite"]
         >>> archive = io.BytesIO(suite.get_archive().getvalue())
         >>> tarball = tarfile.open(fileobj=archive, mode="r")
