@@ -12,7 +12,9 @@ import re
 import bottle
 import io
 import tarfile
+import tempfile
 from string import Template
+
 
 from igor.testing import *
 from igor.virt import *
@@ -28,9 +30,15 @@ BOTTLE_MAX_READ_SIZE=1024*1024*512
 
 #logging.config.fileConfig("logconf.ini")
 logging.basicConfig( \
-    format='%(levelname)s - %(asctime)s - %(module)s - %(message)s', \
+    format='%(name)-12s: %(levelname)-8s %(message)s', \
     level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("")
+logfile = tempfile.NamedTemporaryFile()
+fh = logging.StreamHandler(logfile)
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(logging.Formatter('%(levelname)s - %(asctime)s - %(module)s - %(message)s'))
+logger.addHandler(fh)
+logger.info("Added logging to %s" % logfile.name)
 
 #
 # Parse the config at first
@@ -507,6 +515,15 @@ def delete_profile(pname):
     if pname not in inventory.profiles():
         bottle.abort(404, "Unknown profile")
     inventory.profiles()[pname].delete()
+
+@bottle.route('/server/log')
+def get_log():
+    log = ""
+    logfile.flush()
+    with open(logfile.name, "rb") as f:
+        log = f.read()
+    bottle.response.content_type = "text/plain; charset=utf8"
+    return log
 
 if __name__ == "__main__":
     try:
