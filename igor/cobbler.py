@@ -128,7 +128,9 @@ class Host(hosts.RealHost):
     def start(self):
         logger.debug("Powering on %s" % self.get_name())
         with self.remote as s:
-            s.power_system(self.get_name(), "reboot")
+            s.power_system(self.get_name(), "off")
+            time.sleep(15)  # FIXME reboot did not work
+            s.power_system(self.get_name(), "on")
 
     def purge(self):
         logger.debug("Powering off %s" % self.get_name())
