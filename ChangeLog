@@ -1,0 +1,25 @@
+igor-0.2.3
+- Better documentation
+- ...
+
+igor-0.2.2
+- Critical fixes
+- ChangeLog
+
+igor-0.2.1
+- Add real hardware support, cobbler backend
+- Reports introduced
+- Improved client
+  - LiveCD direct import support
+- Improved cobbler backend
+- Testplans introduced
+- More documentation
+
+igor-0.2.0
+- UI intorduced
+
+igor-0.1.1
+- Improved testcases and client
+
+igor-0.1.0
+- Initial
