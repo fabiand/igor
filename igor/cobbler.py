@@ -168,10 +168,8 @@ class Profile(testing.Profile):
                     }
 
             remote.assign_defaults(system_handle, \
-                                    name=host.get_name(), \
-                                    mac=host.get_mac_address(), \
-                                    profile=self.name, \
-                                    additional_args=kargs)
+                                   profile=self.name, \
+                                   additional_args=kargs)
 
             remote.set_netboot_enable(host.get_name(), True)
 
@@ -190,7 +188,11 @@ class Profile(testing.Profile):
             logger.info("Creating new system %s" % name)
             system_handle = remote.new_system()
             remote.modify_profile(system_handle, {
-                    "name": name
+                    "name": name,
+                    "mac": host.get_mac_address(),
+                    "modify_interface": {
+                        "macaddress-eth0": mac
+                    }
                 })
         return system_handle
 
@@ -343,16 +345,11 @@ class Cobbler(object):
     def assign_defaults(self, system_handle, name, mac, profile, \
                         additional_args):
         args = {
-            "name": name,
-            "mac": mac,
             "profile": profile,
             "comment": identification_tag,
             "status": "testing",
             "kernel_options": "",
-            "kernel_options_post": "",
-            "modify_interface": {
-                "macaddress-eth0": mac
-            }
+            "kernel_options_post": ""
         }
 
         if additional_args is not None:
