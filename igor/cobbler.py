@@ -166,7 +166,7 @@ class Profile(testing.Profile):
                 raise Exception("Unknown profile '%s'" % (self.name))
 
             system_handle = self.__get_or_create_system(remote, \
-                                                        host.get_name())
+                                                        host)
 
             kargs_txt = (self.kargs() + " " + additional_kargs)
             kargs = {"kernel_options": kargs_txt.format(
@@ -179,7 +179,8 @@ class Profile(testing.Profile):
 
             remote.set_netboot_enable(host.get_name(), True)
 
-    def __get_or_create_system(self, remote, name):
+    def __get_or_create_system(self, remote, host):
+        name = host.get_name()
         system_handle = None
         if name in remote.systems():
             logger.info("Reusing existing system %s" % name)
@@ -197,7 +198,7 @@ class Profile(testing.Profile):
                     "name": name,
                     "mac": host.get_mac_address(),
                     "modify_interface": {
-                        "macaddress-eth0": mac
+                        "macaddress-eth0": host.get_mac_address()
                     }
                 })
         return system_handle
