@@ -344,8 +344,7 @@ class Cobbler(object):
         logger.debug("Syncing")
         self.server.sync(self.token)
 
-    def assign_defaults(self, system_handle, name, mac, profile, \
-                        additional_args):
+    def assign_defaults(self, system_handle, profile, additional_args):
         args = {
             "profile": profile,
             "comment": identification_tag,
