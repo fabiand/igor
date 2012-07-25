@@ -80,7 +80,7 @@
         </span>
         <a style="float: right">
             <xsl:attribute name="href">
-                <xsl:text>/job/report/</xsl:text><xsl:value-of select ="./id"/>
+                <xsl:text>/jobs/</xsl:text><xsl:value-of select ="./id"/>/report
             </xsl:attribute>
             Report
         </a>

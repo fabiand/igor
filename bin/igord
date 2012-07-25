@@ -150,8 +150,8 @@ def static_data(filename):
     return bottle.static_file(filename, root=config.DATA_DIR)
 
 
-@bottle.route('/submit/<tname>/with/<pname>/on/<hname>')
-@bottle.route('/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')
+@bottle.route('/jobs/submit/<tname>/with/<pname>/on/<hname>')
+@bottle.route('/jobs/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')
 def submit_testsuite(tname, pname, hname, cookiereq=None):
     args = ()
     for key, name in [("testsuites", tname), \
@@ -175,7 +175,7 @@ def get_jobs():
     return to_json(jc.get_jobs())
 
 
-@bottle.route('/job/start/<cookie>')
+@bottle.route('/jobs/<cookie>/start')
 def start_job(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -183,7 +183,7 @@ def start_job(cookie):
     return to_json(m)
 
 
-@bottle.route('/job/status/<cookie>')
+@bottle.route('/jobs/<cookie>/status')
 def job_status(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -191,7 +191,7 @@ def job_status(cookie):
     return to_json(m)
 
 
-@bottle.route('/job/report/<cookie>')
+@bottle.route('/jobs/<cookie>/report')
 def job_report(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -200,7 +200,7 @@ def job_report(cookie):
     return str(reports.job_status_to_report(j.__to_dict__()))
 
 
-@bottle.route('/job/step/<cookie>/<n:int>/<result:re:success|failed>')
+@bottle.route('/jobs/<cookie>/step/<n:int>/<result:re:success|failed>')
 def finish_step(cookie, n, result):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -209,7 +209,8 @@ def finish_step(cookie, n, result):
     return to_json(m)
 
 
-@bottle.route('/job/abort/<cookie>')
+@bottle.route('/jobs/<cookie>', method='DELETE')
+@bottle.route('/jobs/<cookie>/abort')
 def abort_job(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -220,7 +221,7 @@ def abort_job(cookie):
     return to_json(m)
 
 
-@bottle.route('/job/testsuite/for/<cookie>')
+@bottle.route('/jobs/<cookie>/testsuite')
 def get_testsuite_archive(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -232,8 +233,7 @@ def get_testsuite_archive(cookie):
     return r.getvalue()
 
 
-@bottle.route('/jobs/<cookie>/artifact/<name>', method='PUT')
-@bottle.route('/job/artifact/for/<cookie>/<name>', method='PUT')
+@bottle.route('/jobs/<cookie>/artifacts/<name>', method='PUT')
 def add_artifact(cookie, name):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -254,7 +254,6 @@ def get_artifact(cookie, name):
 
 
 @bottle.route('/jobs/<cookie>/artifacts/download')
-@bottle.route('/job/artifact/from/<cookie>')                    # DEPRECATED
 def get_artifacts(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -264,7 +263,7 @@ def get_artifacts(cookie):
 
 
 @bottle.route('/firstboot/<cookie>')
-@bottle.route('/job/<cookie>/set/enable_pxe/<enable_pxe>')
+@bottle.route('/jobs/<cookie>/set/enable_pxe/<enable_pxe>')
 def disable_pxe_cb(cookie, enable_pxe=False):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -273,7 +272,7 @@ def disable_pxe_cb(cookie, enable_pxe=False):
     return to_json(m)
 
 
-@bottle.route('/job/<cookie>/set/kernelargs/<kernelargs>')
+@bottle.route('/jobs/<cookie>/set/kernelargs/<kernelargs>')
 def set_kernelargs_cb(cookie, kernelargs):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)

@@ -114,7 +114,7 @@ uncookie() # Remove current cookie
 abort() # Abort the current job
 {
   has_cookie
-  api job/abort/$IGORCOOKIE
+  api jobs/$IGORCOOKIE/abort
   uncookie
 }
 
@@ -122,19 +122,19 @@ abort() # Abort the current job
 start() # Start the current job
 {
   has_cookie
-  api job/start/$IGORCOOKIE
+  api jobs/$IGORCOOKIE/start
 }
 
 status() # Get the status of the current job
 {
   has_cookie
-  api job/status/$IGORCOOKIE
+  api jobs/$IGORCOOKIE/status
 }
 
 report() # Get the rst report
 {
   has_cookie
-  api job/report/$IGORCOOKIE
+  api jobs/$IGORCOOKIE/report
 }
 
 testsuite() # Get the testsuite for the current job
@@ -142,7 +142,7 @@ testsuite() # Get the testsuite for the current job
   ARCHIVE=${1:-testsuite.tar.bz2}
   FUNC_USAGE="$0 $FUNCNAME [<DSTARCHIVE=$ARCHIVE>]"
   has_cookie
-  api /job/testsuite/for/$IGORCOOKIE > $ARCHIVE
+  api /jobs/$IGORCOOKIE/testsuite > $ARCHIVE
 }
 
 artifacts() # Get all artifacts for the current job
@@ -150,7 +150,7 @@ artifacts() # Get all artifacts for the current job
   ARCHIVE=${1:-artifacts.tar.bz2}
   FUNC_USAGE="$0 $FUNCNAME [<DSTARCHIVE=$ARCHIVE>]"
   has_cookie
-  api job/artifact/from/$IGORCOOKIE > $ARCHIVE
+  api jobs/$IGORCOOKIE/artifacts/download > $ARCHIVE
 }
 
 testsuites() # List all available testsuites
@@ -270,7 +270,7 @@ testplan_abort() # Abort a running testplan to be run
 state() # Just get the value of the status key
 {
   has_cookie
-  api job/status/$IGORCOOKIE | _filter_key state
+  api jobs/$IGORCOOKIE/status | _filter_key state
 }
 
 testplan_state() # Just get the value of the testplan status key
@@ -289,7 +289,7 @@ wait_state() # Wait until a job reaced a specific state (regex)
   echo -n "Waiting "
   export DEBUG=""
   TIME_START=$(date +%s)
-  TIMEOUT=$(api job/status/$IGORCOOKIE | grep timeout | tail -n1 | _filter_key timeout)
+  TIMEOUT=$(api jobs/$IGORCOOKIE/status | grep timeout | tail -n1 | _filter_key timeout)
   TIMEOUT=$(( $TIMEOUT * 2 )) # Higher timeout, because it can take time before the job ist actually started
   while true
   do

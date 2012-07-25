@@ -20,8 +20,8 @@ debug() { echo "$SESSION $(date) - $@" >&2 ; }
 debug_curl() { debug "Calling $1" ; curl --silent "$1" ; }
 api_url() { echo "${APIURL%/}/${1#/}" ; }
 api_call() { debug_curl $(api_url "$1") ; }
-step_succeeded() { api_call job/step/$SESSION/$CURRENT_STEP/success ; }
-step_failed()    { api_call job/step/$SESSION/$CURRENT_STEP/failed ; }
+step_succeeded() { api_call jobs/$SESSION/step/$CURRENT_STEP/success ; }
+step_failed()    { api_call jobs/$SESSION/step/$CURRENT_STEP/failed ; }
 add_artifact()
 {
   local DST=$1
@@ -30,7 +30,7 @@ add_artifact()
     debug "Adding artifact: Destination '$DST' or filename '$FILENAME' missing." ; return 1 ;
   }
   debug "Adding artifact '$DST': '$FILENAME'"
-  URL=$(api_url "job/artifact/for/$SESSION/$DST")
+  URL=$(api_url "jobs/$SESSION/artifacts/$DST")
 
   python <<EOP
 import urllib2
@@ -58,7 +58,7 @@ EOP
   cd $TMPDIR
 
   debug "Fetching testsuite '$TESTSUITE' for session '$SESSION'"
-  api_call "job/testsuite/for/$SESSION" > testcases.tar.bz2
+  api_call "jobs/$SESSION/testsuite" > testcases.tar.bz2
   tar imxf testcases.tar.bz2
 
   debug "Running testcases"
@@ -106,7 +106,7 @@ EOP
     fi
 
     # Check if we are continuing
-    api_call job/status/$SESSION | grep '"state":' | grep -q '"running"' || {
+    api_call jobs/$SESSION/status | grep '"state":' | grep -q '"running"' || {
       debug "Testsuite is not running anymore"
       break
     }
@@ -115,7 +115,7 @@ EOP
   done
 
   # Add a summary
-  api_call job/status/$SESSION > "/tmp/job_status.json"
+  api_call jobs/$SESSION/status > "/tmp/job_status.json"
   add_artifact "job_status.json.txt" "/tmp/job_status.json"
 } 2>&1 | tee $LOGFILE
 
