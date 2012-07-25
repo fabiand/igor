@@ -1,4 +1,5 @@
 
+PYTHONSOURCES=$(shell find igor -name \*.py) bin/igord
 
 all: rpm dist
 	echo Done
@@ -31,3 +32,19 @@ uninstall: stop
 	-systemctl disable igord.service
 	-yum -y remove igor
 
+check-local: doctests pep8
+	@echo -e "---\n Passed.\n---"
+
+doctests:
+	@for M in $(PYTHONSOURCES); \
+	do \
+		echo Testing "$$M"; \
+		PYTHONPATH=. python -m doctest $$M || exit 1; \
+	done
+
+pep8:
+	@for M in $(PYTHONSOURCES); \
+	do \
+		echo pep8 on "$$M"; \
+		PYTHONPATH=. python -m pep8 $$M || exit 1; \
+	done
