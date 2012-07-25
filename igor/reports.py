@@ -29,7 +29,8 @@ BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 TRANSFORM_MAP = {
     "job-rst": os.path.join(BASE_PATH, "data", "job-report.rst.xsl"),
     "testplan-rst": os.path.join(BASE_PATH, "data", "testplan-report.rst.xsl"),
-    "testplan-junit-xml": os.path.join(BASE_PATH, "data", "testplan-report.junit.xsl"),
+    "testplan-junit-xml": os.path.join(BASE_PATH, "data", \
+                                                  "testplan-report.junit.xsl"),
 }
 
 
@@ -39,15 +40,18 @@ def job_status_to_report_json(txt):
     d = json.loads(txt)
     return status_to_report(d)
 
+
 def job_status_to_report(d):
     """Transform a job status dict to a report
     """
     return _map_transform(d, "job-rst")
 
+
 def testplan_status_to_report(d):
     """Transform a testplan status dict to a report
     """
     return _map_transform(d, "testplan-rst")
+
 
 def testplan_status_to_junit_report(d):
     """Transform a testplan status dict to a junit report
@@ -55,10 +59,10 @@ def testplan_status_to_junit_report(d):
     return _map_transform(d, "testplan-junit-xml")
 
 
-
 def _map_transform(d, t, rootname="status"):
     assert t in TRANSFORM_MAP, "Unknown transformation: %s" % t
     return transform_dict(TRANSFORM_MAP[t], d, rootname)
+
 
 def transform_dict(stylefile, d, rootname):
     """Apply a transformation to a dict
@@ -67,6 +71,7 @@ def transform_dict(stylefile, d, rootname):
     transform = etree.XSLT(etree.parse(stylefile))
     report = transform(xml)
     return report
+
 
 def to_xml_str(etree_obj):
     return etree.tostring(etree_obj, pretty_print=True)

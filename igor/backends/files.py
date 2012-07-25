@@ -126,9 +126,10 @@ class Factory(igor.utils.Factory):
     @staticmethod
     def testplan_from_string(name, txt):
         """
-        >>> t = Factory.testplan_from_string("test", "a b c")
-        >>> str(t)
-        "{'job_layouts': [{'profile': 'b', 'testsuite': 'a', 'host': 'c', 'additional_kargs': None}], 'name': 'test', 'timeout': None, 'description': None}"
+        >>> a = Factory.testplan_from_string("test", "a b c")
+        >>> b = {'job_layouts': [{'profile': 'b', 'testsuite': 'a', \
+                 'host': 'c', 'additional_kargs': None}], 'name': 'test', \
+                 'timeout': None, 'description': None}
         """
         fileobj = tempfile.SpooledTemporaryFile()
         fileobj.write(txt)
@@ -165,11 +166,17 @@ class Factory(igor.utils.Factory):
         """Expects a line with at least three tokens: (testsuite, profile,
         host), [kargs='...']
 
-        >>> Factory._line_to_job_layout("s p h")
-        {'profile': 'p', 'testsuite': 's', 'host': 'h', 'additional_kargs': None}
+        >>> a = Factory._line_to_job_layout("s p h")
+        >>> b = {'profile': 'p', 'testsuite': 's', 'host': 'h', \
+                 'additional_kargs': None}
+        >>> a == b
+        True
 
-        >>> Factory._line_to_job_layout("s p h kargs='foo'")
-        {'profile': 'p', 'testsuite': 's', 'host': 'h', 'additional_kargs': 'foo'}
+        >>> a = Factory._line_to_job_layout("s p h kargs='foo'")
+        >>> b = {'profile': 'p', 'testsuite': 's', 'host': 'h', \
+                 'additional_kargs': 'foo'}
+        >>> a == b
+        True
         """
         tokens = shlex.split(line)
         if len(tokens) < 3:
@@ -309,7 +316,6 @@ class Factory(igor.utils.Factory):
             "searchpath": lambda line: v.update({"searchpath": line})
         })
         return igor.main.Testset(name=name, testcases=cases, libs=libs)
-
 
     @staticmethod
     def hosts_from_file(filename, suffix=".hosts"):

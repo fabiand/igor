@@ -38,7 +38,7 @@ check-local: doctests pep8
 doctests:
 	@for M in $(PYTHONSOURCES); \
 	do \
-		echo Testing "$$M"; \
+		echo Doctest on "$$M"; \
 		PYTHONPATH=. python -m doctest $$M || exit 1; \
 	done
 
@@ -46,5 +46,5 @@ pep8:
 	@for M in $(PYTHONSOURCES); \
 	do \
 		echo pep8 on "$$M"; \
-		PYTHONPATH=. python -m pep8 $$M || exit 1; \
+		PYTHONPATH=. pep8 -r $$M || exit 1; \
 	done

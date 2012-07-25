@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 logger.info("Starting igor daemon")
 
-BOTTLE_MAX_READ_SIZE=1024*1024*512
+BOTTLE_MAX_READ_SIZE = 1024 * 1024 * 512
 
 #
 # Parse the config at first
@@ -48,11 +48,14 @@ __cobbler_origin_args = (CONFIG["cobbler.url"], \
 #
 plan_origins = {
     "filesystem": \
-        igor.backends.files.TestplansOrigin(CONFIG["testplans.path"].split(":"))
+        igor.backends.files.TestplansOrigin( \
+                    CONFIG["testplans.path"].split(":"))
 }
+
 testsuite_origins = {
     "filesystem": \
-        igor.backends.files.TestsuitesOrigin(CONFIG["testcases.path"].split(":"))
+        igor.backends.files.TestsuitesOrigin( \
+                    CONFIG["testcases.path"].split(":"))
 }
 
 profile_origins = {
@@ -136,13 +139,16 @@ def index():
     bottle.response.content_type = "text/xml"
     return "<?xml-stylesheet type='text/xsl' href='/ui/index.xsl' ?>\n<index/>"
 
+
 @bottle.route('/ui/<filename>')
 def ui_data(filename):
     return bottle.static_file(filename, root=config.DATA_DIR + "/ui/")
 
+
 @bottle.route('/static/data/<filename>')
 def static_data(filename):
     return bottle.static_file(filename, root=config.DATA_DIR)
+
 
 @bottle.route('/submit/<tname>/with/<pname>/on/<hname>')
 @bottle.route('/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')
@@ -227,7 +233,7 @@ def get_testsuite_archive(cookie):
 
 
 @bottle.route('/jobs/<cookie>/artifact/<name>', method='PUT')
-@bottle.route('/job/artifact/for/<cookie>/<name>', method='PUT')    # DEPRECTAED
+@bottle.route('/job/artifact/for/<cookie>/<name>', method='PUT')
 def add_artifact(cookie, name):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -307,6 +313,7 @@ def list_testsuites():
     testsuites = inventory.testsuites()
     return to_json(testsuites)
 
+
 @bottle.route('/testsuites/validate')
 def validate_testsuites():
     testsuites = inventory.testsuites().items()
@@ -314,6 +321,7 @@ def validate_testsuites():
     for n, suite in testsuites:
         r[n] = suite.validate()
     return r
+
 
 @bottle.route('/testsuites/<name>/summary')
 def get_testsuite_summary(name):
@@ -341,12 +349,14 @@ def get_testsuite_archive(name, tarball="testsuite.tar"):
 def list_plans():
     return to_json(inventory.plans())
 
+
 @bottle.route('/testplans/<name>')
 def plan_info(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
     plan = inventory.plans()[name]
     return to_json(plan)
+
 
 @bottle.route('/testplans/<name>/submit')
 def run_plans(name):
@@ -359,11 +369,13 @@ def run_plans(name):
     worker = jc.submit_plan(plan)
     return to_json(worker.__to_dict__())
 
+
 @bottle.route('/testplans/<name>')
 def testplan_summary(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
     return to_json(inventory.plans()[name])
+
 
 @bottle.route('/testplans/<name>/status')
 def status_plans(name):
@@ -371,6 +383,7 @@ def status_plans(name):
         bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.status_plan(name)
     return to_json(r)
+
 
 @bottle.route('/testplans/<name>/report')
 def testplan_report(name):
@@ -380,6 +393,7 @@ def testplan_report(name):
     bottle.response.content_type = "text/plain; charset=utf8"
     return str(reports.testplan_status_to_report(r))
 
+
 @bottle.route('/testplans/<name>/report/junit')
 def testplan_junit_report(name):
     if name not in inventory.plans():
@@ -388,12 +402,14 @@ def testplan_junit_report(name):
     bottle.response.content_type = "text/plain; charset=utf8"
     return reports.to_xml_str(reports.testplan_status_to_junit_report(r))
 
+
 @bottle.route('/testplans/<name>/abort')
 def abort_plans(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.abort_plan(name)
     return to_json(r.__to_dict__())
+
 
 @bottle.route('/profiles')
 def list_profiles():
@@ -441,7 +457,8 @@ def profile_from_vmlinuz_put(pname):
             arcfiles = tarball.getnames()
             logger.debug("PUT %s" % arcfiles)
             for arcfile in arcfiles:
-                assert os.path.basename(arcfile) == arcfile, "not paths allowed"
+                assert os.path.basename(arcfile) == arcfile, \
+                       "not paths allowed"
             tarball.extractall(path=tmpdir)
         written_files = {}
         for rf in reqfiles:
@@ -507,6 +524,7 @@ def delete_profile(pname):
     if pname not in inventory.profiles():
         bottle.abort(404, "Unknown profile")
     inventory.profiles()[pname].delete()
+
 
 @bottle.route('/server/log')
 def get_log():

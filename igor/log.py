@@ -29,7 +29,8 @@ log_config = {
 
     "formatters": {
         "default": {
-            "format": '%(levelname)-8s - %(asctime)s - %(name)-15s - %(message)s'
+            "format": '%(levelname)-8s - %(asctime)s - ' + \
+                      '%(name)-15s - %(message)s'
         }
     },
 
@@ -55,6 +56,7 @@ log_config = {
 }
 
 logging.config.dictConfig(log_config)
+
 
 def backlog():
     r = None

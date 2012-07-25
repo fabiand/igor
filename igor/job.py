@@ -177,7 +177,7 @@ class Job(object):
 
         last_timestamp = self.created_at
         if len(self.results) > 0:
-            last_timestamp = self.results[n-1]["created_at"]
+            last_timestamp = self.results[n - 1]["created_at"]
 
         current_testcase = self.testsuite.testcases()[n]
         is_passed = not is_success == current_testcase.expect_failure

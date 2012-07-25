@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 identification_tag = "managed-by-igor"
 
+
 class ProfileOrigin(igor.main.Origin):
     """This is the source where igor retrieves cobbler profiles
     """
@@ -64,7 +65,8 @@ class HostsOrigin(igor.main.Origin):
     expression = None
     whitelist = []
 
-    def __init__(self, server_url, user, pw, ssh_uri, expression="igor-", whitelist=[]):
+    def __init__(self, server_url, user, pw, ssh_uri, expression="igor-", \
+                       whitelist=[]):
         self.cobbler = Cobbler(server_url, (user, pw), ssh_uri)
         self.expression = expression
         self.whitelist = whitelist
@@ -110,7 +112,7 @@ class HostsOrigin(igor.main.Origin):
     def __read_whitelist(self, filename):
         whitelist = []
         with open(filename) as f:
-             for line in f:
+            for line in f:
                 line = line.strip()
                 if line.startswith("#"):
                     # comment
@@ -313,6 +315,7 @@ class Profile(igor.main.Profile):
             )
         utils.run(cmd)
 
+
 #pydoc cobbler.remote
 class Cobbler(object):
     """A simple wrapper around Cobbler's XMLRPC API.
@@ -332,7 +335,7 @@ class Cobbler(object):
         self.credentials = c
         self.server_url = server_url
         self.server = xmlrpclib.Server(server_url)
-        self.ssh_uri= ssh_uri
+        self.ssh_uri = ssh_uri
 
     def __enter__(self):
         self.login()
