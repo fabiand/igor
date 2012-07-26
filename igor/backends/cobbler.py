@@ -261,7 +261,7 @@ class Profile(igor.main.Profile):
                 initrd=initrd,
                 kargs=kargs
                 )
-        utils.run(cmd)
+        igor.utils.run(cmd)
 
     def __ssh_create_remote_distro_and_profile(self, remote_path, vmlinuz, \
                                                initrd, kargs):
@@ -294,7 +294,7 @@ class Profile(igor.main.Profile):
             arch="x86_64",
             identification_tag=identification_tag
             )
-        utils.run(cmd)
+        igor.utils.run(cmd)
 
     def __ssh_remove_remote_distro_profile_and_files(self, remote_path):
         profile_comment = self.remote.profile(self.get_name())["comment"]
@@ -313,7 +313,7 @@ class Profile(igor.main.Profile):
             remote_path=remote_path,
             profilename=self.get_name()
             )
-        utils.run(cmd)
+        igor.utils.run(cmd)
 
 
 #pydoc cobbler.remote

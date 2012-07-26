@@ -56,11 +56,11 @@ class Host(igor.main.Host):
 
     def start(self):
         logger.debug("Powering on %s: %s" % (self.get_name(), \
-                                             utils.run(self.poweron_script)))
+                                          igor.utils.run(self.poweron_script)))
 
     def purge(self):
         logger.debug("Powering off %s: %s" % (self.get_name(), \
-                                             utils.run(self.poweroff_script)))
+                                         igor.utils.run(self.poweroff_script)))
 
     def __str__(self):
         return "%s <%s>" % (self.name, self.mac)
