@@ -641,7 +641,6 @@ class TestSession(UpdateableObject):
         self.do_cleanup = cleanup
         self.cookie = cookie
         self.dirname = tempfile.mkdtemp(suffix="-" + self.cookie, \
-                                        prefix="igord-session-", \
                                         dir=session_path)
         os.mkdir(self.__artifacts_path())
         run("chmod -R a+X '%s'" % self.dirname)
