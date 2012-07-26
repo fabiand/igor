@@ -117,24 +117,28 @@ def check_authentication(user, password):
 #
 # bottles
 #
-@bottle.route('/')
+
+app = bottle.Bottle()
+
+
+@app.route('/')
 def index():
     bottle.response.content_type = "text/xml"
     return "<?xml-stylesheet type='text/xsl' href='/ui/index.xsl' ?>\n<index/>"
 
 
-@bottle.route('/ui/<filename>')
+@app.route('/ui/<filename>')
 def ui_data(filename):
     return bottle.static_file(filename, root=config.DATA_DIR + "/ui/")
 
 
-@bottle.route('/static/data/<filename>')
+@app.route('/static/data/<filename>')
 def static_data(filename):
     return bottle.static_file(filename, root=config.DATA_DIR)
 
 
-@bottle.route('/jobs/submit/<tname>/with/<pname>/on/<hname>')
-@bottle.route('/jobs/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')
+@app.route('/jobs/submit/<tname>/with/<pname>/on/<hname>')
+@app.route('/jobs/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')
 def submit_testsuite(tname, pname, hname, cookiereq=None):
     for key, name in [("testsuites", tname), \
                       ("profiles", pname), \
@@ -152,12 +156,12 @@ def submit_testsuite(tname, pname, hname, cookiereq=None):
     return to_json(resp)
 
 
-@bottle.route('/jobs')
+@app.route('/jobs')
 def get_jobs():
     return to_json(jc.get_jobs())
 
 
-@bottle.route('/jobs/<cookie>/start')
+@app.route('/jobs/<cookie>/start')
 def start_job(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -165,7 +169,7 @@ def start_job(cookie):
     return to_json(m)
 
 
-@bottle.route('/jobs/<cookie>/status')
+@app.route('/jobs/<cookie>/status')
 def job_status(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -173,7 +177,7 @@ def job_status(cookie):
     return to_json(m)
 
 
-@bottle.route('/jobs/<cookie>/report')
+@app.route('/jobs/<cookie>/report')
 def job_report(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -182,7 +186,7 @@ def job_report(cookie):
     return str(igor.reports.job_status_to_report(j.__to_dict__()))
 
 
-@bottle.route('/jobs/<cookie>/step/<n:int>/<result:re:success|failed>')
+@app.route('/jobs/<cookie>/step/<n:int>/<result:re:success|failed>')
 def finish_step(cookie, n, result):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -191,8 +195,8 @@ def finish_step(cookie, n, result):
     return to_json(m)
 
 
-@bottle.route('/jobs/<cookie>', method='DELETE')
-@bottle.route('/jobs/<cookie>/abort')
+@app.route('/jobs/<cookie>', method='DELETE')
+@app.route('/jobs/<cookie>/abort')
 def abort_job(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -203,7 +207,7 @@ def abort_job(cookie):
     return to_json(m)
 
 
-@bottle.route('/jobs/<cookie>/testsuite')
+@app.route('/jobs/<cookie>/testsuite')
 def get_job_testsuite_archive(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -215,7 +219,7 @@ def get_job_testsuite_archive(cookie):
     return r.getvalue()
 
 
-@bottle.route('/jobs/<cookie>/artifacts/<name>', method='PUT')
+@app.route('/jobs/<cookie>/artifacts/<name>', method='PUT')
 def add_artifact(cookie, name):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -226,7 +230,7 @@ def add_artifact(cookie, name):
     j.add_artifact_to_current_step(name, data)
 
 
-@bottle.route('/jobs/<cookie>/artifacts/<name>')
+@app.route('/jobs/<cookie>/artifacts/<name>')
 def get_artifact(cookie, name):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -235,7 +239,7 @@ def get_artifact(cookie, name):
     return str(j.get_artifact(name))
 
 
-@bottle.route('/jobs/<cookie>/artifacts/download')
+@app.route('/jobs/<cookie>/artifacts/download')
 def get_artifacts(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -244,8 +248,8 @@ def get_artifacts(cookie):
     return j.get_artifacts_archive().getvalue()
 
 
-@bottle.route('/firstboot/<cookie>')
-@bottle.route('/jobs/<cookie>/set/enable_pxe/<enable_pxe>')
+@app.route('/firstboot/<cookie>')
+@app.route('/jobs/<cookie>/set/enable_pxe/<enable_pxe>')
 def disable_pxe_cb(cookie, enable_pxe=False):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -254,7 +258,7 @@ def disable_pxe_cb(cookie, enable_pxe=False):
     return to_json(m)
 
 
-@bottle.route('/jobs/<cookie>/set/kernelargs/<kernelargs>')
+@app.route('/jobs/<cookie>/set/kernelargs/<kernelargs>')
 def set_kernelargs_cb(cookie, kernelargs):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -264,8 +268,8 @@ def set_kernelargs_cb(cookie, kernelargs):
     return to_json(m)
 
 
-@bottle.route('/testjob/<cookie>')
-@bottle.route('//testjob/<cookie>')
+@app.route('/testjob/<cookie>')
+@app.route('//testjob/<cookie>')
 def get_bootstrap_script(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
@@ -289,13 +293,13 @@ def get_bootstrap_script(cookie):
     return r
 
 
-@bottle.route('/testsuites')
+@app.route('/testsuites')
 def list_testsuites():
     testsuites = inventory.testsuites()
     return to_json(testsuites)
 
 
-@bottle.route('/testsuites/validate')
+@app.route('/testsuites/validate')
 def validate_testsuites():
     testsuites = inventory.testsuites().items()
     r = {}
@@ -304,7 +308,7 @@ def validate_testsuites():
     return r
 
 
-@bottle.route('/testsuites/<name>/summary')
+@app.route('/testsuites/<name>/summary')
 def get_testsuite_summary(name):
     testsuites = inventory.testsuites()
     if name not in testsuites:
@@ -312,8 +316,8 @@ def get_testsuite_summary(name):
     return to_json(testsuites[name])
 
 
-@bottle.route('/testsuites/<name>/download')
-@bottle.route('/testsuites/<name>/download/<tarball>')
+@app.route('/testsuites/<name>/download')
+@app.route('/testsuites/<name>/download/<tarball>')
 def get_testsuite_archive(name, tarball="testsuite.tar"):
     testsuites = inventory.testsuites()
     if name not in testsuites:
@@ -326,12 +330,12 @@ def get_testsuite_archive(name, tarball="testsuite.tar"):
     return r.getvalue()
 
 
-@bottle.route('/testplans')
+@app.route('/testplans')
 def list_plans():
     return to_json(inventory.plans())
 
 
-@bottle.route('/testplans/<name>')
+@app.route('/testplans/<name>')
 def plan_info(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
@@ -339,7 +343,7 @@ def plan_info(name):
     return to_json(plan)
 
 
-@bottle.route('/testplans/<name>/submit')
+@app.route('/testplans/<name>/submit')
 def run_plans(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
@@ -351,14 +355,14 @@ def run_plans(name):
     return to_json(worker.__to_dict__())
 
 
-@bottle.route('/testplans/<name>')
+@app.route('/testplans/<name>')
 def testplan_summary(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
     return to_json(inventory.plans()[name])
 
 
-@bottle.route('/testplans/<name>/status')
+@app.route('/testplans/<name>/status')
 def status_plans(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
@@ -366,7 +370,7 @@ def status_plans(name):
     return to_json(r)
 
 
-@bottle.route('/testplans/<name>/report')
+@app.route('/testplans/<name>/report')
 def testplan_report(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
@@ -375,7 +379,7 @@ def testplan_report(name):
     return str(igor.reports.testplan_status_to_report(r))
 
 
-@bottle.route('/testplans/<name>/report/junit')
+@app.route('/testplans/<name>/report/junit')
 def testplan_junit_report(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
@@ -385,7 +389,7 @@ def testplan_junit_report(name):
     return igor.reports.to_xml_str(xml)
 
 
-@bottle.route('/testplans/<name>/abort')
+@app.route('/testplans/<name>/abort')
 def abort_plans(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
@@ -393,17 +397,17 @@ def abort_plans(name):
     return to_json(r.__to_dict__())
 
 
-@bottle.route('/profiles')
+@app.route('/profiles')
 def list_profiles():
     return to_json(inventory.profiles())
 
 
-@bottle.route('/hosts')
+@app.route('/hosts')
 def list_hosts():
     return to_json(inventory.hosts())
 
 
-@bottle.route('/testcases/<suitename>/<setname>/<casename>/source')
+@app.route('/testcases/<suitename>/<setname>/<casename>/source')
 def testcase_source(suitename, setname, casename):
     testsuites = inventory.testsuites()
     if suitename not in testsuites:
@@ -429,7 +433,7 @@ def testcase_source(suitename, setname, casename):
     return source
 
 
-@bottle.route('/profiles/<pname>', method='PUT')
+@app.route('/profiles/<pname>', method='PUT')
 def profile_from_vmlinuz_put(pname):
     reqfiles = set(["kernel", "initrd", "kargs"])
     _tmpdir = igor.utils.TemporaryDirectory()
@@ -458,7 +462,7 @@ def profile_from_vmlinuz_put(pname):
     _tmpdir.clean()
 
 
-@bottle.route('/profiles/<pname>', method='POST')
+@app.route('/profiles/<pname>', method='POST')
 def profile_from_vmlinuz_post(pname):
     reqfiles = set(["kernel", "initrd", "kargs"])
     _tmpdir = igor.utils.TemporaryDirectory(reqfiles)
@@ -481,8 +485,8 @@ def profile_from_vmlinuz_post(pname):
     _tmpdir.clean()
 
 
-@bottle.route('/profiles/<pname>/kargs', method='GET')
-@bottle.route('/profiles/<pname>/kargs', method='POST')
+@app.route('/profiles/<pname>/kargs', method='GET')
+@app.route('/profiles/<pname>/kargs', method='POST')
 def profile_kargs(pname):
     if pname not in inventory.profiles():
         bottle.abort(404, "Unknown profile")
@@ -500,15 +504,15 @@ def profile_kargs(pname):
     return n_kargs
 
 
-@bottle.route('/profiles/<pname>', method='DELETE')
-@bottle.route('/profiles/<pname>/remove')
+@app.route('/profiles/<pname>', method='DELETE')
+@app.route('/profiles/<pname>/remove')
 def delete_profile(pname):
     if pname not in inventory.profiles():
         bottle.abort(404, "Unknown profile")
     inventory.profiles()[pname].delete()
 
 
-@bottle.route('/server/log')
+@app.route('/server/log')
 def get_log():
     bottle.response.content_type = "text/plain; charset=utf8"
     return igor.log.backlog()
@@ -516,7 +520,6 @@ def get_log():
 if __name__ == "__main__":
     try:
     #    logger.info("Starting igord")
-        bottle.run(host='0.0.0.0', port=8080, reloader=False)
+        bottle.run(app, host='0.0.0.0', port=8080, reloader=False)
     except KeyboardInterrupt:
-        logger.debug("Cleaning")
-        jc.clean()
+        logger.debug("Ending igor")
