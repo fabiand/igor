@@ -652,7 +652,11 @@ class TestSession(UpdateableObject):
         logger.debug("Removing session '%s'" % self.cookie)
         for artifact in self.artifacts():
             logger.debug("Removing artifact '%s'" % artifact)
-            os.remove(os.path.join(self.dirname, artifact))
+            filename = os.path.join(self.dirname, artifact)
+            try:
+                os.remove(filename)
+            except Exception as e:
+                logger.warning("Removing '%s': %s" % (filename, e.message))
         remaining_files = os.listdir(self.dirname)
         if len(remaining_files) > 0:
             logger.warning("Remaining files for session '%s': %s" % ( \
