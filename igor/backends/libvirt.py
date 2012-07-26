@@ -156,12 +156,6 @@ class VMHost(igor.main.Host):
                                                  volname, disk, self.poolname))
         return poolvol
 
-    def start_vm_and_install_os(self):
-        # Never reboot, even if requested by guest
-        self.set_reboot_is_poweroff(True)
-
-        self.boot()
-
     def remove_images(self):
         if self.image_specs is None or len(self.image_specs) is 0:
             logger.info("No image spec given.")
@@ -217,7 +211,7 @@ class VMHostFactory:
                             network_configuration="network=default"):
         host = VMHost(name="default", image_specs=[ \
                  VMImage("8G", [ \
-                   igor.partitions.Partition("pri", "1M", "1G") \
+                   igor.partition.Partition("pri", "1M", "1G") \
                  ]) \
                ])
         host.connection_uri = connection_uri

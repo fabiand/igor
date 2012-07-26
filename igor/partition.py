@@ -27,6 +27,7 @@ from igor.utils import run
 
 logger = logging.getLogger(__name__)
 
+
 class Layout(igor.main.UpdateableObject):
     '''
     An image specififcation for a VMHost.

@@ -582,7 +582,6 @@ class Testcase(object):
     """
     name = None
     filename = None
-    source = None
     timeout = 60
     expect_failure = False
     description = None

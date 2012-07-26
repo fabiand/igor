@@ -191,9 +191,9 @@ class Losetup:
 
     def __enter__(self):
         logger.debug("Setting up: %s" % self.image)
-        devices = run(("losetup -v -f '%s'" + \
-                       " | egrep -o 'is /dev/loop[0-9]+'") % \
-                       self.image).split(" ")
+        _txt_devices = run(("losetup -v -f '%s'" + \
+                            " | egrep -o 'is /dev/loop[0-9]+'") % self.image)
+        devices = str(_txt_devices).split(" ")
         self.device = devices[1]
         logger.debug("losetup: %s on %s" % (self.image, self.device))
         return self
@@ -236,4 +236,3 @@ if __name__ == "__main__":
     logger.info("Testing")
     with lv.losetup() as losetup:
         print(run("pvs ; vgs ; lvs --noheadings -o name,path"))
-        print(lv.device)

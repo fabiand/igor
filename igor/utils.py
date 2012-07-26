@@ -40,9 +40,9 @@ def run(cmd, with_retval=False):
     proc.wait()
     if stderr:
         logger.warning(stderr)
-    r = stdout.strip()
+    r = str(stdout).strip()
     if with_retval:
-        r = (proc.returncode, stdout.strip())
+        r = (proc.returncode, str(stdout).strip())
     return r
 
 
@@ -98,9 +98,8 @@ class GvfsMountedArchive(MountedArchive):
         isobasename = os.path.basename(iso)
         run("gvfs-mount '%s'" % ("archive://file%3a%2f%2f" \
                                  + urllib.quote_plus(iso)))
-        self.gvfs_url = self.run(("gvfs-mount -l " \
-                                  + "| awk '$2 == \"%s\" {print $4;}'") % \
-                                 isobasename)
+        self.gvfs_url = run(("gvfs-mount -l " + \
+                             "| awk '$2 == \"%s\" {print $4;}'") % isobasename)
         return "~/.gvfs/%s/" % isobasename
 
     def umount(self):
