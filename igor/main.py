@@ -651,13 +651,9 @@ class TestSession(UpdateableObject):
         """Remove the session dir and all remaining artifacts
         """
         logger.debug("Removing session '%s'" % self.cookie)
-        for artifact in self.artifacts():
-            logger.debug("Removing artifact '%s'" % artifact)
-            filename = os.path.join(self.dirname, artifact)
-            try:
-                os.remove(filename)
-            except Exception as e:
-                logger.warning("Removing '%s': %s" % (filename, e.message))
+
+        self.__remove_artifacts()
+
         remaining_files = os.listdir(self.dirname)
         if len(remaining_files) > 0:
             logger.warning("Remaining files for session '%s': %s" % ( \
@@ -666,6 +662,15 @@ class TestSession(UpdateableObject):
         else:
             logger.debug("Removing testdir '%s'" % self.dirname)
             os.rmdir(self.dirname)
+
+    def __remove_artifacts(self):
+        for artifact in self.artifacts(use_abs=True):
+            logger.debug("Removing artifact '%s'" % artifact)
+            try:
+                os.remove(artifact)
+            except Exception as e:
+                logger.warning("Exception while removing '%s': %s" % \
+                                                         (artifact, e.message))
 
     def __artifacts_path(self, name=""):
         """Returns the absoulte path to the artifacts folder
@@ -700,7 +705,7 @@ class TestSession(UpdateableObject):
         dirname = self.__artifacts_path()
         fns = os.listdir(dirname)
         if use_abs:
-            fns = [os.path.join(dirname, fn) \
+            fns = [self.__artifacts_path(fn) \
                    for fn in fns]
         return fns
 
