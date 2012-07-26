@@ -48,3 +48,10 @@ pep8:
 		echo pep8 on "$$M"; \
 		PYTHONPATH=. pep8 -r $$M || exit 1; \
 	done
+
+pylint:
+	@for M in $(PYTHONSOURCES); \
+	do \
+		echo pylint on "$$M"; \
+		PYTHONPATH=. pylint $$M || exit 1; \
+	done
