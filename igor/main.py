@@ -652,7 +652,7 @@ class TestSession(UpdateableObject):
         """
         logger.debug("Removing session '%s'" % self.cookie)
 
-        self.__remove_artifacts()
+        self.remove_artifacts()
 
         remaining_files = os.listdir(self.dirname)
         if len(remaining_files) > 0:
@@ -663,7 +663,8 @@ class TestSession(UpdateableObject):
             logger.debug("Removing testdir '%s'" % self.dirname)
             os.rmdir(self.dirname)
 
-    def __remove_artifacts(self):
+    def remove_artifacts(self):
+        logger.info("Removing artifacts")
         for artifact in self.artifacts(use_abs=True):
             logger.debug("Removing artifact '%s'" % artifact)
             try:
@@ -689,6 +690,10 @@ class TestSession(UpdateableObject):
 
     def get_artifact(self, name):
         """Returns the data/content of an artifact
+        >>> s = TestSession("cookie", "/tmp/")
+        >>> s.add_artifact("test", "foo")
+        >>> s.get_artifact("test")
+        'foo'
         """
         data = None
         afilename = self.__artifacts_path(name)
@@ -701,6 +706,10 @@ class TestSession(UpdateableObject):
 
     def artifacts(self, use_abs=False):
         """Returns a list of all artifacts.
+        >>> s = TestSession("cookie", "/tmp/")
+        >>> s.add_artifact("test", "")
+        >>> s.artifacts()
+        ['test']
         """
         dirname = self.__artifacts_path()
         fns = os.listdir(dirname)
