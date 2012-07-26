@@ -1,5 +1,7 @@
 
-PYTHONSOURCES=$(shell find igor -name \*.py) bin/igord
+PYTHONSOURCES=$(shell find igor -name \*.py -not -path */hacks.py) bin/igord
+
+SHELL := /bin/bash
 
 all: rpm dist
 	echo Done
@@ -32,8 +34,17 @@ uninstall: stop
 	-systemctl disable igord.service
 	-yum -y remove igor
 
-check-local: doctests pep8 pyflakes
+check-local: doctests pep8 pyflakes pylint
 	@echo -e "---\n Passed.\n---"
+
+check-local-fast:
+	@for M in $(PYTHONSOURCES); \
+	do export PARENT=$$$$ ; \
+		echo "Fast checks on '$$M'"; \
+		PYTHONPATH=. python -m doctest $$M || kill $$PARENT & \
+		PYTHONPATH=. pep8 -r $$M || kill $$PARENT & \
+		PYTHONPATH=. pyflakes $$M || kill $$PARENT & \
+	done ; wait
 
 doctests:
 	@for M in $(PYTHONSOURCES); \
@@ -49,11 +60,12 @@ pep8:
 		PYTHONPATH=. pep8 -r $$M || exit 1; \
 	done
 
+PYLINT=pylint -f parseable --include-ids=yes --rcfile=.pylintrc
 pylint:
 	@for M in $(PYTHONSOURCES); \
 	do \
 		echo pylint on "$$M"; \
-		PYTHONPATH=. pylint $$M || exit 1; \
+		PYTHONPATH=. $(PYLINT) $$M || exit 1; \
 	done
 
 pyflakes:
