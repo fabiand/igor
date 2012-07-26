@@ -17,6 +17,7 @@ import igor.job
 import igor.utils
 import igor.reports
 import igor.backends.files
+from igor.hacks import IgordJSONEncoder
 
 import igor.config as config
 
@@ -85,18 +86,6 @@ inventory = igor.main.Inventory( \
     profiles=profile_origins, \
     hosts=host_origins)
 inventory.check()
-
-
-class IgordJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, igor.job.Job) or isinstance(obj, igor.main.Testsuite) or \
-           isinstance(obj, igor.main.Testset) or isinstance(obj, igor.main.Testcase) or \
-           isinstance(obj, igor.main.Profile) or isinstance(obj, igor.main.Origin) or \
-           isinstance(obj, igor.main.Host) or isinstance(obj, igor.main.Testplan):
-            return obj.__to_dict__()
-        elif isinstance(obj, igor.utils.State):
-            return str(obj)
-        return json.JSONEncoder.default(self, obj)
 
 
 def to_json(obj):
