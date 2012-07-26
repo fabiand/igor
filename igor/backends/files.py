@@ -205,7 +205,11 @@ class Factory(igor.utils.Factory):
         >>> "exampleplan" in plans
         True
 
-        >>> plans["exampleplan"].name = "exampleplan"
+        >>> plan = plans["exampleplan"]
+        >>> plan.name == "exampleplan"
+        True
+        >>> plan.timeout() is None  # Calculated by jobspecs()
+        True
         """
         assert type(paths) is list
         plans = {}
@@ -254,6 +258,7 @@ class Factory(igor.utils.Factory):
         >>> suites = Factory.testsuites_from_paths(["testcases/suites/"])
         >>> "examplesuite" in suites
         True
+        >>> suite = suites["examplesuite"]
         """
         suites = {}
         paths = [str.strip(p) for p in paths]
