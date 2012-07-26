@@ -18,23 +18,20 @@
 #
 # -*- coding: utf-8 -*-
 
-import logging
 import os
-from string import Template
+import logging
 from lxml import etree
 import tempfile
 
-import libvirt
-
 import igor.main
 from igor.utils import run, dict_to_args
-from igor.partition import *
+import igor.partition
 
 
 logger = logging.getLogger(__name__)
 
 
-class VMImage(Layout):
+class VMImage(igor.partition.Layout):
     def compress(self, dst_fmt="qcow2"):
         '''Convert the raw image into a qemu image.
         '''
@@ -71,7 +68,7 @@ class VMHost(igor.main.Host):
     def __init__(self, *args, **kwargs):
         self.vm_defaults = {}
         self._vm_name = "VMHost (Created on demand)"
-        Host.__init__(self, *args, **kwargs)
+        igor.main.Host.__init__(self, *args, **kwargs)
 
     def prepare(self):
         logger.debug("Preparing VMHost")
@@ -220,7 +217,7 @@ class VMHostFactory:
                             network_configuration="network=default"):
         host = VMHost(name="default", image_specs=[ \
                  VMImage("8G", [ \
-                   Partition("pri", "1M", "1G") \
+                   igor.partitions.Partition("pri", "1M", "1G") \
                  ]) \
                ])
         host.connection_uri = connection_uri
@@ -233,7 +230,7 @@ class VMHostFactory:
         pass
 
 
-class VMAlwaysCreateHostOrigin(Origin):
+class VMAlwaysCreateHostOrigin(igor.main.Origin):
     connection_uri = None
     storage_pool = None
     network_configuration = None

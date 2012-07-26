@@ -25,7 +25,6 @@ import re
 import tempfile
 import shlex
 import threading
-import uu
 from lxml import etree
 
 logger = logging.getLogger(__name__)
@@ -120,7 +119,6 @@ class LosetupMountedArchive(MountedArchive):
 
 
 def surl(number):
-    import math
     import string
     codes = string.digits[2:] + string.lowercase + string.uppercase
     r = ""

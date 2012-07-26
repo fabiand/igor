@@ -18,16 +18,16 @@
 #
 # -*- coding: utf-8 -*-
 
-import logging
 import os
-import tempfile
+import logging
 
-from main import *
-from utils import run
-from partition import *
+import igor.main
+import igor.partition
+from igor.utils import run
 
+logger = logging.getLogger(__name__)
 
-class Layout(UpdateableObject):
+class Layout(igor.main.UpdateableObject):
     '''
     An image specififcation for a VMHost.
     This are actually params for truncate and parted.
@@ -95,7 +95,7 @@ class Layout(UpdateableObject):
             run("parted '%s' '%s'" % (self.filename, parted_cmd))
 
 
-class Partition(UpdateableObject):
+class Partition(igor.main.UpdateableObject):
     '''
     Params
     ------

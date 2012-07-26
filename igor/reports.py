@@ -38,7 +38,7 @@ def job_status_to_report_json(txt):
     """Apply the plaintext report transformation to a json obj (str)
     """
     d = json.loads(txt)
-    return status_to_report(d)
+    return job_status_to_report(d)
 
 
 def job_status_to_report(d):

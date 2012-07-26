@@ -18,24 +18,19 @@
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
 
-import json
+"""
+The main module of igor, specifying the model.
+"""
+
 import os
-import glob
-import base64
-from string import Template
 import time
 import logging
-import unittest
 import tempfile
 import tarfile
-import StringIO
 import io
-import re
-import shlex
-from threading import Lock
 
-import utils
-from utils import run
+import igor.utils
+from igor.utils import run
 
 logger = logging.getLogger(__name__)
 
@@ -603,19 +598,24 @@ class Testcase(object):
 
     @staticmethod
     def from_line(line):
+        """Creates a testcase from a line
+        FIXME this should go into the igor.backends.files.factory
+        """
         token = line.split()
         token.reverse()
         assert len(token) > 0, "Testcase filename is mandatory"
         filename = token.pop()
         c = Testcase(filename)
-        for k, v in utils.cmdline_to_dict(" ".join(token)).items():
+        for k, v in igor.utils.cmdline_to_dict(" ".join(token)).items():
             if k == "timeout":
                 c.timeout = int(v)
             elif k == "expect_failure":
-                c.expect_failure = utils.parse_bool(v)
+                c.expect_failure = igor.utils.parse_bool(v)
         return c
 
     def source(self):
+        """Returns the source of this testcase
+        """
         src = None
         with open(self.filename, "r") as f:
             src = f.read()
@@ -649,6 +649,8 @@ class TestSession(UpdateableObject):
         logger.info("Starting session %s in %s" % (self.cookie, self.dirname))
 
     def remove(self):
+        """Remove the session dir and all remaining artifacts
+        """
         logger.debug("Removing session '%s'" % self.cookie)
         for artifact in self.artifacts():
             logger.debug("Removing artifact '%s'" % artifact)
@@ -667,10 +669,14 @@ class TestSession(UpdateableObject):
             os.rmdir(self.dirname)
 
     def __artifacts_path(self, name=""):
+        """Returns the absoulte path to the artifacts folder
+        """
         assert self.dirname is not None
         return os.path.join(self.dirname, "artifacts", name)
 
     def add_artifact(self, name, data):
+        """Adds an artifact
+        """
         assert("/" not in name and "\\" not in name)
         afilename = self.__artifacts_path(name)
         # fixme collsisions
@@ -678,6 +684,8 @@ class TestSession(UpdateableObject):
             afile.write(data)
 
     def get_artifact(self, name):
+        """Returns the data/content of an artifact
+        """
         data = None
         afilename = self.__artifacts_path(name)
         if os.path.exists(afilename):
@@ -688,6 +696,8 @@ class TestSession(UpdateableObject):
         return data
 
     def artifacts(self, use_abs=False):
+        """Returns a list of all artifacts.
+        """
         dirname = self.__artifacts_path()
         fns = os.listdir(dirname)
         if use_abs:
@@ -696,23 +706,25 @@ class TestSession(UpdateableObject):
         return fns
 
     def get_artifacts_archive(self, selection=None):
+        """Return all artifacts as an .tar.bz2
+        """
         selection = selection or self.artifacts()
-        r = io.BytesIO()
+        container = io.BytesIO()
         logger.debug("Preparing artifacts archive for session %s" % \
                                                                    self.cookie)
-        with tarfile.open(fileobj=r, mode="w:bz2") as archive:
+        with tarfile.open(fileobj=container, mode="w:bz2") as archive:
             for artifact in selection:
                 if artifact not in self.artifacts():
                     logger.debug("Artifact not here: %s" % artifact)
                 logger.debug("Adding artifact %s" % artifact)
                 archive.add(self.__artifacts_path(artifact), artifact)
-        return r
+        return container
 
     def __enter__(self):
         logger.debug("With session '%s'" % self.cookie)
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         logger.debug("Ending session %s" % self.cookie)
         if self.do_cleanup:
             self.remove()

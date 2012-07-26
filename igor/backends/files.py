@@ -313,7 +313,6 @@ class Factory(igor.utils.Factory):
                             os.path.dirname(filename), \
                             v["searchpath"], \
                             line)))
-        testcases = []
         libs = []
         cases = Factory._from_file(filename, {
             None: lambda line: igor.main.Testcase.from_line(rp(line)),

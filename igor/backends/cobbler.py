@@ -20,7 +20,6 @@
 
 import logging
 import xmlrpclib
-import time
 import os
 
 import igor.main
@@ -437,7 +436,5 @@ class Cobbler(object):
 def example():
     c = Cobbler("http://127.0.0.1/cobbler_api")
     c.login()
-    print (s.systems())
-    print (s.profiles())
-
-    p = c.new_profile("abc")
+    print (c.systems())
+    print (c.profiles())

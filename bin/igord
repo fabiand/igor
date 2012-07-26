@@ -3,25 +3,19 @@
 
 import json
 import os
-import sys
-import base64
 import logging
 import logging.config
-import time
-import re
 import bottle
-import io
 import tarfile
-import tempfile
 from string import Template
 
 import igor.log
-from igor.main import *
-from igor.backends.libvirt import *
-from igor.backends.cobbler import Cobbler
-from igor.job import *
-import igor.utils as utils
-import igor.reports as reports
+import igor.main
+import igor.backends.libvirt
+import igor.backends.cobbler
+import igor.job
+import igor.utils
+import igor.reports
 import igor.backends.files
 
 import igor.config as config
@@ -83,9 +77,9 @@ host_origins = {
 #
 # Now prepare the essential objects
 #
-jc = JobCenter(session_path=CONFIG["session.path"])
+jc = igor.job.JobCenter(session_path=CONFIG["session.path"])
 
-inventory = Inventory( \
+inventory = igor.main.Inventory( \
     plans=plan_origins, \
     testsuites=testsuite_origins, \
     profiles=profile_origins, \
@@ -95,12 +89,12 @@ inventory.check()
 
 class IgordJSONEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, Job) or isinstance(obj, Testsuite) or \
-           isinstance(obj, Testset) or isinstance(obj, Testcase) or \
-           isinstance(obj, Profile) or isinstance(obj, Origin) or \
-           isinstance(obj, Host) or isinstance(obj, Testplan):
+        if isinstance(obj, igor.job.Job) or isinstance(obj, igor.main.Testsuite) or \
+           isinstance(obj, igor.main.Testset) or isinstance(obj, igor.main.Testcase) or \
+           isinstance(obj, igor.main.Profile) or isinstance(obj, igor.main.Origin) or \
+           isinstance(obj, igor.main.Host) or isinstance(obj, igor.main.Testplan):
             return obj.__to_dict__()
-        elif isinstance(obj, utils.State):
+        elif isinstance(obj, igor.utils.State):
             return str(obj)
         return json.JSONEncoder.default(self, obj)
 
@@ -122,7 +116,7 @@ def to_json(obj):
     if format == "xml":
         j = json.loads(r)
         r = "<?xml-stylesheet type='text/xsl' href='/ui/index.xsl' ?>\n"
-        r += utils.obj2xml(root_tag, j, as_string=True)
+        r += igor.utils.obj2xml(root_tag, j, as_string=True)
     bottle.response.content_type = "application/%s" % format
     return r
 
@@ -153,14 +147,13 @@ def static_data(filename):
 @bottle.route('/jobs/submit/<tname>/with/<pname>/on/<hname>')
 @bottle.route('/jobs/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')
 def submit_testsuite(tname, pname, hname, cookiereq=None):
-    args = ()
     for key, name in [("testsuites", tname), \
                       ("profiles", pname), \
                       ("hosts", hname)]:
         item = inventory._lookup(key, name)
         if item is None:
             bottle.abort(412, "Unknown %s '%s'" % (key, name))
-    spec = main.JobSpec(testsuite=inventory.testsuites()[tname],
+    spec = igor.main.JobSpec(testsuite=inventory.testsuites()[tname],
                profile=inventory.profiles()[pname],
                host=inventory.hosts()[hname],
                additional_kargs=bottle.request.query.additional_kargs or "")
@@ -197,7 +190,7 @@ def job_report(cookie):
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
     bottle.response.content_type = "text/plain; charset=utf8"
-    return str(reports.job_status_to_report(j.__to_dict__()))
+    return str(igor.reports.job_status_to_report(j.__to_dict__()))
 
 
 @bottle.route('/jobs/<cookie>/step/<n:int>/<result:re:success|failed>')
@@ -222,7 +215,7 @@ def abort_job(cookie):
 
 
 @bottle.route('/jobs/<cookie>/testsuite')
-def get_testsuite_archive(cookie):
+def get_job_testsuite_archive(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     t = jc.jobs[cookie].testsuite
@@ -339,7 +332,7 @@ def get_testsuite_archive(name, tarball="testsuite.tar"):
     t = testsuites[name]
     r = t.get_archive()
     if not r:
-        bottle.abort(404, 'No testsuite for %s' % (cookie))
+        bottle.abort(404, 'No testsuite for %s' % (name))
     bottle.response.content_type = "application/x-tar; charset=binary"
     return r.getvalue()
 
@@ -390,7 +383,7 @@ def testplan_report(name):
         bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.status_plan(name)
     bottle.response.content_type = "text/plain; charset=utf8"
-    return str(reports.testplan_status_to_report(r))
+    return str(igor.reports.testplan_status_to_report(r))
 
 
 @bottle.route('/testplans/<name>/report/junit')
@@ -399,7 +392,8 @@ def testplan_junit_report(name):
         bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.status_plan(name)
     bottle.response.content_type = "text/plain; charset=utf8"
-    return reports.to_xml_str(reports.testplan_status_to_junit_report(r))
+    xml = igor.reports.testplan_status_to_junit_report(r)
+    return igor.reports.to_xml_str(xml)
 
 
 @bottle.route('/testplans/<name>/abort')
@@ -449,7 +443,7 @@ def testcase_source(suitename, setname, casename):
 @bottle.route('/profiles/<pname>', method='PUT')
 def profile_from_vmlinuz_put(pname):
     reqfiles = set(["kernel", "initrd", "kargs"])
-    _tmpdir = utils.TemporaryDirectory()
+    _tmpdir = igor.utils.TemporaryDirectory()
     with _tmpdir as tmpdir:
         logger.debug("Using PUT tmpdir %s" % tmpdir)
         with tarfile.open(fileobj=bottle.request.body) as tarball:
@@ -478,7 +472,7 @@ def profile_from_vmlinuz_put(pname):
 @bottle.route('/profiles/<pname>', method='POST')
 def profile_from_vmlinuz_post(pname):
     reqfiles = set(["kernel", "initrd", "kargs"])
-    _tmpdir = utils.TemporaryDirectory(reqfiles)
+    _tmpdir = igor.utils.TemporaryDirectory(reqfiles)
     with _tmpdir as tmpdir:
         logger.debug("Using tmpdir %s" % tmpdir)
         if not all([r in bottle.request.files.keys() for r in reqfiles]):

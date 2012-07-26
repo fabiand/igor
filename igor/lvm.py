@@ -20,7 +20,6 @@
 
 import logging
 import os
-import re
 
 from utils import run
 
@@ -130,7 +129,7 @@ class LogicalVolume(object):
     def create(self):
         self.vg.create()
 
-        with self.vg.losetup() as losetups:
+        with self.vg.losetup():
             vg_cmd = "lvcreate -v -L '%s' -n '%s' '%s'" % (self.size, \
                                                        self.name, self.vg.name)
             run(vg_cmd)

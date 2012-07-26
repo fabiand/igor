@@ -21,12 +21,9 @@
 import logging
 import threading
 import time
-import zlib
 import os
 
 import main
-import backends.libvirt as virt
-import backends.cobbler as cobbler
 import utils
 
 logger = logging.getLogger(__name__)
