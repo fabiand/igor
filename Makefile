@@ -32,7 +32,7 @@ uninstall: stop
 	-systemctl disable igord.service
 	-yum -y remove igor
 
-check-local: doctests pep8
+check-local: doctests pep8 pyflakes
 	@echo -e "---\n Passed.\n---"
 
 doctests:
@@ -54,4 +54,11 @@ pylint:
 	do \
 		echo pylint on "$$M"; \
 		PYTHONPATH=. pylint $$M || exit 1; \
+	done
+
+pyflakes:
+	@for M in $(PYTHONSOURCES); \
+	do \
+		echo pyflakes on "$$M"; \
+		PYTHONPATH=. pyflakes $$M || exit 1; \
 	done
