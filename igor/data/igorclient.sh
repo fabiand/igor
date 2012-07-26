@@ -75,7 +75,7 @@ submit() # Submit a new job, e.g. submit <testsuite> <profile> <host>
   [[ -z $HOST ]] && die "Hostname is mandatory."
 
   TMPFILE=$(mktemp)
-  URL="submit/$TESTSUITE/with/$PROFILE/on/$HOST"
+  URL="jobs/submit/$TESTSUITE/with/$PROFILE/on/$HOST"
   [[ -z $KARGS ]] || {
     QUERY=$(_py_urlencode "{'additional_kargs': '$KARGS'}")
     URL="$URL?$QUERY"
