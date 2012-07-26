@@ -27,6 +27,7 @@ Summary
 - Runtime: <xsl:value-of select="/status/runtime/text()"/> / <xsl:value-of select="/status/timeout/text()"/>
 - Testsuite: <xsl:value-of select="/status/testsuite/name/text()"/>
 - Profile: <xsl:value-of select="/status/profile/text()"/>
+- Additional kargs: ``<xsl:value-of select="/status/additional_kargs"/>``
 - Host: <xsl:value-of select="/status/host/text()"/>
 - ID: <xsl:value-of select="/status/id/text()"/>
 
@@ -61,7 +62,6 @@ Created artifacts:
 
 Specification
 ---------------------------------------------------------------<xsl:for-each select="//testsets">
-
 Testcases in set **<xsl:value-of select="name/text()"/>**:
 <xsl:for-each select="testcases">
 #. <xsl:value-of select="name/text()"/>
