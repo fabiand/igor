@@ -105,6 +105,12 @@ EOP
       # We are not breaking here, because a failed testcase could be expected
     fi
 
+    if [[ -e "/tmp/quit-testing" ]];
+    then
+      debug "Quitting testing on request"
+      break
+    fi
+
     # Check if we are continuing
     api_call jobs/$SESSION/status | grep '"state":' | grep -q '"running"' || {
       debug "Testsuite is not running anymore"
@@ -113,6 +119,12 @@ EOP
 
     CURRENT_STEP=$(($CURRENT_STEP + 1))
   done
+
+  if [[ -e "/tmp/reboot-requested" ]]
+  then
+    debug "Got request to initiate reboot"
+    { sleep 5 ; reboot ; } &
+  fi
 
   # Add a summary
   api_call jobs/$SESSION/status > "/tmp/job_status.json"
