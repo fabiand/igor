@@ -55,6 +55,13 @@ _py_urlencode()
   pyc "import urllib as u; print u.urlencode($@);"
 }
 
+view() # View the source of function FUNCNAME
+{
+  FUNC_USAGE="$0 $FUNCNAME <FUNCNAME>"
+  [[ -z $1 ]] && die "FUNCNAME is mandatory."
+  typeset -f $1
+}
+
 #
 # API stateless functions
 #
@@ -416,4 +423,4 @@ else
   exit 1
 fi
 
-# vim: sw=2 tw=2:
+# vim: sw=80 tw=2:
