@@ -14,6 +14,7 @@
     <link href='http://fonts.googleapis.com/css?family=Basic' rel='stylesheet' type='text/css'/>
     <link rel="stylesheet" type="text/css" href="/ui/default.css" />
     <link rel="stylesheet" type="text/css" href="/ui/stripes.css" />
+    <link rel="shortcut icon" href="/ui/favicon.png" />
   </head>
   <body>
     <div id="header">
