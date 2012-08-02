@@ -61,7 +61,10 @@ $(document).ready(function(){
   $("div[load]").each(function(index,el){
     var url = $(el).attr("load")
 
-    if ($(el).attr("on-request"))
+    var hash = window.location.hash
+    var is_in_hash = ("#"+$(el).attr("id")) == hash
+
+    if ($(el).attr("on-request") && !is_in_hash)
     {
       $(el).html("Click to load from url (<a href='url'>source</a>).".replace(/url/g, url))
       $(el).click(function() {
@@ -73,6 +76,7 @@ $(document).ready(function(){
     else
     {
       $(el).load_xml(url)
+      $(el).removeAttr("on-request")
     }
   })
 
