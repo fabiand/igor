@@ -78,6 +78,13 @@
             </xsl:attribute>
             <xsl:value-of select ="./state"/>
         </span>
+        <span class="progressbar" style="width: 100px">
+            <xsl:variable name="progress_p" select="round(100 div count(.//testcases) * count(./results))"/>
+            <xsl:attribute name="title">Completed <xsl:value-of select="count(./results)"/> of <xsl:value-of select="count(.//testcases)"/> testcases (<xsl:value-of select="$progress_p"/>%) in <xsl:value-of select="round(./runtime)"/> (of <xsl:value-of select="round(./timeout)"/>) seconds.</xsl:attribute>
+            <span>
+                <xsl:attribute name="style">width:<xsl:value-of select="$progress_p"/>%</xsl:attribute>
+            </span>
+        </span>
         <a style="float: right">
             <xsl:attribute name="href">
                 <xsl:text>/jobs/</xsl:text><xsl:value-of select ="./id"/>/report

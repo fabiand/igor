@@ -1,6 +1,7 @@
 igor-0.2.3
 - Better documentation
 - Better python checks (make check-local)
+- Add progressbar to UI
 - ...
 
 igor-0.2.2

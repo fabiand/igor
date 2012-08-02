@@ -271,3 +271,20 @@ div#footer
   margin: 0;
   padding-left: 15px;
 }
+
+.progressbar
+{
+  display: inline-block;
+  border: 1px solid gray;
+  padding: .2em;
+  border-radius: .5em;
+  vertical-align: center;
+  margin: 0 1em;
+}
+.progressbar > span
+{
+  display: block;
+  height: .2em;
+  background-color: gray;
+  border-radius: .5em;
+}
