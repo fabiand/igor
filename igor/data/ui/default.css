@@ -283,8 +283,8 @@ div#footer
 }
 .progressbar > span
 {
+  height: .5em;
   display: block;
-  height: .2em;
   background-color: gray;
-  border-radius: .5em;
+  border-radius: 0;
 }
