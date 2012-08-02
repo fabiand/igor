@@ -1,5 +1,6 @@
 
 PYTHONSOURCES=$(shell find igor -name \*.py -not -path */hacks.py) bin/igord
+XMLSOURCES=$(shell find . -name \*.xml -or -name \*.xsl)
 
 SHELL := /bin/bash
 
@@ -45,6 +46,12 @@ check-local-fast:
 		PYTHONPATH=. pep8 -r $$M || kill $$PARENT & \
 		PYTHONPATH=. pyflakes $$M || kill $$PARENT & \
 	done ; wait
+	@for M in $(XMLSOURCES); \
+	do export PARENT=$$$$ ; \
+		echo "Fast checks on '$$M'"; \
+		xmllint --noout $$M || kill $$PARENT & \
+	done ; wait
+
 
 doctests:
 	@for M in $(PYTHONSOURCES); \
