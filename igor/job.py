@@ -228,10 +228,25 @@ class Job(object):
         self.current_step += 1
         return self.current_step
 
+    def annotate_current_step(self, note, is_append=True):
+        filename = "annotations"
+        notes = ""
+        if is_append:
+            try:
+                notes += self.get_artifact_for_current_step(filename)
+            except:
+                logger.debug("Creating new annotation")
+        notes += note + "\n"
+        self.add_artifact_to_current_step(filename, notes)
+
     def add_artifact_to_current_step(self, name, data):
         aname = "%s-%s" % (self.current_step, name)
         self.add_artifact(aname, data)
         return aname
+
+    def get_artifact_for_current_step(self, name):
+        aname = "%s-%s" % (self.current_step, name)
+        return self.get_artifact(aname)
 
     def add_artifact(self, name, data):
         self._artifacts.append(name)

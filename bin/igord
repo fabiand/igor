@@ -196,6 +196,15 @@ def finish_step(cookie, n, result):
     return to_json(m)
 
 
+@app.route('/jobs/<cookie>/step/current/annotate', method='PUT')
+def annotate_step(cookie, annotation):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job '%s'" % cookie)
+    j = jc.jobs[cookie]
+    data = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
+    j.annotate_current_step(data)
+
+
 @app.route('/jobs/<cookie>', method='DELETE')
 @app.route('/jobs/<cookie>/abort')
 def abort_job(cookie):
