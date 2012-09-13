@@ -1,7 +1,7 @@
 ---
+# This first document contains all suite specififc properties
 description: "An example testsuite"
 
-# Now the sets, each block can have optionally a searchpath
 ---
 searchpath: '../sets/'
 sets:

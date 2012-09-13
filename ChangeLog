@@ -5,6 +5,7 @@ igor-0.2.3
 - Added basic hooks (pre-job, post-job) and documentation
 - Added annotations and documentation
 - Switch files syntax to yaml
+- Add testcase dependencies
 
 igor-0.2.2
 - Critical fixes

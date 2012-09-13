@@ -22,6 +22,8 @@ api_url() { echo "${APIURL%/}/${1#/}" ; }
 api_call() { debug_curl $(api_url "$1") ; }
 step_succeeded() { api_call jobs/$SESSION/step/$CURRENT_STEP/success ; }
 step_failed()    { api_call jobs/$SESSION/step/$CURRENT_STEP/failed ; }
+skip_step()    { api_call jobs/$SESSION/step/$CURRENT_STEP/skip ; }
+step_result()....{ api_call jobs/$SESSION/step/${1}/result ; }
 add_artifact()
 {
   local DST=$1
@@ -47,7 +49,28 @@ request.get_method = lambda: 'PUT'
 resp = opener.open(request)
 EOP
 }
-
+testcase_x_succeeded_last_time() {
+  # Go backwards and return 0 in the case that the
+  # last run of X was successfull
+  debug "CHecking dependecy"
+  TESTCASENAME=$1
+  for N in $(seq $CURRENT_STEP -1 0)
+  do
+    if [[ -e $N-$TESTCASENAME ]]
+    then
+      if step_result $N | grep -qi true
+      then
+        debug "Dependency $N-$TESTCASENAME was met"
+        return 0
+      else
+        debug "Dependency $N-$TESTCASENAME failed"
+        return 1
+      fi
+    fi
+  done
+  debug "No such testcase: $N-$TESTCASENAME"
+  return 2
+}
 
 
 #
@@ -73,9 +96,26 @@ EOP
       debug "Is not testcase, a directory: $TESTCASE" ; continue
     }
 
+    # Skip testcases we already ran through
     TESTCASESTEP=${TESTCASE/-*/}
     [[ $TESTCASESTEP -lt $CURRENT_STEP ]] && {
-      debug "Skipping testcase $TESTCASE" ; continue
+      debug "Skipping testcase $TESTCASE (already run)" ; continue
+    }
+
+    # Skip a testcase if a dependency failed
+    TESTCASEDEPS=$TESTCASE.deps
+    [[ -e $TESTCASEDEPS ]] && {
+      debug "Checking testcase dependencies"
+      DEPENDENCIES_MET=true
+      cat $TESTCASEDEPS | while read DEP;
+      do
+        testcase_x_succeeded_last_time "$DEP" || DEPENDENCIES_MET=false
+      done
+
+      $DEPENDENCIES_MET && {
+        skip_step
+        debug "Skipping testcase $TESTCASE (dependency failed)" ; continue
+      }
     }
 
     RETVAL=4242

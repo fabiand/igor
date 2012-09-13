@@ -477,17 +477,31 @@ class Testsuite(object):
         """Add a single testcase to the archive
         And testcase specififc metadata files
         """
-        srcobj = io.BytesIO(testcase.source())
-        info = tarfile.TarInfo(name=arcname)
-        info.size = len(srcobj.getvalue())
-        info.mtime = time.time()
-        archive.addfile(tarinfo=info, fileobj=srcobj)
+        # Add the testcase itself
+        self.__add_data_to_archive(archive, arcname, testcase.source())
+
+        # Add a file with testcase dependencies
+        arcdepsname = arcname + ".deps"
+        dependencies = "\n".join(testcase.dependencies)
+        self.__add_data_to_archive(archive, arcdepsname,
+                                   "\n".join(dependencies))
+
+        # Add a testcase extra dir
         testcaseextradir = testcase.filename + ".d"
         if os.path.exists(testcaseextradir):
             logger.debug("Adding extra dir: %s" % testcaseextradir)
             arcname += ".d"
             archive.add(testcaseextradir, arcname=arcname, \
                         recursive=True)
+
+    def __add_data_to_archive(self, archive, arcname, data):
+        """Adds data as a file to an archive
+        """
+        srcobj = io.BytesIO(data)
+        info = tarfile.TarInfo(name=arcname)
+        info.size = len(srcobj.getvalue())
+        info.mtime = time.time()
+        archive.addfile(tarinfo=info, fileobj=srcobj)
 
     def __add_libs_to_archive(self, archive, subdir):
         for libname, libpath in self.libs().items():
@@ -524,6 +538,7 @@ class Testset(object):
     name = None
     _libs = None
     _testcases = None
+    _dependencies = []
 
     def __init__(self, name, testcases=[], libs=None):
         self.name = name
@@ -531,6 +546,7 @@ class Testset(object):
         self._testcases = []
         self.add(testcases)
         self.libs(libs)
+        self._dependencies = []
 
     def testcases(self):
         """All testcases of this set
@@ -595,6 +611,7 @@ class Testcase(object):
     timeout = 60
     expect_failure = False
     description = None
+    dependencies = []
 
     def __init__(self, filename=None, name=None):
         if name is None and filename is None:
@@ -604,6 +621,7 @@ class Testcase(object):
         else:
             self.name = name
         self.filename = filename
+        self.dependencies = []
 
     def source(self):
         """Returns the source of this testcase

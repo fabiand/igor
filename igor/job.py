@@ -160,7 +160,8 @@ class Job(object):
         self.host.start()
 
     @utils.synchronized(_high_state_change_lock)
-    def finish_step(self, n, is_success, note=None, is_abort=False):
+    def finish_step(self, n, is_success, note=None, is_abort=False,
+                    is_skipped=False):
         """Finish one test step
         """
         logger.debug("%s: Finishing step %s: %s (%s)" % (self.cookie, n, \
@@ -199,6 +200,7 @@ class Job(object):
             "is_success": is_success,
             "is_passed": is_passed,
             "is_abort": is_abort,
+            "is_skipped": is_skipped,
             "note": note,
             "runtime": time.time() - last_timestamp,
             "log": log,
@@ -210,6 +212,9 @@ class Job(object):
                                                         current_testcase.name))
             self.watchdog.stop()
             self.state(s_aborted)
+        if is_skipped:
+            logger.debug("Skipping step %s (%s)" % (n, \
+                                                        current_testcase.name))
         elif is_success is True:
             logger.debug("Finished step %s (%s) succesfully" % (n, \
                                                         current_testcase.name))
@@ -556,6 +561,18 @@ class JobCenter(object):
         j.finish_step(step, is_success, note)
         logger.info("Job %s finished step %s" % (cookie, step))
         return j
+
+    @utils.synchronized(_jobcenter_lock)
+    def skip_step(self, cookie, step, note=None):
+        j = self.jobs[cookie]
+        j.finish_step(step, False, note, is_skipped=True)
+        logger.info("Job %s skipped step %s" % (cookie, step))
+        return j
+
+    @utils.synchronized(_jobcenter_lock)
+    def test_step_result(self, cookie, step):
+        j = self.jobs[cookie]
+        return j.results[step]
 
     @utils.synchronized(_jobcenter_lock)
     def abort_job(self, cookie):

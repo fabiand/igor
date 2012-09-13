@@ -193,12 +193,27 @@ def job_report(cookie):
     return str(igor.reports.job_status_to_report(j.__to_dict__()))
 
 
+@app.route('/jobs/<cookie>/step/<n:int>/skip')
+def skip_step(cookie, n, result):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job '%s'" % cookie)
+    m = jc.skip_step(cookie, n)
+    return to_json(m)
+
+
 @app.route('/jobs/<cookie>/step/<n:int>/<result:re:success|failed>')
 def finish_step(cookie, n, result):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
-    note = None
-    m = jc.finish_test_step(cookie, n, result == "success", note)
+    m = jc.finish_test_step(cookie, n, result == "success", None)
+    return to_json(m)
+
+
+@app.route('/jobs/<cookie>/step/<n:int>/result')
+def get_step(cookie, step):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job '%s'" % cookie)
+    m = jc.test_step_result(cookie, step)
     return to_json(m)
 
 
