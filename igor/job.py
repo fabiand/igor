@@ -419,6 +419,7 @@ class JobCenter(object):
     """Manage jobs
     """
     session_path = None
+    hooks_path = None
 
     jobs = {}
     closed_jobs = []
@@ -434,8 +435,9 @@ class JobCenter(object):
 
     _worker = None
 
-    def __init__(self, session_path):
+    def __init__(self, session_path, hooks_path=None):
         self.session_path = session_path
+        self.hooks_path = hooks_path
         assert os.path.exists(self.session_path), \
                "Session path does not exist: %s" % session_path
 
@@ -554,6 +556,17 @@ class JobCenter(object):
             return None
         return self._running_plans[name].stop()
 
+    def __run_hook(self, hook, cookie):
+        allowed_hooks = ["pre-job", "post-job"]
+        if hook in allowed_hooks:
+            hook_dir = self.hooks_path.format(hook=hook)
+            if not os.path.exists(hook_dir):
+                return
+            for hookfile in os.listdir(hook_dir):
+                script = os.path.join(hook_dir, hookfile)
+                logger.debug("Running hook: %s" % script)
+                os.system(script + " " + cookie)
+
     class PlanWorker(threading.Thread):
         jc = None
         plan = None
@@ -651,6 +664,7 @@ class JobCenter(object):
                                     cookie)
                     else:
                         self._debug("Starting job %s" % cookie)
+                        self.jc.__run_hook("pre-job", cookie)
                         self.jc._start_job(cookie)
                         self.jc._queue_of_pending_jobs.remove(cookie)
 
@@ -659,6 +673,7 @@ class JobCenter(object):
                 if j.reached_endstate():
                     if not j._ended:
                         self._debug("Unwinding job %s" % cookie)
+                        self.jc.__run_hook("post-job", cookie)
                         self.jc._end_job(j.cookie)
                         self.jc._queue_of_ended_jobs.append(j)
 

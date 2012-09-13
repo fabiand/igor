@@ -78,7 +78,8 @@ host_origins = {
 #
 # Now prepare the essential objects
 #
-jc = igor.job.JobCenter(session_path=CONFIG["session.path"])
+jc = igor.job.JobCenter(session_path=CONFIG["session.path"],
+                        hooks_path=CONFIG["hooks.path"])
 
 inventory = igor.main.Inventory( \
     plans=plan_origins, \

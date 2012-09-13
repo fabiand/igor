@@ -6,6 +6,20 @@
 path = /usr/lib/igord/testcases/
 
 
+[Testplans]
+# Path of testplans relative to runpath
+#path = /home/fdeutsch/dev/ovirt/igor/testsuites/plans
+path = /home/fdeutsch/dev/ovirt/gerrit/ovirt-node/tests/igor/plans/
+
+
+[Hooks]
+# Hooks can be (pre-job and post-job) and need to be executable scripts
+# residing in the path below. {hook} is replaced by the hook name.
+# pre-job hook scripts would reside in /etc/igord/pre-job.d/, each one
+# would be run
+path = /etc/igord/{hook}.d/
+
+
 [Hosts]
 # Path to .hosts files
 # Separate multiple paths by ":"
