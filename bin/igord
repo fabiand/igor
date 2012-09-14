@@ -8,6 +8,7 @@ import logging.config
 import bottle
 import tarfile
 from string import Template
+import yaml
 
 import igor.log
 import igor.main
@@ -107,6 +108,11 @@ def to_json(obj):
         j = json.loads(r)
         r = "<?xml-stylesheet type='text/xsl' href='/ui/index.xsl' ?>\n"
         r += igor.utils.obj2xml(root_tag, j, as_string=True)
+
+    if format == "yaml":
+        j = json.loads(r)
+        r = yaml.dump_all(j)
+
     bottle.response.content_type = "application/%s" % format
     return r
 
