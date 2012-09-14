@@ -3,7 +3,7 @@ igor-0.2.3
 - Better python checks (make check-local)
 - Add progressbar to UI
 - Added basic hooks (pre-job, post-job) and documentation
-- Added annotations
+- Added annotations and documentation
 
 igor-0.2.2
 - Critical fixes
