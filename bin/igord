@@ -197,7 +197,7 @@ def finish_step(cookie, n, result):
 
 
 @app.route('/jobs/<cookie>/step/current/annotate', method='PUT')
-def annotate_step(cookie, annotation):
+def annotate_step(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]

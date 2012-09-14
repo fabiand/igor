@@ -688,7 +688,7 @@ class JobCenter(object):
                 if j.reached_endstate():
                     if not j._ended:
                         self._debug("Unwinding job %s" % cookie)
-                        self.jc.__run_hook("post-job", cookie)
+                        self.jc._run_hook("post-job", cookie)
                         self.jc._end_job(j.cookie)
                         self.jc._queue_of_ended_jobs.append(j)
 
