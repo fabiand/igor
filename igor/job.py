@@ -249,7 +249,7 @@ class Job(object):
         if is_append:
             try:
                 data = self.get_artifact(filename)
-                notes = yaml.load_all(data)
+                notes = list(yaml.load_all(data))
             except:
                 logger.debug("Creating new annotation")
         notes.append(note)
