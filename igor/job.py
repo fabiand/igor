@@ -187,6 +187,12 @@ class Job(object):
             except:
                 log = "(no log output)"
 
+        annotations = ""
+        try:
+            annotations = unicode(str(self.annotation()), errors='ignore')
+        except:
+            pass
+
         self.results.append({
             "created_at": time.time(),
             "testcase": current_testcase.__to_dict__(),
@@ -195,7 +201,8 @@ class Job(object):
             "is_abort": is_abort,
             "note": note,
             "runtime": time.time() - last_timestamp,
-            "log": log
+            "log": log,
+            "annotations": annotations
             })
 
         if is_abort:
@@ -229,8 +236,15 @@ class Job(object):
         self.current_step += 1
         return self.current_step
 
-    def annotate_current_step(self, note, is_append=True):
+    def annotate(self, note, step="current", is_append=True):
+        """Annotate - by default - the current step.
+        """
         filename = "annotations.yaml"
+        if step == "current":
+            filename = self.current_step + "-" + filename
+        elif step != None:
+            filename = step + "-" + filename
+
         notes = []
         if is_append:
             try:
@@ -240,7 +254,15 @@ class Job(object):
                 logger.debug("Creating new annotation")
         notes.append(note)
         data = yaml.dump_all(notes)
-        self.add_artifact_to_current_step(filename, data)
+        self.add_artifact(filename, data)
+
+    def annotation(self, step="current"):
+        filename = "annotations.yaml"
+        if step == "current":
+            filename = self.current_step + "-" + filename
+        elif step != None:
+            filename = step + "-" + filename
+        self.get_artifact(filename)
 
     def add_artifact_to_current_step(self, name, data):
         aname = "%s-%s" % (self.current_step, name)

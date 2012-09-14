@@ -202,7 +202,7 @@ def annotate_step(cookie):
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
     data = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
-    j.annotate_current_step(data)
+    j.annotate(data)
 
 
 @app.route('/jobs/<cookie>', method='DELETE')
