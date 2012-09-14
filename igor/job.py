@@ -189,7 +189,7 @@ class Job(object):
 
         annotations = ""
         try:
-            annotations = unicode(str(self.annotation()), errors='ignore')
+            annotations = unicode(str(self.annotations()), errors='ignore')
         except:
             pass
 
@@ -256,13 +256,13 @@ class Job(object):
         data = yaml.dump_all(notes)
         self.add_artifact(filename, data)
 
-    def annotation(self, step="current"):
+    def annotations(self, step="current"):
         filename = "annotations.yaml"
         if step == "current":
             filename = "%s-%s" % (self.current_step, filename)
         elif step != None:
             filename = "%s-%s" % (step, filename)
-        self.get_artifact(filename)
+        return list(yaml.load_all(self.get_artifact(filename)))
 
     def add_artifact_to_current_step(self, name, data):
         aname = "%s-%s" % (self.current_step, name)
