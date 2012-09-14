@@ -42,6 +42,7 @@
         <script type="text/javascript" src="/ui/index.js"></script>
     </div>
     <div id="footer">
+        <a href="/server/log">Log</a> |
         <a href="http://gitorious.org/ovirt/igord">More about igor</a>
     </div>
   </body>
