@@ -241,9 +241,9 @@ class Job(object):
         """
         filename = "annotations.yaml"
         if step == "current":
-            filename = self.current_step + "-" + filename
+            filename = "%s-%s" % (self.current_step, filename)
         elif step != None:
-            filename = step + "-" + filename
+            filename = "%s-%s" % (step, filename)
 
         notes = []
         if is_append:
@@ -259,9 +259,9 @@ class Job(object):
     def annotation(self, step="current"):
         filename = "annotations.yaml"
         if step == "current":
-            filename = self.current_step + "-" + filename
+            filename = "%s-%s" % (self.current_step, filename)
         elif step != None:
-            filename = step + "-" + filename
+            filename = "%s-%s" % (step, filename)
         self.get_artifact(filename)
 
     def add_artifact_to_current_step(self, name, data):
