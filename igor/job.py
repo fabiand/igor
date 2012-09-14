@@ -100,7 +100,7 @@ class Job(object):
         self.additional_kargs = additional_kargs
 
         self.results = []
-        self._artifacts = []
+        self._artifacts = set([])
 
         self._state_history = []
         self.state_changed = threading.Event()
@@ -274,7 +274,7 @@ class Job(object):
         return self.get_artifact(aname)
 
     def add_artifact(self, name, data):
-        self._artifacts.append(name)
+        self._artifacts.add(name)
         self.session.add_artifact(name, data)
 
     def get_artifact(self, name):
