@@ -55,4 +55,4 @@ of data/artifacts about the job and push this into your application.
   You can access the e.g. 
 
   1. list artifacts using ``/jobs/<cookie>/artifacts/``
-  2. artifacts directly using ``/jobs/<cookie>/artifacts/somelog.txt``
+  2. getting an artifact: ``/jobs/<cookie>/artifacts/0-annotations.yaml``
