@@ -190,8 +190,8 @@ class Job(object):
         annotations = ""
         try:
             annotations = unicode(str(self.annotations()), errors='ignore')
-        except:
-            pass
+        except Exception as e:
+            logger.debug("No annotation or error: %s" % e.message)
 
         self.results.append({
             "created_at": time.time(),
