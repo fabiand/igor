@@ -22,6 +22,7 @@ import logging
 import threading
 import time
 import os
+import yaml
 
 import main
 import utils
@@ -229,15 +230,17 @@ class Job(object):
         return self.current_step
 
     def annotate_current_step(self, note, is_append=True):
-        filename = "annotations"
-        notes = ""
+        filename = "annotations.yaml"
+        notes = []
         if is_append:
             try:
-                notes += self.get_artifact_for_current_step(filename)
+                data = self.get_artifact_for_current_step(filename)
+                notes = yaml.load_all(data)
             except:
                 logger.debug("Creating new annotation")
-        notes += note + "\n"
-        self.add_artifact_to_current_step(filename, notes)
+        notes.append(note)
+        data = yaml.dump_all(notes)
+        self.add_artifact_to_current_step(filename, data)
 
     def add_artifact_to_current_step(self, name, data):
         aname = "%s-%s" % (self.current_step, name)
