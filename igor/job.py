@@ -571,7 +571,7 @@ class JobCenter(object):
             return None
         return self._running_plans[name].stop()
 
-    def __run_hook(self, hook, cookie):
+    def _run_hook(self, hook, cookie):
         allowed_hooks = ["pre-job", "post-job"]
         if hook in allowed_hooks:
             hook_dir = self.hooks_path.format(hook=hook)
@@ -679,7 +679,7 @@ class JobCenter(object):
                                     cookie)
                     else:
                         self._debug("Starting job %s" % cookie)
-                        self.jc.__run_hook("pre-job", cookie)
+                        self.jc._run_hook("pre-job", cookie)
                         self.jc._start_job(cookie)
                         self.jc._queue_of_pending_jobs.remove(cookie)
 
