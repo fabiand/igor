@@ -281,6 +281,9 @@ class Job(object):
     def get_artifact(self, name):
         return self.session.get_artifact(name)
 
+    def list_artifacts(self):
+        return self._artifacts
+
     def get_artifacts_archive(self):
         logger.debug("Creating artifacts archive for: %s" % self._artifacts)
         return self.session.get_artifacts_archive(self._artifacts)

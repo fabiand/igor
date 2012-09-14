@@ -235,6 +235,14 @@ def get_job_testsuite_archive(cookie):
     return r.getvalue()
 
 
+@app.route('/jobs/<cookie>/artifacts')
+def list_artifact(cookie):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job '%s'" % cookie)
+    j = jc.jobs[cookie]
+    return to_json(j.list_artifacts())
+
+
 @app.route('/jobs/<cookie>/artifacts/<name>', method='PUT')
 def add_artifact(cookie, name):
     if cookie not in jc.jobs:
