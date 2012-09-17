@@ -19,11 +19,11 @@
 #
 
 import logging
-import ConfigParser
 import os
 import glob
 import shlex
 import tempfile
+import yaml
 
 import igor.main
 import igor.utils
@@ -327,16 +327,30 @@ class Factory(igor.utils.Factory):
         if not os.path.isfile(filename):
             raise Exception("Hosts filename does not exist: %s" % filename)
 
-        hostsconfig = ConfigParser.SafeConfigParser()
-        hostsconfig.read(filename)
+        host_fields = ["name", "mac", "poweron_script", "poweroff_script"]
+        default_key = "DEFAULT"
+
+        data = open(filename).read()
+        documents = yaml.load_all(data)
         hosts = {}
-        for hostname in hostsconfig.sections():
+        # Read hosts from file
+        for document in documents:
             host = Host()
-            props = {"name": hostname}
-            for prop in ["mac", "poweron_script", "poweroff_script"]:
-                props[prop] = hostsconfig.get(hostname, prop)
-            host.__dict__.update(props)
-            hosts[hostname] = host
+            host.__dict__.update(document)
+            hosts[host.name] = host
+
+        # Gather defaults from default host
+        if default_key in hosts.keys():
+            default_host = hosts[default_key]
+            for host in hosts.values():
+                missing_fields = set(host_fields) - set(host.__dict__.keys())
+                defaults = {k: default_host.__dict__[k]
+                            for k in missing_fields}
+                host.__dict__.update(defaults)
+                assert all([f in document.keys() for f in host_fields])
+            # Remove default host from list
+            del hosts[default_key]
+
         return hosts
 
     @staticmethod
