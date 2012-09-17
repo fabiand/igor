@@ -4,6 +4,7 @@ igor-0.2.3
 - Add progressbar to UI
 - Added basic hooks (pre-job, post-job) and documentation
 - Added annotations and documentation
+- Switch files syntax to yaml
 
 igor-0.2.2
 - Critical fixes

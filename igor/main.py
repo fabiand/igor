@@ -29,7 +29,6 @@ import tempfile
 import tarfile
 import io
 
-import igor.utils
 from igor.utils import run
 
 logger = logging.getLogger(__name__)
