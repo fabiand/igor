@@ -230,26 +230,39 @@ class Factory(igor.utils.Factory):
         Testsets can appear more than once.
 
         A sample testsuite could look like:
-            basic.set
-            selinux.set
-            # Now some input
-            uinput.set
-            # And see if there are now denials
-            selinux.set
+            ---
+            description: "An example testsuite"
+
+            # Now the sets, each block can have optionally a searchpath
+            ---
+            searchpath: '../sets/'
+            sets:
+              - 'example.set'
+              - 'selinux.set'
         """
+
+        documents = Factory.__read_yaml(filename)
+#        set_fields = ["sets"]  # searchpath
+
+        properties, blocks = (documents[0],
+                              [d for d in documents[1:] if d != None])
+
+        sets = []
+        testsuitedir = os.path.dirname(filename)
+        for block in blocks:
+            searchpath = "."
+            if "searchpath" in block:
+                searchpath = block["searchpath"]
+            for tset in block["sets"]:
+                tsetfn = os.path.join(testsuitedir, searchpath, tset)
+                tsetfn = os.path.relpath(os.path.realpath(tsetfn))
+                testset = Factory.testset_from_file(tsetfn)
+                sets.append(testset)
+
         name = os.path.basename(filename).replace(suffix, "")
-        v = {"searchpath": ".", "description": ""}
-        rp = lambda line: os.path.relpath(os.path.realpath(os.path.join( \
-                            os.path.dirname(filename), \
-                            v["searchpath"], \
-                            line)))
-        sets = Factory._from_file(filename, {
-            None: lambda line: Factory.testset_from_file(rp(line)),
-            "searchpath": lambda line: v.update({"searchpath": line}),
-            "description": lambda line: v.update({"description": line})
-        })
         suite = igor.main.Testsuite(name=name, testsets=sets)
-        suite.description = v["description"]
+        suite.__dict__.update(properties)
+
         return suite
 
     @staticmethod
