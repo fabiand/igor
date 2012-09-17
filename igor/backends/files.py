@@ -21,8 +21,6 @@
 import logging
 import os
 import glob
-import shlex
-import tempfile
 import yaml
 
 import igor.main
@@ -118,74 +116,36 @@ class Factory(igor.utils.Factory):
     """
 
     @staticmethod
-    def testplan_from_string(name, txt):
-        """
-        >>> a = Factory.testplan_from_string("test", "a b c")
-        >>> b = {'job_layouts': [{'profile': 'b', 'testsuite': 'a', \
-                 'host': 'c', 'additional_kargs': None}], 'name': 'test', \
-                 'timeout': None, 'description': None}
-        """
-        fileobj = tempfile.SpooledTemporaryFile()
-        fileobj.write(txt)
-        fileobj.seek(0)
-        layouts = Factory._from_file(None, {
-                    None: lambda line: Factory._line_to_job_layout(line)
-                }, \
-                fileobj=fileobj)
-        return igor.main.Testplan(name=name, job_layouts=layouts)
-
-    @staticmethod
     def testplan_from_file(filename, suffix=".plan"):
         """Builds a Testplan from a testplan file.
-        The *.plan files are expected to contain one (testsuite, profile, host)
-        tuple per line.
+        The *.plan files are yaml encoded files containing the fields
+        (testsuite, profile, host) for each job to be run in the plan.
 
         A sample tesplan could look like:
-            # Some comment:
-            basic minimal_pkg_set highend_server kargs="tuiinstall"
-            basic maximal_pkg_set highend_server kargs="firstboot trigger=url"
+            --- # Testplan properties
+            description: A simple plan
+
+            # Now the jobs
+            ---
+            testsuite: 'basic_tui_installation'
+            profile: '{profile_pri}'
+            host: 'default-libvirt'
+            additional_kargs: 'foo'
+            ---
         """
+        documents = Factory.__read_yaml(filename)
+        layout_fields = ["testsuite", "profile", "host"]  # kargs
+
+        properties, layouts = (documents[0],
+                               [d for d in documents[1:] if d != None])
+
+        assert all([set(layout_fields) - set(l.keys()) == set([])
+                    for l in layouts])
         name = os.path.basename(filename).replace(suffix, "")
-        v = {"description": ""}
-        layouts = Factory._from_file(filename, {
-            None: lambda line: Factory._line_to_job_layout(line),
-            "description": lambda line: v.update({"description": line})
-        })
         plan = igor.main.Testplan(name=name, job_layouts=layouts)
-        plan.description = v["description"]
+        plan.__dict__.update(properties)
+
         return plan
-
-    @staticmethod
-    def _line_to_job_layout(line):
-        """Expects a line with at least three tokens: (testsuite, profile,
-        host), [kargs='...']
-
-        >>> a = Factory._line_to_job_layout("s p h")
-        >>> b = {'profile': 'p', 'testsuite': 's', 'host': 'h', \
-                 'additional_kargs': None}
-        >>> a == b
-        True
-
-        >>> a = Factory._line_to_job_layout("s p h kargs='foo'")
-        >>> b = {'profile': 'p', 'testsuite': 's', 'host': 'h', \
-                 'additional_kargs': 'foo'}
-        >>> a == b
-        True
-        """
-        tokens = shlex.split(line)
-        if len(tokens) < 3:
-            raise Exception("Not enough params in plan line: '%s'" % line)
-        t, p, h = tokens[0:3]
-        layout = {
-            "testsuite": t,
-            "profile": p,
-            "host": h,
-            "additional_kargs": None
-            }
-        if len(tokens) == 4:
-            if tokens[3].startswith("kargs="):
-                layout["additional_kargs"] = tokens[3].replace("kargs=", "")
-        return layout
 
     @staticmethod
     def testplans_from_paths(paths, suffix=".plan"):
@@ -201,6 +161,8 @@ class Factory(igor.utils.Factory):
 
         >>> plan = plans["exampleplan"]
         >>> plan.name == "exampleplan"
+        True
+        >>> "auto-installation" in plan.description
         True
         >>> plan.timeout() is None  # Calculated by jobspecs()
         True

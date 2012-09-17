@@ -1,10 +1,22 @@
-#
-# A simple plan for a basic TUI and auto-simple
-# Variables have the format {[^}]+}
-#
+--- # Testplan properties
+description: >
+    A simple plan for a basic TUI and auto-installation
+    Variables have the format {[^}]+}
 
-# Testsuite             Profile         Host                Optional: kargs
-basic_tui_installation  {profile_pri}   default-libvirt
 
-basic                   {profile_pri}   default-libvirt     kargs='storage_init BOOTIF=link'
-extended                {profile_pri}   default-libvirt     kargs='storage_init BOOTIF=link'
+# Now the jobs:
+# Testsuite, Profile, Host, Optional: kargs
+---
+testsuite: 'basic_tui_installation'
+profile: '{profile_pri}'
+host: 'default-libvirt'
+---
+testsuite: basic
+profile: '{profile_pri}'
+host: 'default-libvirt'
+additional_kargs: 'storage_init BOOTIF=link'
+---
+testsuite: 'extended'
+profile: '{profile_pri}'
+host: 'default-libvirt'
+additional_kargs: 'storage_init BOOTIF=link'

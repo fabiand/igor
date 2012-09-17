@@ -308,7 +308,7 @@ class Factory(object):
     """
 
     @staticmethod
-    def __open(filename, fileobj):
+    def __open(filename, fileobj=None):
         if filename:
             if not os.path.exists(filename):
                 raise Exception("Can't find %s rel. to %s" % (filename, \
@@ -319,18 +319,9 @@ class Factory(object):
         return fileobj
 
     @staticmethod
-    def _from_yaml_file(filename, cb_map, fileobj=None):
-        txt = None
-        objs = []
-        with Factory.__open(filename, fileobj) as f:
-            txt = f.read()
-        documents = yaml.load_all(txt)
-        if type(documents) is list:
-            cb = cb_map[None]
-            objs += [cb(v) for v in documents]
-        elif type(documents) is dict:
-            for cb, docs in documents.items():
-                objs += [cb(v) for v in docs]
+    def __read_yaml(filename, fileobj=None):
+        data = Factory.__open(filename, fileobj).read()
+        return list(yaml.load_all(data))
 
     @staticmethod
     def _from_file(filename, cb_map, fileobj=None):
