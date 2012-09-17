@@ -458,6 +458,8 @@ class Testsuite(object):
         return r
 
     def __add_testcases_to_archive(self, archive, subdir):
+        """Add many testcases to the archive
+        """
         stepn = 0
         for testcase in self.testcases():
             logger.debug("Adding testcase #%s: %s" % (stepn, \
@@ -472,6 +474,9 @@ class Testsuite(object):
             stepn += 1
 
     def __add_testcase_to_archive(self, archive, arcname, testcase):
+        """Add a single testcase to the archive
+        And testcase specififc metadata files
+        """
         srcobj = io.BytesIO(testcase.source())
         info = tarfile.TarInfo(name=arcname)
         info.size = len(srcobj.getvalue())
