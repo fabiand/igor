@@ -256,6 +256,9 @@
 <xsl:template match="testcases">
     <tr>
         <td>
+            <xsl:attribute name="title">
+                <xsl:value-of select ="./description"/>
+            </xsl:attribute>
             <xsl:value-of select ="./name"/>
         </td>
         <td>
@@ -271,7 +274,15 @@
             </a>
         </td>
         <td>
-            <xsl:value-of select ="./timeout"/>
+            Timeout: <xsl:value-of select ="./timeout"/>
+            <xsl:if test="./dependencies">
+            , <span>
+                <xsl:attribute name="title">
+                    <xsl:value-of select ="./dependencies"/>
+                </xsl:attribute>
+                Deps.: <xsl:value-of select ="count(./dependencies)"/>
+            </span>
+            </xsl:if>
         </td>
     </tr>
 </xsl:template>

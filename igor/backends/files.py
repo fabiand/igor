@@ -273,21 +273,42 @@ class Factory(igor.utils.Factory):
         The testcase files path is relative to the testset file.
 
         Example of a testset file:
-            installation_completed.sh
-            check_selinux_denials.sh
+            ---
+            description: 'Some selinux related tests'
+            searchpath: '../tcs/'
+            libs: []
+
+            ---
+            filename: 'selinux-denials.py'
+            expect_failure: True
+            ---
+
         """
-        name = os.path.basename(filename).replace(suffix, "")
-        v = {"searchpath": "."}
-        rp = lambda line: os.path.relpath(os.path.realpath(os.path.join( \
-                            os.path.dirname(filename), \
-                            v["searchpath"], \
-                            line)))
+        testsetdir = os.path.dirname(filename)
+        documents = Factory.__read_yaml(filename)
+
+        properties, layouts = (documents[0],
+                               [d for d in documents[1:] if d != None])
+
+        searchpath = "."
+        if "searchpath" in properties:
+            searchpath = properties["searchpath"]
+
         libs = []
-        cases = Factory._from_file(filename, {
-            None: lambda line: igor.main.Testcase.from_line(rp(line)),
-            "lib": lambda line: libs.append(rp(line)),
-            "searchpath": lambda line: v.update({"searchpath": line})
-        })
+        if "libs" in properties:
+            libs = properties["libs"]
+            libs = [os.path.relpath(os.path.join(testsetdir, l)) for l in libs]
+
+        cases = []
+        for l in layouts:
+            tcasefn = os.path.join(testsetdir, searchpath, l["filename"])
+            tcasefn = os.path.relpath(os.path.realpath(tcasefn))
+            testcase = igor.main.Testcase(filename=tcasefn)
+            del l["filename"]
+            testcase.__dict__.update(l)
+            cases.append(testcase)
+
+        name = os.path.basename(filename).replace(suffix, "")
         return igor.main.Testset(name=name, testcases=cases, libs=libs)
 
     @staticmethod

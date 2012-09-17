@@ -1,28 +1,30 @@
-# First token must be the filename of the script to be run, relative to this
-# file.
-# Additionally you can specify a timeout argument to specify a timeout in
-# seconds (default 60). They are not env variables.
-#
-# Libraries can be added by using the "lib" selector 
-# (<selector>: <rest of the line …>) the library path is relative to this file.
-#
-# Any line starting with a # and the rest of a line after a hash are treated
-# as a comments
-# Empty lines are ignored.
+---
+description: 'An example testset'
+searchpath: '../tcs'
 
+libs:
+  - '../libs/common'
 
-searchpath:../
-lib:libs/common
+---
+filename: installation_completed.sh
+timeout: 600
+# Take time for installation
 
+---
+filename: 'helloworld.sh'
+timeout: 10
+dependencies:
+  - 'installation_completed.sh'
+---
+filename: 'initiate_reboot.sh'
+timeout: 10
 
-# Change the searchpath for testcases:
-searchpath:../tcs/
+---
+filename: 'reboot_completed.sh'
+timeout: 120
+# Rebooting takes a while
 
-installation_completed.sh   timeout=600     # Take time for installation
-
-helloworld.sh               timeout=10
-
-initiate_reboot.sh          timeout=10
-reboot_completed.sh         timeout=120     # Rebooting takes a while
-
-set_admin_password.sh                       # Default timeout will be used
+---
+filename: 'set_admin_password.sh'
+# Default timeout will be used
+---

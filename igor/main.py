@@ -601,23 +601,6 @@ class Testcase(object):
             self.name = name
         self.filename = filename
 
-    @staticmethod
-    def from_line(line):
-        """Creates a testcase from a line
-        FIXME this should go into the igor.backends.files.factory
-        """
-        token = line.split()
-        token.reverse()
-        assert len(token) > 0, "Testcase filename is mandatory"
-        filename = token.pop()
-        c = Testcase(filename)
-        for k, v in igor.utils.cmdline_to_dict(" ".join(token)).items():
-            if k == "timeout":
-                c.timeout = int(v)
-            elif k == "expect_failure":
-                c.expect_failure = igor.utils.parse_bool(v)
-        return c
-
     def source(self):
         """Returns the source of this testcase
         """

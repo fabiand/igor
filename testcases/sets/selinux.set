@@ -1,8 +1,8 @@
-#
-# Some selinux related tests
-#
+---
+description: 'Some selinux related tests'
+searchpath: '../tcs/'
 
-searchpath:../tcs/
-
-
-selinux-denials.py              expect_failure=True
+---
+filename: 'selinux-denials.py'
+expect_failure: True
+---
