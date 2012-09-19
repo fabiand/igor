@@ -536,6 +536,7 @@ class Testset(object):
     """
 
     name = None
+    description = None
     _libs = None
     _testcases = None
     _dependencies = []
