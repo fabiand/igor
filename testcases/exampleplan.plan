@@ -7,16 +7,11 @@ description: >
 # Now the jobs:
 # Testsuite, Profile, Host, Optional: kargs
 ---
-testsuite: 'basic_tui_installation'
-profile: '{profile_pri}'
+testsuite: 'examplesuite'
+profile: '{tbd_profile}'
 host: 'default-libvirt'
 ---
-testsuite: basic
-profile: '{profile_pri}'
-host: 'default-libvirt'
-additional_kargs: 'storage_init BOOTIF=link'
----
-testsuite: 'extended'
-profile: '{profile_pri}'
+testsuite: 'examplesuite'
+profile: '{tbd_profile}'
 host: 'default-libvirt'
 additional_kargs: 'storage_init BOOTIF=link'

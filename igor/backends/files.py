@@ -60,6 +60,12 @@ class Host(igor.main.Host):
         logger.debug("Powering off %s: %s" % (self.get_name(), \
                                          igor.utils.run(self.poweroff_script)))
 
+    def __str__(self):
+        return "%s <%s>" % (self.get_name(), self.get_mac_address())
+
+    def __hash__(self):
+        return hash(str(self))
+
 
 class HostsOrigin(igor.main.Origin):
     paths = None

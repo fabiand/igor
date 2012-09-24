@@ -92,12 +92,6 @@ class Host(UpdateableObject):
                 "origin": self.origin
             }
 
-    def __str__(self):
-        return "%s <%s>" % (self.get_name(), self.get_mac_address())
-
-    def __hash__(self):
-        return hash(str(self))
-
 
 class Profile(UpdateableObject):
     """A profile is some abstraction of an installation.

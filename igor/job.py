@@ -127,7 +127,6 @@ class Job(object):
                     self.stop()
 
         watchdog = JobTimeoutWatchdog(self)
-        watchdog.start()
         return watchdog
 
     @utils.synchronized(_high_state_change_lock)
@@ -158,6 +157,7 @@ class Job(object):
         logger.debug("Starting job %s" % (self.cookie))
         self.state(s_running)
         self.host.start()
+        self.watchdog.start()
 
     @utils.synchronized(_high_state_change_lock)
     def finish_step(self, n, is_success, note=None, is_abort=False,
