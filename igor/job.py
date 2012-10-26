@@ -430,16 +430,64 @@ class Job(object):
         return runtime
 
     def is_timedout(self):
+        """Check if the testsuite has timed out
+
+        Returns:
+            True if more time has passed than the sum of all testcase timeouts
+        """
         is_timeout = False
-        if self.runtime() > self.timeout():
+
+        timeout = Job._calculate_timeout_for(self.testsuite().testcases(),
+                                             self.current_step)
+        if self.runtime() > timeout:
             is_timeout = True
-        # FIXME we need to check each testcase
+
         return is_timeout
 
+    @staticmethod
+    def _calculate_timeout_for_tcs(all_tcs, cur):
+        """Calculcate the the timeout including the current testcase.
+
+        >>> Job._calculate_timeout_for_tcs([], 0)
+        0
+        >>> Job._calculate_timeout_for_tcs([], 42)
+        0
+        >>> class Obj(object):
+        ...     def __init__(self, **kwargs):
+        ...         self.__dict__.update(kwargs)
+        >>> tcs = [
+        ...     Obj(timeout=1),
+        ...     Obj(timeout=1),
+        ...     ]
+        >>> Job._calculate_timeout_for_tcs(tcs, 0)
+        1
+        >>> Job._calculate_timeout_for_tcs(tcs, 1)
+        2
+        >>> Job._calculate_timeout_for_tcs(tcs, 2)
+        2
+
+        Args:
+            all_tcs: All testcases
+            cur: The current testcase idx
+        Returns:
+            The timeout in seconds
+        """
+        # +1 because we want the timeouts, including the current one
+        tcs_up_to_now = all_tcs[:cur+1]
+        return sum([t.timeout for t in tcs_up_to_now])
+
     def reached_endstate(self):
+        """If this testsuite has reached any end state
+
+        Returns:
+            True if the testsuite reached an end
+        """
         return self.state() in endstates
 
     def wait(self):
+        """Wait for this testsuite to end
+        This call blocks until this testsuite has ended.
+        """
         while not self.reached_endstate():
             self.state_changed.wait()
 
