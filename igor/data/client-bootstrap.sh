@@ -22,8 +22,8 @@ api_url() { echo "${APIURL%/}/${1#/}" ; }
 api_call() { debug_curl $(api_url "$1") ; }
 step_succeeded() { api_call jobs/$SESSION/step/$CURRENT_STEP/success ; }
 step_failed()    { api_call jobs/$SESSION/step/$CURRENT_STEP/failed ; }
-skip_step()    { api_call jobs/$SESSION/step/$CURRENT_STEP/skip ; }
-step_result()....{ api_call jobs/$SESSION/step/${1}/result ; }
+skip_step()      { api_call jobs/$SESSION/step/$CURRENT_STEP/skip ; }
+step_result()    { api_call jobs/$SESSION/step/${1}/result ; }
 add_artifact()
 {
   local DST=$1
