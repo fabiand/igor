@@ -194,7 +194,7 @@ def job_report(cookie):
 
 
 @app.route('/jobs/<cookie>/step/<n:int>/skip')
-def skip_step(cookie, n, result):
+def skip_step(cookie, n):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     m = jc.skip_step(cookie, n)
