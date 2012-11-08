@@ -52,8 +52,8 @@ EOP
 testcase_x_succeeded_last_time() {
   # Go backwards and return 0 in the case that the
   # last run of X was successfull
-  debug "CHecking dependecy"
   TESTCASENAME=$1
+  debug "Checking dependency of testcase $TESTCASENAME"
   for N in $(seq $CURRENT_STEP -1 0)
   do
     if [[ -e $N-$TESTCASENAME ]]
@@ -105,14 +105,15 @@ testcase_x_succeeded_last_time() {
     # Skip a testcase if a dependency failed
     TESTCASEDEPS=$TESTCASE.deps
     [[ -e $TESTCASEDEPS ]] && {
-      debug "Checking testcase dependencies"
+      debug "Checking testcase dependencies for step $CURRENT_STEP"
       DEPENDENCIES_MET=true
       cat $TESTCASEDEPS | while read DEP;
       do
+        debug "  Checking state of dependency '$DEP'"
         testcase_x_succeeded_last_time "$DEP" || DEPENDENCIES_MET=false
       done
 
-      $DEPENDENCIES_MET && {
+      $DEPENDENCIES_MET || {
         skip_step
         debug "Skipping testcase $TESTCASE (dependency failed)" ; continue
       }
