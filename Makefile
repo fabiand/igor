@@ -81,3 +81,6 @@ pyflakes:
 		echo pyflakes on "$$M"; \
 		PYTHONPATH=. pyflakes $$M || exit 1; \
 	done
+
+run:
+	PYTHONPATH=. python bin/igord
