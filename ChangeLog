@@ -1,11 +1,13 @@
+igor-0.3.0
+- Switch files syntax to yaml
+- Add testcase dependencies
+
 igor-0.2.3
 - Better documentation
 - Better python checks (make check-local)
 - Add progressbar to UI
 - Added basic hooks (pre-job, post-job) and documentation
 - Added annotations and documentation
-- Switch files syntax to yaml
-- Add testcase dependencies
 
 igor-0.2.2
 - Critical fixes
