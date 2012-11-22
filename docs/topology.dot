@@ -1,0 +1,28 @@
+/*
+ * This graph gives on overview over the dataflow within an Igor environment.
+ * # dot -Tpng -otopology.png
+ */
+digraph {
+    bgcolor="transparent"
+    node [fontname="Sans"]
+
+    // Nodes in the topology
+    Jenkins [comment="Building and editing image"]
+    Igor [comment="Taking care of Hosts and Profiles"]
+    Cobbler [comment="Providing a PXE environment and fencing"]
+    libvirtd [comment="Providing VMs"]
+    Host [comment="Some real host"]
+
+    // And the paths between them
+    Igor -> Cobbler
+
+    Igor -> libvirtd
+    libvirtd -> VM
+
+    Cobbler -> VM
+    Cobbler -> Host
+
+    Jenkins -> Igor
+
+    {VM Host} -> Igor [color="gray", style="dashed"]
+}
