@@ -437,8 +437,8 @@ class Job(object):
         """
         is_timeout = False
 
-        timeout = Job._calculate_timeout_for(self.testsuite().testcases(),
-                                             self.current_step)
+        timeout = Job._calculate_timeout_for_tcs(self.testsuite().testcases(),
+                                                 self.current_step)
         if self.runtime() > timeout:
             is_timeout = True
 
@@ -473,7 +473,7 @@ class Job(object):
             The timeout in seconds
         """
         # +1 because we want the timeouts, including the current one
-        tcs_up_to_now = all_tcs[:cur+1]
+        tcs_up_to_now = all_tcs[:cur + 1]
         return sum([t.timeout for t in tcs_up_to_now])
 
     def reached_endstate(self):
