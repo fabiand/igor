@@ -437,7 +437,7 @@ class Job(object):
         """
         is_timeout = False
 
-        timeout = Job._calculate_timeout_for_tcs(self.testsuite().testcases(),
+        timeout = Job._calculate_timeout_for_tcs(self.testsuite.testcases(),
                                                  self.current_step)
         if self.runtime() > timeout:
             is_timeout = True
