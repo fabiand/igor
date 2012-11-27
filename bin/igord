@@ -548,7 +548,12 @@ def profile_kargs(pname):
 def delete_profile(pname):
     if pname not in inventory.profiles():
         bottle.abort(404, "Unknown profile")
-    inventory.profiles()[pname].delete()
+    try:
+        inventory.profiles()[pname].delete()
+    except Exception as e:
+        # FIXME could be solved in the cobblre backend
+        logger.warning("An error occurred while removing a " +
+                       "profile: %s (%s)" % (e.message, e))
 
 
 @app.route('/server/log')
