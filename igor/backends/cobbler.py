@@ -20,6 +20,7 @@
 
 import logging
 import xmlrpclib
+import httplib
 import os
 
 import igor.main
@@ -222,21 +223,24 @@ class Profile(igor.main.Profile):
     def revoke_from(self, host):
         name = host.get_name()
         logger.debug("Revoking host '%s' from cobbler " % name)
-        with self.remote as remote:
-            if name in remote.systems():
-                if self.system_existed:
-                    logger.info(("Not removing system %s because it " + \
-                                 "existed before") % name)
-                    system_handle = remote.get_system_handle(name)
-                    remote.modify_system(system_handle, {
-                        "profile": self.previous_profile
-                    })
+        try:
+            with self.remote as remote:
+                if name in remote.systems():
+                    if self.system_existed:
+                        logger.info(("Not removing system %s because it " + \
+                                     "existed before") % name)
+                        system_handle = remote.get_system_handle(name)
+                        remote.modify_system(system_handle, {
+                            "profile": self.previous_profile
+                        })
+                    else:
+                        remote.remove_system(name)
                 else:
-                    remote.remove_system(name)
-            else:
-                # Can happen if corresponding distro or profile was deleted
-                logger.info(("Unknown '%s' host when trying to revoke " + \
-                             "igor profile.") % name)
+                    # Can happen if corresponding distro or profile was deleted
+                    logger.info(("Unknown '%s' host when trying to revoke " + \
+                                 "igor profile.") % name)
+        except httplib.CannotSendRequest as e:
+            logger.warning("Request could not be sent: %s" % e.message)
 
     def delete(self):
         self.remote_path = "/tmp/igor-cobbler-%s" % self.get_name()
