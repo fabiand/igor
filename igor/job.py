@@ -347,12 +347,12 @@ class Job(object):
         msg = None
         if self.has_passed():
             msg = "passed"
-        elif self.has_failed():
-            msg = "failed"
         elif self.is_aborted():
             msg = "aborted"
         elif self.is_timedout():
             msg = "timedout"
+        elif self.has_failed():
+            msg = "failed"
         elif self.is_running():
             msg = "(no result, running)"
         assert msg is not None, "Unknown job result"
