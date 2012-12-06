@@ -19,6 +19,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import logging
 from lxml import etree
 import tempfile
@@ -46,6 +47,17 @@ class VMImage(igor.partition.Layout):
         self.format = dst_fmt
 
 
+class LibvirtConnection(object):
+    connection_uri = None
+
+    def virsh(self, cmd):
+        return LibvirtConnection._virsh(cmd, self.connection_uri)
+
+    @staticmethod
+    def _virsh(cmd, connection_uri):
+        return run("virsh --connect='%s' %s" % (connection_uri, cmd))
+
+
 class VMHost(igor.main.Host):
     """Corresponds to a libvirt domain.
     This class can be used to control the domain and wrap it to provide
@@ -56,12 +68,13 @@ class VMHost(igor.main.Host):
     connection_uri = "qemu:///system"
     poolname = "default"
 
-    def __init__(self, name, *args, **kwargs):
-        # FIXME assert name is available
+    def __init__(self, name, remove=True, *args, **kwargs):
+        self._vm_name = name
+        self.remove_on_purge = remove
         super(VMHost, self).__init__(*args, **kwargs)
 
     def _virsh(self, cmd):
-        return run("virsh --connect='%s' %s" % (self.connection_uri, cmd))
+        return LibvirtConnection._virsh(cmd, self.connection_uri)
 
     def start(self):
         self.boot()
@@ -87,7 +100,10 @@ class VMHost(igor.main.Host):
         pass
 
     def purge(self):
-        self.remove()
+        if self.remove_on_purge:
+            self.remove()
+        else:
+            logger.debug("VMHost shall not be removed at the end.")
 
     def remove_images(self):
         for image in self.get_disk_images():
@@ -149,9 +165,10 @@ class NewVMHost(VMHost):
     description = "managed-by-igor"
     vm_defaults = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, force_name=None, *args, **kwargs):
         self.vm_defaults = {}
         self._vm_name = "VMHost (Created on demand)"
+        self.force_name = force_name
         super(NewVMHost, self).__init__(*args, **kwargs)
 
     def prepare(self):
@@ -172,12 +189,13 @@ class NewVMHost(VMHost):
     def prepare_vm(self):
         """Define the VM within libvirt
         """
-        logger.debug("Preparing vm")
+        name = self.force_name or self._vm_name
+        logger.debug("Preparing vm: %s" % name)
 
         # Sane defaults
         virtinstall_args = {
             "connect": "'%s'" % self.connection_uri,
-            "name": "'%s'" % self._vm_name,
+            "name": "'%s'" % name,
             "description": "'%s'" % self.description,
             "vcpus": "2",
             "cpu": "host",
@@ -258,10 +276,6 @@ class VMHostFactory:
             remove: If the guest shall be removed at the end
         """
 
-    @staticmethod
-    def hosts_from_configfile():
-        pass
-
 
 class VMAlwaysCreateHostOrigin(igor.main.Origin):
     connection_uri = None
@@ -276,13 +290,44 @@ class VMAlwaysCreateHostOrigin(igor.main.Origin):
     def name(self):
         return "VMAlwaysCreateHostOrigin(%s)" % str(self.__dict__)
 
+    def _build_host(self):
+        return VMHostFactory.create_default_host( \
+                   connection_uri=self.connection_uri, \
+                   storage_pool=self.storage_pool, \
+                   network_configuration=self.network_configuration)
+
     def items(self):
-        hosts = {"default-libvirt": \
-                            VMHostFactory.create_default_host( \
-                            connection_uri=self.connection_uri, \
-                            storage_pool=self.storage_pool, \
-                            network_configuration=self.network_configuration)
-               }
+        hosts = {"default-libvirt": self._build_host()}
+        for key in hosts:
+            hosts[key].origin = self
+        return hosts
+
+
+class VMCreateOrReuseHostOrigin(VMAlwaysCreateHostOrigin):
+    """Provides access to all existing guests and also creating a guest
+    if it does not exist.
+    """
+
+    def name(self):
+        return "VMCreateOrReuseHostOrigin(%s)" % str(self.__dict__)
+
+    def _list_domains(self):
+        domains = []
+        cmd = "list --all"
+        domain_pattern = re.compile("\s+(\d+)\s+([\w-]+)\s+(\w+.*$)")
+        txt = LibvirtConnection._virsh(cmd, self.connection_uri)
+        for line in txt:
+            groups = domain_pattern.search(line)
+            if groups:
+                domid, domname, state = groups
+                if state in ["running", "shut off"]:
+                    domains.append(domname)
+        return domains
+
+    def items(self):
+        domains = self._list_domains()
+        logger.debug("Found the following existing domains: %s" % domains)
+        hosts = {n: VMHost(n) for n in domains}
         for key in hosts:
             hosts[key].origin = self
         return hosts
