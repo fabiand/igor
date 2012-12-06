@@ -47,35 +47,21 @@ class VMImage(igor.partition.Layout):
 
 
 class VMHost(igor.main.Host):
-    '''A host which is actually a virtual guest.
-    VMHosts are not much different from other hosts, besides that we can
-    configure them.
-    '''
-    name = None
-    image_specs = None
+    """Corresponds to a libvirt domain.
+    This class can be used to control the domain and wrap it to provide
+    the igor Host API.
+    """
 
-    poolname = "default"
-    network_configuration = "network=default"
-    disk_bus_type = "virtio"
-
-    vm_prefix = "i-"
-    description = "managed-by-igor"
-    vm_defaults = None
     _vm_name = None
-
     connection_uri = "qemu:///system"
+    poolname = "default"
 
-    def __init__(self, *args, **kwargs):
-        self.vm_defaults = {}
-        self._vm_name = "VMHost (Created on demand)"
-        igor.main.Host.__init__(self, *args, **kwargs)
+    def __init__(self, name, *args, **kwargs):
+        # FIXME assert name is available
+        super(VMHost, self).__init__(*args, **kwargs)
 
-    def prepare(self):
-        logger.debug("Preparing VMHost")
-        self._vm_name = "%s%s-%s" % (self.vm_prefix, self.name, \
-                                     self.session.cookie)
-        self.prepare_images()
-        self.prepare_vm()
+    def _virsh(self, cmd):
+        return run("virsh --connect='%s' %s" % (self.connection_uri, cmd))
 
     def start(self):
         self.boot()
@@ -88,8 +74,92 @@ class VMHost(igor.main.Host):
         mac = dom.xpath("/domain/devices/interface[1]/mac")[0]
         return mac.attrib["address"]
 
+    def get_disk_images(self):
+        path = ("/domain/devices/disk[@type='file' and @device='disk']" +
+                "/source/@file")
+        dom = etree.XML(self.dumpxml())
+        files = dom.xpath(path)
+        return files
+
+    def prepare(self):
+        """No need to prepare, host is assumed to exist
+        """
+        pass
+
     def purge(self):
         self.remove()
+
+    def remove_images(self):
+        for image in self.get_disk_images():
+            volname = os.path.basename(image)
+            self._virsh("vol-delete --vol '%s' --pool '%s'" % (volname, \
+                                                            self.poolname))
+
+    def remove_vm(self):
+        self.destroy()
+        self.undefine()
+
+    def remove(self):
+        '''
+        Remove all files which were created during the VM creation.
+        '''
+        logger.debug("Removing host %s" % self._vm_name)
+        self.remove_vm()
+        self.remove_images()
+
+    def boot(self):
+        self._virsh("start %s" % self._vm_name)
+
+    def reboot(self):
+        self._virsh("reboot %s" % self._vm_name)
+
+    def shutdown(self):
+        self._virsh("shutdown %s" % self._vm_name)
+
+    def destroy(self):
+        self._virsh("destroy %s" % self._vm_name)
+
+    def define(self, definition):
+        with tempfile.NamedTemporaryFile() as f:
+            logger.debug(f.name)
+            f.write(definition)
+            f.flush()
+            self._virsh("define '%s'" % f.name)
+
+    def undefine(self):
+        self._virsh("undefine %s" % self._vm_name)
+
+    def dumpxml(self):
+        return self._virsh("dumpxml '%s'" % self._vm_name)
+
+
+class NewVMHost(VMHost):
+    '''A host which is actually a virtual guest.
+    VMHosts are not much different from other hosts, besides that we can
+    configure them.
+    '''
+    name = None
+
+    image_specs = None
+
+    network_configuration = "network=default"
+    disk_bus_type = "virtio"
+
+    vm_prefix = "i-"
+    description = "managed-by-igor"
+    vm_defaults = None
+
+    def __init__(self, *args, **kwargs):
+        self.vm_defaults = {}
+        self._vm_name = "VMHost (Created on demand)"
+        super(NewVMHost, self).__init__(*args, **kwargs)
+
+    def prepare(self):
+        logger.debug("Preparing a new VMHost")
+        self._vm_name = "%s%s-%s" % (self.vm_prefix, self.name, \
+                                     self.session.cookie)
+        self.prepare_images()
+        self.prepare_vm()
 
     def prepare_images(self):
         logger.debug("Preparing images")
@@ -138,9 +208,6 @@ class VMHost(igor.main.Host):
 
         self.define(definition)
 
-    def _virsh(self, cmd):
-        return run("virsh --connect='%s' %s" % (self.connection_uri, cmd))
-
     def _upload_image(self, image_spec):
         image_spec.compress()
         disk = image_spec.filename
@@ -157,51 +224,14 @@ class VMHost(igor.main.Host):
         return poolvol
 
     def remove_images(self):
+        # Remove or local images (created initially)
         if self.image_specs is None or len(self.image_specs) is 0:
             logger.info("No image spec given.")
         else:
             for image_spec in self.image_specs:
                 image_spec.remove()
-                volname = os.path.basename(image_spec.filename)
-                self._virsh("vol-delete --vol '%s' --pool '%s'" % (volname, \
-                                                                self.poolname))
-
-    def remove_vm(self):
-        self.destroy()
-        self.undefine()
-
-    def remove(self):
-        '''
-        Remove all files which were created during the VM creation.
-        '''
-        logger.debug("Removing host %s" % self._vm_name)
-        self.remove_vm()
-        self.remove_images()
-
-    def boot(self):
-        self._virsh("start %s" % self._vm_name)
-
-    def reboot(self):
-        self._virsh("reboot %s" % self._vm_name)
-
-    def shutdown(self):
-        self._virsh("shutdown %s" % self._vm_name)
-
-    def destroy(self):
-        self._virsh("destroy %s" % self._vm_name)
-
-    def define(self, definition):
-        with tempfile.NamedTemporaryFile() as f:
-            logger.debug(f.name)
-            f.write(definition)
-            f.flush()
-            self._virsh("define '%s'" % f.name)
-
-    def undefine(self):
-        self._virsh("undefine %s" % self._vm_name)
-
-    def dumpxml(self):
-        return self._virsh("dumpxml '%s'" % self._vm_name)
+        # Now also remove the remote volumes
+        super(NewVMHost, self).remove_images()
 
 
 class VMHostFactory:
@@ -209,7 +239,7 @@ class VMHostFactory:
     def create_default_host(connection_uri="qemu:///system", \
                             storage_pool="default", \
                             network_configuration="network=default"):
-        host = VMHost(name="default", image_specs=[ \
+        host = NewVMHost(name="default", image_specs=[ \
                  VMImage("8G", [ \
                    igor.partition.Partition("pri", "1M", "1G") \
                  ]) \
@@ -218,6 +248,15 @@ class VMHostFactory:
         host.storage_pool = storage_pool
         host.network_configuration = network_configuration
         return host
+
+    @staticmethod
+    def create_or_reuse_host(name, remove=False):
+        """Creates or reuses a virtual guest and cond. removes it at the end
+
+        Args:
+            name: Name to be used
+            remove: If the guest shall be removed at the end
+        """
 
     @staticmethod
     def hosts_from_configfile():
