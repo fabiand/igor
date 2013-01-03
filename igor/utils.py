@@ -322,3 +322,37 @@ class Factory(object):
     def __read_yaml(filename, fileobj=None):
         data = Factory.__open(filename, fileobj).read()
         return list(yaml.load_all(data))
+
+
+def update_properties_only(obj, kwargs):
+    """Update the properties of obj according to kwargs if obj has a property
+    of these names
+
+    Args:
+        obj: The object to update
+        kwargs: A dict mapping (prop, value)
+
+    >>> class Foo(object):
+    ...     bar = None
+    ...     def baz(self):
+    ...         return "baz"
+
+    >>> kwargs = {"bar": True, "xyz": False, "baz": None}
+    >>> obj = Foo()
+    >>> obj.bar
+
+    >>> update_properties_only(obj, kwargs)
+
+    >>> obj.bar
+    True
+    >>> hasattr(obj, "xyz")
+    False
+    >>> callable(obj.baz)
+    True
+    """
+
+    t = type(obj)
+    tdict = t.__dict__
+    allowed_args = {k: v for k, v in kwargs.items()
+                    if k in tdict and not callable(tdict[k])}
+    obj.__dict__.update(allowed_args)

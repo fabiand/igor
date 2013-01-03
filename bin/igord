@@ -388,8 +388,8 @@ def run_plans(name):
         bottle.abort(404, "Unknown plan: %s" % name)
     plan = inventory.plans()[name]
     plan.inventory = inventory      # FIXME not very nice
-    plan.variables = {k: bottle.request.query[k] \
-                      for k in bottle.request.query.keys()}
+    plan.variables.update({k: bottle.request.query[k] \
+                           for k in bottle.request.query.keys()})
     worker = jc.submit_plan(plan)
     return to_json(worker.__to_dict__())
 

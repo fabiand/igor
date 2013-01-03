@@ -15,3 +15,18 @@ testsuite: 'examplesuite'
 profile: '{tbd_profile}'
 host: 'default-libvirt'
 additional_kargs: 'storage_init BOOTIF=link'
+
+
+---
+# This VM is kept after the testsuite was run, so we can reinstall it
+testsuite: 'examplesuite'
+profile: '{tbd_profile}'
+host: ['default-libvirt', {force_name: 'updateable-vm-{planid}',
+                           remove_afterwards: False}]
+additional_kargs: 'storage_init BOOTIF=link'
+---
+# This picks up the previous VM and removes it afterwards
+testsuite: 'examplesuite'
+profile: '{tbd_profile}'
+host: ['updateable-vm-{planid}', {'remove_afterwards': True}]
+additional_kargs: 'storage_init BOOTIF=link reinstall'

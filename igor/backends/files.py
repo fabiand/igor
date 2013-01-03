@@ -25,7 +25,6 @@ import yaml
 
 import igor.main
 import igor.utils
-import igor.backends.libvirt
 
 
 logger = logging.getLogger(__name__)

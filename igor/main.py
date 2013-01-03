@@ -29,7 +29,7 @@ import tempfile
 import tarfile
 import io
 
-from igor.utils import run
+from igor.utils import run, update_properties_only
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class UpdateableObject(object):
         self.__dict__.update(kwargs)
 
 
-class Host(UpdateableObject):
+class Host(object):
     """An abstract host class to have a common set of functions
     The whole functionality relies on this functions.
     All subclasses need to implement the functions so they  can be used.
@@ -320,6 +320,7 @@ class Testplan(object):
         """
         specs = []
         self._timeout = 0
+        self.variables["planid"] = hash(self)
         logger.debug("Replacing vars in spec %s: %s" % (self.name, \
                                                         self.variables))
         for layout in self.job_layouts:
@@ -328,19 +329,50 @@ class Testplan(object):
                             ("profile", self.inventory.profiles),
                             ("host", self.inventory.hosts),
                             ("additional_kargs", lambda x: x)]:
+                kwargs = {}
                 if k in layout and layout[k] is not None:
-                    layout[k] = layout[k].format(**self.variables)
+                    txt = layout[k].format(**self.variables)
+                    v, kwargs = self._parse_toplevel_field_value(k, txt)
+                    layout[k] = v
                 else:
                     layout[k] = ""
 
                 if ("{" or "}") in layout[k]:
                     raise Exception("Variables could not be substituted " + \
                                     "in plan %s" % self.name)
+                if type(kwargs) is not dict:
+                    raise RuntimeError("The additional kwargs need to " +
+                                       "be a dict but ain't: %s" % kwargs)
 
-                spec.update_props({k: func(layout[k])})
+                item = func(layout[k])
+                update_properties_only(item, kwargs)
+
+                props = {k: item}
+                logger.debug(("Job layout '%s' and kwargs '%s' lead to " +
+                              "job '%s'") % (layout, kwargs, props))
+                spec.update_props(props)
             self._timeout += spec.testsuite.timeout()
             specs.append(spec)
         return specs
+
+    def _parse_toplevel_field_value(self, key, value):
+        """Parses the value of a top-level testplan value
+
+        >>> k = "host",
+        >>> v = ["the-hostname", {"count": "1", "keep": True}]
+        >>> p = Testplan("tname", None, None)
+        >>> p._parse_toplevel_field_value(k, v)
+        ('the-hostname', {'count': '1', 'keep': True})
+        """
+        kwargs = {}
+        if type(value) is list:
+            if len(value) != 2:
+                raise RuntimeError(("Expecting the jobplan value for '%s' " \
+                                    "to be either a single string or a list " \
+                                    "with two items (name, additional_" \
+                                    "kwarguments), it is: %s") % (key, value))
+            v, kwargs = value[0], value[1]
+        return v, kwargs
 
     def __str__(self):
         return str(self.__to_dict__())

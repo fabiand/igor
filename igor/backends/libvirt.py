@@ -70,7 +70,7 @@ class VMHost(igor.main.Host):
 
     def __init__(self, name, remove=True, *args, **kwargs):
         self._vm_name = name
-        self.remove_on_purge = remove
+        self.remove_afterwards = remove
         super(VMHost, self).__init__(*args, **kwargs)
 
     def _virsh(self, cmd):
@@ -100,7 +100,7 @@ class VMHost(igor.main.Host):
         pass
 
     def purge(self):
-        if self.remove_on_purge:
+        if self.remove_afterwards:
             self.remove()
         else:
             logger.debug("VMHost shall not be removed at the end.")
@@ -277,7 +277,7 @@ class VMHostFactory:
         """
 
 
-class VMAlwaysCreateHostOrigin(igor.main.Origin):
+class CommonLibvirtHostOrigin(igor.main.Origin):
     connection_uri = None
     storage_pool = None
     network_configuration = None
@@ -287,6 +287,11 @@ class VMAlwaysCreateHostOrigin(igor.main.Origin):
         self.storage_pool = storage_pool
         self.network_configuration = network_configuration
 
+    def items(self):
+        return NotImplementedError
+
+
+class VMAlwaysCreateHostOrigin(CommonLibvirtHostOrigin):
     def name(self):
         return "VMAlwaysCreateHostOrigin(%s)" % str(self.__dict__)
 
@@ -303,9 +308,8 @@ class VMAlwaysCreateHostOrigin(igor.main.Origin):
         return hosts
 
 
-class VMCreateOrReuseHostOrigin(VMAlwaysCreateHostOrigin):
-    """Provides access to all existing guests and also creating a guest
-    if it does not exist.
+class VMUseExistingHostOrigin(CommonLibvirtHostOrigin):
+    """Provides access to all existing guests
     """
 
     def name(self):
