@@ -332,18 +332,10 @@ class Testplan(object):
                             ("additional_kargs", lambda x: x)]:
                 kwargs = {}
                 if k in layout and layout[k] is not None:
-                    txt = layout[k].format(**self.variables)
-                    v, kwargs = self._parse_toplevel_field_value(k, txt)
+                    v, kwargs = self._parse_toplevel_field_value(k, layout[k])
                     layout[k] = v
                 else:
                     layout[k] = ""
-
-                if ("{" or "}") in v:
-                    raise Exception("Variables could not be substituted " + \
-                                    "in plan %s" % self.name)
-                if type(kwargs) is not dict:
-                    raise RuntimeError("The additional kwargs need to " +
-                                       "be a dict but ain't: %s" % kwargs)
 
                 logger.debug("Handling top-level item '%s', with kwargs '%s'" %
                              (k, kwargs))
@@ -363,10 +355,11 @@ class Testplan(object):
         """Parses the value of a top-level testplan value
 
         >>> k = "host",
-        >>> v = ["the-hostname", {"count": "1", "keep": True}]
+        >>> v = ["the-hostname", {"count": "1", "keep": True, "var": "{VAR}"}]
         >>> p = Testplan("tname", None, None)
+        >>> p.variables = {"VAR": "val"}
         >>> p._parse_toplevel_field_value(k, v)
-        ('the-hostname', {'count': '1', 'keep': True})
+        ('the-hostname', {'count': '1', 'var': 'val', 'keep': True})
         """
         kwargs = {}
         if type(value) is list:
@@ -375,7 +368,18 @@ class Testplan(object):
                                     "to be either a single string or a list " \
                                     "with two items (name, additional_" \
                                     "kwarguments), it is: %s") % (key, value))
-            value, kwargs = value[0], value[1]
+            value, kwargs = value[0], \
+                            {k: v.format(**self.variables) if type(v) in
+                             [str, unicode] else v for k, v
+                             in value[1].items()}
+        value = value.format(**self.variables)
+
+        if any((("{" or "}") in val for val in [value] + kwargs.values())):
+            raise Exception(("Variables (%s) could not be substituted " + \
+                             "in plan %s: %s / %s") % (self.variables,
+                                                       self.name, value,
+                                                       kwargs))
+
         return value, kwargs
 
     def __str__(self):

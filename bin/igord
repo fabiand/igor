@@ -60,8 +60,14 @@ profile_origins = {
 }
 
 host_origins = {
-    "libvirt": \
-        igor.backends.libvirt.VMAlwaysCreateHostOrigin( \
+    "libvirt-create": \
+        igor.backends.libvirt.CreateDomainHostOrigin( \
+                    CONFIG["libvirtd.connection_uri"], \
+                    CONFIG["libvirtd.virt-install.storage_pool"], \
+                    CONFIG["libvirtd.virt-install.network_configuration"]),
+
+    "libvirt-existing": \
+        igor.backends.libvirt.ExistingDomainHostOrigin( \
                     CONFIG["libvirtd.connection_uri"], \
                     CONFIG["libvirtd.virt-install.storage_pool"], \
                     CONFIG["libvirtd.virt-install.network_configuration"]),

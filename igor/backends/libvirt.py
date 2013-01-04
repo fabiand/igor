@@ -293,7 +293,7 @@ class CommonLibvirtHostOrigin(igor.main.Origin):
         return NotImplementedError
 
 
-class VMAlwaysCreateHostOrigin(CommonLibvirtHostOrigin):
+class CreateDomainHostOrigin(CommonLibvirtHostOrigin):
     def name(self):
         return "VMAlwaysCreateHostOrigin(%s)" % str(self.__dict__)
 
@@ -310,12 +310,12 @@ class VMAlwaysCreateHostOrigin(CommonLibvirtHostOrigin):
         return hosts
 
 
-class VMUseExistingHostOrigin(CommonLibvirtHostOrigin):
+class ExistingDomainHostOrigin(CommonLibvirtHostOrigin):
     """Provides access to all existing guests
     """
 
     def name(self):
-        return "VMCreateOrReuseHostOrigin(%s)" % str(self.__dict__)
+        return "VMExistingHostOrigin(%s)" % str(self.__dict__)
 
     def _list_domains(self):
         domains = []
