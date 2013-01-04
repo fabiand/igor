@@ -68,9 +68,10 @@ class VMHost(igor.main.Host):
     connection_uri = "qemu:///system"
     poolname = "default"
 
-    def __init__(self, name, remove=True, *args, **kwargs):
+    def __init__(self, name, remove=True, **kwargs):
         self._vm_name = name
         self.remove_afterwards = remove
+        super(VMHost, self).__init__(**kwargs)
 
     def _virsh(self, cmd):
         return LibvirtConnection._virsh(cmd, self.connection_uri)

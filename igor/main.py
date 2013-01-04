@@ -42,7 +42,7 @@ class UpdateableObject(object):
         self.__dict__.update(kwargs)
 
 
-class Host(object):
+class Host(UpdateableObject):
     """An abstract host class to have a common set of functions
     The whole functionality relies on this functions.
     All subclasses need to implement the functions so they  can be used.
@@ -325,6 +325,7 @@ class Testplan(object):
                                                         self.variables))
         for layout in self.job_layouts:
             spec = JobSpec()
+            logger.debug("Creating spec for job layout '%s'" % layout)
             for k, func in [("testsuite", self.inventory.testsuites),
                             ("profile", self.inventory.profiles),
                             ("host", self.inventory.hosts),
@@ -337,19 +338,22 @@ class Testplan(object):
                 else:
                     layout[k] = ""
 
-                if ("{" or "}") in layout[k]:
+                if ("{" or "}") in v:
                     raise Exception("Variables could not be substituted " + \
                                     "in plan %s" % self.name)
                 if type(kwargs) is not dict:
                     raise RuntimeError("The additional kwargs need to " +
                                        "be a dict but ain't: %s" % kwargs)
 
-                item = func(layout[k])
-                update_properties_only(item, kwargs)
+                logger.debug("Handling top-level item '%s', with kwargs '%s'" %
+                             (k, kwargs))
+
+                item = func(v)
+                logger.debug("New item: %s" % item)
+                if kwargs and hasattr(item, "__dict__"):
+                    update_properties_only(item, kwargs)
 
                 props = {k: item}
-                logger.debug(("Job layout '%s' and kwargs '%s' lead to " +
-                              "job '%s'") % (layout, kwargs, props))
                 spec.update_props(props)
             self._timeout += spec.testsuite.timeout()
             specs.append(spec)
@@ -367,7 +371,7 @@ class Testplan(object):
         kwargs = {}
         if type(value) is list:
             if len(value) != 2:
-                raise RuntimeError(("Expecting the jobplan value for '%s' " \
+                raise RuntimeError(("Expecting the testplan value for '%s' " \
                                     "to be either a single string or a list " \
                                     "with two items (name, additional_" \
                                     "kwarguments), it is: %s") % (key, value))
