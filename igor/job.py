@@ -679,7 +679,6 @@ class JobCenter(object):
     class PlanWorker(threading.Thread):
         jc = None
         plan = None
-        specs = None
 
         created_at = 0
 
@@ -697,7 +696,6 @@ class JobCenter(object):
 
             self.jc = jc
             self.plan = plan
-            self.specs = self.plan.job_specs()
             self.created_at = time.time()
             self.jobs = []
 
@@ -705,7 +703,7 @@ class JobCenter(object):
             logger.debug("Starting plan %s" % self.plan.name)
             self.status = "running"
 
-            for jobspec in self.specs:
+            for jobspec in self.plan.job_specs():
                 resp = self.jc.submit(jobspec)
                 cookie, self.current_job = (resp["cookie"], resp["job"])
                 self.jc.start_job(cookie)

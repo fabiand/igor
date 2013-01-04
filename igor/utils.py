@@ -337,13 +337,18 @@ def update_properties_only(obj, kwargs):
     ...     def baz(self):
     ...         return "baz"
 
-    >>> kwargs = {"bar": True, "xyz": False, "baz": None}
-    >>> obj = Foo()
+    >>> class Foo2(Foo):
+    ...     bar2 = None
+
+    >>> kwargs = {"bar": True, "xyz": False, "baz": None, "bar2": True}
+    >>> obj = Foo2()
     >>> obj.bar
 
     >>> update_properties_only(obj, kwargs)
 
     >>> obj.bar
+    True
+    >>> obj.bar2
     True
     >>> hasattr(obj, "xyz")
     False
@@ -351,8 +356,15 @@ def update_properties_only(obj, kwargs):
     True
     """
 
-    t = type(obj)
-    tdict = t.__dict__
+    subt = type(obj)
+    tdict = {}
+    for t in subt.mro():
+        tdict.update(t.__dict__)
     allowed_args = {k: v for k, v in kwargs.items()
                     if k in tdict and not callable(tdict[k])}
+    logger.debug("Updating properties of %s: %s" % (obj, allowed_args))
+    if kwargs and not allowed_args:
+        logger.debug("Request to update props, but non are allowed")
+        logger.debug("Requested: '%s'" % kwargs)
+        logger.debug("Object props: '%s'" % tdict)
     obj.__dict__.update(allowed_args)

@@ -55,7 +55,7 @@ class LibvirtConnection(object):
 
     @staticmethod
     def _virsh(cmd, connection_uri):
-        return run("virsh --connect='%s' %s" % (connection_uri, cmd))
+        return run("LC_ALL=C virsh --connect='%s' %s" % (connection_uri, cmd))
 
 
 class VMHost(igor.main.Host):
@@ -67,6 +67,8 @@ class VMHost(igor.main.Host):
     vm_name = None
     connection_uri = "qemu:///system"
     poolname = "default"
+
+    remove_afterwards = True
 
     def __init__(self, name, remove=True):
         super(VMHost, self).__init__()
@@ -95,9 +97,10 @@ class VMHost(igor.main.Host):
         return files
 
     def prepare(self):
-        """No need to prepare, host is assumed to exist
+        """There is nothing much to do
+        We are just shutting down the machine - ungracefully ...
         """
-        pass
+        self.shutdown()
 
     def purge(self):
         if self.remove_afterwards:
@@ -311,7 +314,7 @@ class CreateDomainHostOrigin(CommonLibvirtHostOrigin):
 
 
 class ExistingDomainHostOrigin(CommonLibvirtHostOrigin):
-    """Provides access to all existing guests
+    """Provides access to all existing g    uests
     """
 
     def name(self):
@@ -320,12 +323,12 @@ class ExistingDomainHostOrigin(CommonLibvirtHostOrigin):
     def _list_domains(self):
         domains = []
         cmd = "list --all"
-        domain_pattern = re.compile("\s+(\d+)\s+([\w-]+)\s+(\w+.*$)")
-        txt = LibvirtConnection._virsh(cmd, self.connection_uri)
-        for line in txt:
-            groups = domain_pattern.search(line)
-            if groups:
-                domid, domname, state = groups
+        domain_pattern = re.compile("\s*(\d+)\s+([\w-]+)\s+(\w+.*$)")
+        txt = str(LibvirtConnection._virsh(cmd, self.connection_uri))
+        for line in txt.split("\n"):
+            match = domain_pattern.search(line)
+            if match:
+                domid, domname, state = match.groups()
                 if state in ["running", "shut off"]:
                     domains.append(domname)
         return domains

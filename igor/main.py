@@ -302,7 +302,6 @@ class Testplan(object):
     job_layouts = None
     variables = None
     inventory = None
-    _timeout = None
 
     def __init__(self, name, job_layouts, inventory=None):
         self.name = name
@@ -311,45 +310,57 @@ class Testplan(object):
         self.variables = {}
 
     def timeout(self):
-        return self._timeout
+        timeout = None
+        if self.inventory:
+            timeout = 0
+            for layout in self.job_layouts:
+                    k = "testsuite"
+                    v = layout[k]
+                    txt, kwargs = self._parse_toplevel_field_value(k, v)
+                    suite = self.inventory.testsuites(txt)
+                    timeout += suite.timeout()
+        return timeout
 
     def job_specs(self):
         """Converts the layout into specs.
         The layout contains the strings, here the strings are queried in the
         inventory and objects are created.
         """
-        specs = []
-        self._timeout = 0
         self.variables["planid"] = hash(self)
         logger.debug("Replacing vars in spec %s: %s" % (self.name, \
                                                         self.variables))
         for layout in self.job_layouts:
-            spec = JobSpec()
-            logger.debug("Creating spec for job layout '%s'" % layout)
-            for k, func in [("testsuite", self.inventory.testsuites),
-                            ("profile", self.inventory.profiles),
-                            ("host", self.inventory.hosts),
-                            ("additional_kargs", lambda x: x)]:
-                kwargs = {}
-                if k in layout and layout[k] is not None:
-                    v, kwargs = self._parse_toplevel_field_value(k, layout[k])
-                    layout[k] = v
-                else:
-                    layout[k] = ""
+            """A generator is used (yield), because a followup spec might
+            depend on infos from a previous spec (e.g. a host gets created)
+            """
+            yield self.spec_from_layout(layout)
 
-                logger.debug("Handling top-level item '%s', with kwargs '%s'" %
-                             (k, kwargs))
+    def spec_from_layout(self, layout):
+        spec = JobSpec()
+        logger.debug("Creating spec for job layout '%s'" % layout)
+        for k, func in [("testsuite", self.inventory.testsuites),
+                        ("profile", self.inventory.profiles),
+                        ("host", self.inventory.hosts),
+                        ("additional_kargs", lambda x: x)]:
+            kwargs = {}
+            if k in layout and layout[k] is not None:
+                v, kwargs = self._parse_toplevel_field_value(k, layout[k])
+                layout[k] = v
+            else:
+                layout[k] = ""
 
-                item = func(v)
-                logger.debug("New item: %s" % item)
-                if kwargs and hasattr(item, "__dict__"):
-                    update_properties_only(item, kwargs)
+            logger.debug("Handling top-level item '%s', with kwargs '%s'" %
+                         (k, kwargs))
 
-                props = {k: item}
-                spec.update_props(props)
-            self._timeout += spec.testsuite.timeout()
-            specs.append(spec)
-        return specs
+            item = func(v)
+
+            logger.debug("New item: %s" % item)
+            if kwargs and hasattr(item, "__dict__"):
+                update_properties_only(item, kwargs)
+
+            props = {k: item}
+            spec.update_props(props)
+        return spec
 
     def _parse_toplevel_field_value(self, key, value):
         """Parses the value of a top-level testplan value
@@ -374,7 +385,8 @@ class Testplan(object):
                              in value[1].items()}
         value = value.format(**self.variables)
 
-        if any((("{" or "}") in val for val in [value] + kwargs.values())):
+        if any(("{" or "}") in val for val in [value] + kwargs.values()
+               if type(val) in [str, unicode]):
             raise Exception(("Variables (%s) could not be substituted " + \
                              "in plan %s: %s / %s") % (self.variables,
                                                        self.name, value,
