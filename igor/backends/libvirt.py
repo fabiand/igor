@@ -71,7 +71,6 @@ class VMHost(igor.main.Host):
     def __init__(self, name, remove=True, *args, **kwargs):
         self._vm_name = name
         self.remove_afterwards = remove
-        super(VMHost, self).__init__(*args, **kwargs)
 
     def _virsh(self, cmd):
         return LibvirtConnection._virsh(cmd, self.connection_uri)

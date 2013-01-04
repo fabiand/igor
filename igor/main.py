@@ -371,8 +371,8 @@ class Testplan(object):
                                     "to be either a single string or a list " \
                                     "with two items (name, additional_" \
                                     "kwarguments), it is: %s") % (key, value))
-            v, kwargs = value[0], value[1]
-        return v, kwargs
+            value, kwargs = value[0], value[1]
+        return value, kwargs
 
     def __str__(self):
         return str(self.__to_dict__())
