@@ -109,19 +109,16 @@ class VMHost(igor.main.Host):
         for image in self.get_disk_images():
             volname = os.path.basename(image)
             self._virsh("vol-delete --vol '%s' --pool '%s'" % (volname, \
-                                                            self.poolname))
-
-    def remove_vm(self):
-        self.destroy()
-        self.undefine()
+                                                               self.poolname))
 
     def remove(self):
         '''
         Remove all files which were created during the VM creation.
         '''
         logger.debug("Removing host %s" % self._vm_name)
-        self.remove_vm()
+        self.destroy()
         self.remove_images()
+        self.undefine()
 
     def boot(self):
         self._virsh("start %s" % self._vm_name)
@@ -165,11 +162,13 @@ class NewVMHost(VMHost):
     description = "managed-by-igor"
     vm_defaults = None
 
-    def __init__(self, force_name=None, *args, **kwargs):
+    def __init__(self, name, image_specs, force_name=None):
         self.vm_defaults = {}
         self._vm_name = "VMHost (Created on demand)"
         self.force_name = force_name
-        super(NewVMHost, self).__init__(*args, **kwargs)
+        self.name = name
+        self.image_specs = image_specs
+        super(NewVMHost, self).__init__()
 
     def prepare(self):
         logger.debug("Preparing a new VMHost")
