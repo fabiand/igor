@@ -64,14 +64,14 @@ class VMHost(igor.main.Host):
     the igor Host API.
     """
 
-    _vm_name = None
+    vm_name = None
     connection_uri = "qemu:///system"
     poolname = "default"
 
-    def __init__(self, name, remove=True, **kwargs):
-        self._vm_name = name
+    def __init__(self, name, remove=True):
+        super(VMHost, self).__init__()
+        self.vm_name = name
         self.remove_afterwards = remove
-        super(VMHost, self).__init__(**kwargs)
 
     def _virsh(self, cmd):
         return LibvirtConnection._virsh(cmd, self.connection_uri)
@@ -80,7 +80,7 @@ class VMHost(igor.main.Host):
         self.boot()
 
     def get_name(self):
-        return self._vm_name
+        return self.vm_name
 
     def get_mac_address(self):
         dom = etree.XML(self.dumpxml())
@@ -115,22 +115,22 @@ class VMHost(igor.main.Host):
         '''
         Remove all files which were created during the VM creation.
         '''
-        logger.debug("Removing host %s" % self._vm_name)
+        logger.debug("Removing host %s" % self.vm_name)
         self.destroy()
         self.remove_images()
         self.undefine()
 
     def boot(self):
-        self._virsh("start %s" % self._vm_name)
+        self._virsh("start %s" % self.vm_name)
 
     def reboot(self):
-        self._virsh("reboot %s" % self._vm_name)
+        self._virsh("reboot %s" % self.vm_name)
 
     def shutdown(self):
-        self._virsh("shutdown %s" % self._vm_name)
+        self._virsh("shutdown %s" % self.vm_name)
 
     def destroy(self):
-        self._virsh("destroy %s" % self._vm_name)
+        self._virsh("destroy %s" % self.vm_name)
 
     def define(self, definition):
         with tempfile.NamedTemporaryFile() as f:
@@ -140,10 +140,10 @@ class VMHost(igor.main.Host):
             self._virsh("define '%s'" % f.name)
 
     def undefine(self):
-        self._virsh("undefine %s" % self._vm_name)
+        self._virsh("undefine %s" % self.vm_name)
 
     def dumpxml(self):
-        return self._virsh("dumpxml '%s'" % self._vm_name)
+        return self._virsh("dumpxml '%s'" % self.vm_name)
 
 
 class NewVMHost(VMHost):
@@ -151,8 +151,6 @@ class NewVMHost(VMHost):
     VMHosts are not much different from other hosts, besides that we can
     configure them.
     '''
-    name = None
-
     image_specs = None
 
     network_configuration = "network=default"
@@ -160,20 +158,25 @@ class NewVMHost(VMHost):
 
     vm_prefix = "i-"
     description = "managed-by-igor"
-    vm_defaults = None
+    custom_install_args = None
 
-    def __init__(self, name, image_specs, force_name=None):
-        self.vm_defaults = {}
-        self._vm_name = "VMHost (Created on demand)"
-        self.force_name = force_name
-        self.name = name
+    def __init__(self, name, image_specs):
+        """
+        Args
+            name: The name of the VM, for newly created VMs this can contain
+                  the variable {identifier}, which get's replaced by a unique
+                  identifier upon creation. This is intended to prevent name
+                  conflicts.
+            image_specs: A list of ImageSpecs for disks to be created
+        """
+        super(NewVMHost, self).__init__(name)
+        self.custom_install_args = {}
         self.image_specs = image_specs
-        super(NewVMHost, self).__init__()
 
     def prepare(self):
         logger.debug("Preparing a new VMHost")
-        self._vm_name = "%s%s-%s" % (self.vm_prefix, self.name, \
-                                     self.session.cookie)
+        identifier = "%s%s" % (self.vm_prefix, self.session.cookie)
+        self.vm_name = self.vm_name.format(identifier=identifier)
         self.prepare_images()
         self.prepare_vm()
 
@@ -188,13 +191,12 @@ class NewVMHost(VMHost):
     def prepare_vm(self):
         """Define the VM within libvirt
         """
-        name = self.force_name or self._vm_name
-        logger.debug("Preparing vm: %s" % name)
+        logger.debug("Preparing vm: %s" % self.vm_name)
 
         # Sane defaults
         virtinstall_args = {
             "connect": "'%s'" % self.connection_uri,
-            "name": "'%s'" % name,
+            "name": "'%s'" % self.vm_name,
             "description": "'%s'" % self.description,
             "vcpus": "2",
             "cpu": "host",
@@ -211,7 +213,7 @@ class NewVMHost(VMHost):
             "print-xml": None
         }
 
-        virtinstall_args.update(self.vm_defaults)
+        virtinstall_args.update(self.custom_install_args)
 
         cmd = "virt-install "
         cmd += dict_to_args(virtinstall_args)
@@ -256,7 +258,8 @@ class VMHostFactory:
     def create_default_host(connection_uri="qemu:///system", \
                             storage_pool="default", \
                             network_configuration="network=default"):
-        host = NewVMHost(name="default", image_specs=[ \
+        name = "default-{identifier}"
+        host = NewVMHost(name=name, image_specs=[ \
                  VMImage("8G", [ \
                    igor.partition.Partition("pri", "1M", "1G") \
                  ]) \
@@ -295,7 +298,7 @@ class VMAlwaysCreateHostOrigin(CommonLibvirtHostOrigin):
         return "VMAlwaysCreateHostOrigin(%s)" % str(self.__dict__)
 
     def _build_host(self):
-        return VMHostFactory.create_default_host( \
+        return VMHostFactory.create_default_host(
                    connection_uri=self.connection_uri, \
                    storage_pool=self.storage_pool, \
                    network_configuration=self.network_configuration)
