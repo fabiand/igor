@@ -18,15 +18,16 @@
 #
 # -*- coding: utf-8 -*-
 
+from igor.utils import run, dict_to_args
+from lxml import etree
+import igor.main
+import igor.partition
+import logging
 import os
 import re
-import logging
-from lxml import etree
 import tempfile
+import time
 
-import igor.main
-from igor.utils import run, dict_to_args
-import igor.partition
 
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,7 @@ class VMHost(igor.main.Host):
         We are just shutting down the machine - ungracefully ...
         """
         self.shutdown()
+        time.sleep(5) # Hack!
 
     def purge(self):
         if self.remove_afterwards:
@@ -256,32 +258,6 @@ class NewVMHost(VMHost):
         super(NewVMHost, self).remove_images()
 
 
-class VMHostFactory:
-    @staticmethod
-    def create_default_host(connection_uri="qemu:///system", \
-                            storage_pool="default", \
-                            network_configuration="network=default"):
-        name = "default-{identifier}"
-        host = NewVMHost(name=name, image_specs=[ \
-                 VMImage("8G", [ \
-                   igor.partition.Partition("pri", "1M", "1G") \
-                 ]) \
-               ])
-        host.connection_uri = connection_uri
-        host.storage_pool = storage_pool
-        host.network_configuration = network_configuration
-        return host
-
-    @staticmethod
-    def create_or_reuse_host(name, remove=False):
-        """Creates or reuses a virtual guest and cond. removes it at the end
-
-        Args:
-            name: Name to be used
-            remove: If the guest shall be removed at the end
-        """
-
-
 class CommonLibvirtHostOrigin(igor.main.Origin):
     connection_uri = None
     storage_pool = None
@@ -292,6 +268,32 @@ class CommonLibvirtHostOrigin(igor.main.Origin):
         self.storage_pool = storage_pool
         self.network_configuration = network_configuration
 
+    def __set_host_props(self, host):
+        host.connection_uri = self.connection_uri
+        host.storage_pool = self.storage_pool
+        host.network_configuration = self.network_configuration
+
+    def _create_default_host(self):
+        name = "default-{identifier}"
+        host = NewVMHost(name=name, image_specs=[ \
+                 VMImage("8G", [ \
+                   igor.partition.Partition("pri", "1M", "1G") \
+                 ]) \
+               ])
+        self.__set_host_props(host)
+
+        return host
+
+    def _use_existing_host(self, name):
+        """Reuses a virtual guest and cond. removes it at the end
+
+        Args:
+            name: Name of the VM to be used
+        """
+        host = VMHost(name=name)
+        self.__set_host_props(host)
+        return host
+
     def items(self):
         return NotImplementedError
 
@@ -300,14 +302,8 @@ class CreateDomainHostOrigin(CommonLibvirtHostOrigin):
     def name(self):
         return "VMAlwaysCreateHostOrigin(%s)" % str(self.__dict__)
 
-    def _build_host(self):
-        return VMHostFactory.create_default_host(
-                   connection_uri=self.connection_uri, \
-                   storage_pool=self.storage_pool, \
-                   network_configuration=self.network_configuration)
-
     def items(self):
-        hosts = {"default-libvirt": self._build_host()}
+        hosts = {"default-libvirt": self._create_default_host()}
         for key in hosts:
             hosts[key].origin = self
         return hosts
@@ -336,7 +332,7 @@ class ExistingDomainHostOrigin(CommonLibvirtHostOrigin):
     def items(self):
         domains = self._list_domains()
         logger.debug("Found the following existing domains: %s" % domains)
-        hosts = {n: VMHost(n) for n in domains}
+        hosts = {n: self._use_existing_host(n) for n in domains}
         for key in hosts:
             hosts[key].origin = self
         return hosts

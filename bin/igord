@@ -38,6 +38,9 @@ __cobbler_origin_args = (CONFIG["cobbler.url"], \
                          CONFIG["cobbler.password"], \
                          CONFIG["cobbler.ssh_uri"])
 
+__libvirt_con_args = (CONFIG["libvirtd.connection_uri"], \
+                      CONFIG["libvirtd.virt-install.storage_pool"], \
+                      CONFIG["libvirtd.virt-install.network_configuration"])
 
 #
 # Now define our origins, where we get the items (hosts, profiles, …) from
@@ -61,16 +64,10 @@ profile_origins = {
 
 host_origins = {
     "libvirt-create": \
-        igor.backends.libvirt.CreateDomainHostOrigin( \
-                    CONFIG["libvirtd.connection_uri"], \
-                    CONFIG["libvirtd.virt-install.storage_pool"], \
-                    CONFIG["libvirtd.virt-install.network_configuration"]),
+        igor.backends.libvirt.CreateDomainHostOrigin(__libvirt_con_args),
 
     "libvirt-existing": \
-        igor.backends.libvirt.ExistingDomainHostOrigin( \
-                    CONFIG["libvirtd.connection_uri"], \
-                    CONFIG["libvirtd.virt-install.storage_pool"], \
-                    CONFIG["libvirtd.virt-install.network_configuration"]),
+        igor.backends.libvirt.ExistingDomainHostOrigin(__libvirt_con_args),
 
     "cobbler": \
         # Just systems with igor- prefix
