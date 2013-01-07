@@ -200,10 +200,9 @@ class Factory(igor.utils.Factory):
         {'common': 'testcases/libs/common'}
         """
         if not os.path.exists(path):
-            raise Exception("Testsuites path does not exist: %s" % path)
+            raise RuntimeError("Testsuites path does not exist: %s" % path)
         suites = {}
         pat = os.path.join(path, "*%s" % suffix)
-        logger.debug("Trying to load from %s" % pat)
         for f in glob.glob(pat):
             suite = Factory.testsuite_from_file(f)
             suites[suite.name] = suite
