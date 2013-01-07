@@ -64,10 +64,10 @@ profile_origins = {
 
 host_origins = {
     "libvirt-create": \
-        igor.backends.libvirt.CreateDomainHostOrigin(__libvirt_con_args),
+        igor.backends.libvirt.CreateDomainHostOrigin(*__libvirt_con_args),
 
     "libvirt-existing": \
-        igor.backends.libvirt.ExistingDomainHostOrigin(__libvirt_con_args),
+        igor.backends.libvirt.ExistingDomainHostOrigin(*__libvirt_con_args),
 
     "cobbler": \
         # Just systems with igor- prefix
