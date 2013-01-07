@@ -26,7 +26,6 @@ import logging
 import os
 import re
 import tempfile
-import time
 
 
 logger = logging.getLogger(__name__)
@@ -100,8 +99,7 @@ class VMHost(igor.main.Host):
         """There is nothing much to do
         We are just shutting down the machine - ungracefully ...
         """
-        self.shutdown()
-        time.sleep(5)  # Hack!
+        self.destroy()  # Kill the machine!
 
     def purge(self):
         if self.remove_afterwards:
