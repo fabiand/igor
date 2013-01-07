@@ -29,7 +29,6 @@ import tempfile
 import time
 
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -102,7 +101,7 @@ class VMHost(igor.main.Host):
         We are just shutting down the machine - ungracefully ...
         """
         self.shutdown()
-        time.sleep(5) # Hack!
+        time.sleep(5)  # Hack!
 
     def purge(self):
         if self.remove_afterwards:
@@ -149,6 +148,42 @@ class VMHost(igor.main.Host):
 
     def dumpxml(self):
         return self._virsh("dumpxml '%s'" % self.vm_name)
+
+    def __eq__(self, other):
+        """Override to allow simple comparisons
+        >>> a = VMHost("foo")
+        >>> b = VMHost("foo")
+        >>> a == b
+        True
+        >>> b = VMHost("bar")
+        >>> a == b
+        False
+        >>> pool = [a, b]
+        >>> VMHost("foo") in pool
+        True
+        >>> VMHost("baz") in pool
+        False
+        >>> VMHost("foo") in set(pool)
+        True
+        """
+        return self.get_name() == other.get_name()
+
+    def __hash__(self):
+        """Override to allow "in" opertor on collections
+        >>> a = VMHost("foo")
+        >>> b = VMHost("bar")
+
+        >>> VMHost("foo") in [a, b]
+        True
+        >>> VMHost("baz") in [a, b]
+        False
+
+        >>> VMHost("foo") in set([a, b])
+        True
+        >>> VMHost("baz") in set([a, b])
+        False
+        """
+        return hash(self.get_name())
 
 
 class NewVMHost(VMHost):

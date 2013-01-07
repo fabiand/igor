@@ -225,10 +225,9 @@ class Job(object):
         elif is_success is False:
             logger.info("Finished step %s (%s) unsucsessfull" % (n, \
                                                         current_testcase.name))
-            self.watchdog.stop()
             self.state(s_failed)
 
-        if self.has_passed():
+        if len(self.testcases()) == len(self.results) and is_passed:
             self.state(s_passed)
 
         if self.state() in endstates:
@@ -345,16 +344,28 @@ class Job(object):
 
     def result(self):
         msg = None
-        if self.has_passed():
+
+        if self.state() == s_passed:
+            assert len(self.testcases()) == len(self.results)
+            assert self.state() is not s_failed
             msg = "passed"
-        elif self.is_aborted():
+
+        elif self.state() == s_aborted:
+            assert any([r["is_abort"] for r in self.results])
             msg = "aborted"
-        elif self.is_timedout():
+
+        elif self.state() == s_timedout:
+            assert self.is_timedout()
             msg = "timedout"
-        elif self.has_failed():
+
+        elif self.state() == s_failed:
+            assert not all([r["is_passed"] for r in self.results])
             msg = "failed"
-        elif self.is_running():
+
+        elif self.state() == s_running:
+            assert self.current_step < len(self.testsuite.testcases())
             msg = "(no result, running)"
+
         assert msg is not None, "Unknown job result"
         return msg
 
@@ -363,42 +374,6 @@ class Job(object):
 
     def testcases(self):
         return self.testsuite.testcases()
-
-    def has_passed(self):
-        """If the testsuite was completed and all results are as expected
-        """
-        m_val = self.completed_all_steps() and not self.has_failed()
-        return m_val
-
-    def completed_all_steps(self):
-        """If all tests of the testsuite are completed
-        """
-        m_val = len(self.testcases()) == len(self.results)
-        return m_val
-
-    def has_failed(self):
-        """If the jobs test failed
-        """
-        m_val = not all([r["is_passed"] for r in self.results])
-        e_val = self.state() == s_failed
-        assert(m_val == e_val)
-        return m_val
-
-    def is_running(self):
-        """If the job is still running the test phase
-        """
-        m_val = self.current_step < len(self.testsuite.testcases())
-        e_val = self.state() == s_running
-        assert(m_val == e_val)
-        return m_val
-
-    def is_aborted(self):
-        """If the jobs testing part was aborted
-        """
-        m_val = any([r["is_abort"] for r in self.results])
-        e_val = self.state() == s_aborted
-        assert(m_val == e_val)
-        return m_val
 
     def timeout(self):
         """The maximum time the testing part of this job can consume.
