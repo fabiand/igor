@@ -28,6 +28,7 @@ import logging
 import tempfile
 import tarfile
 import io
+import random
 
 from igor.utils import run, update_properties_only
 
@@ -308,6 +309,7 @@ class Testplan(object):
         self.job_layouts = job_layouts
         self.inventory = None
         self.variables = {}
+        self.id = random.randrange(10**2, 10**4)  # FIXME make jobs!
 
     def timeout(self):
         timeout = None
@@ -326,7 +328,7 @@ class Testplan(object):
         The layout contains the strings, here the strings are queried in the
         inventory and objects are created.
         """
-        self.variables["planid"] = hash(self)
+        self.variables["planid"] = self.id
         logger.debug("Replacing vars in spec %s: %s" % (self.name, \
                                                         self.variables))
         for layout in self.job_layouts:
