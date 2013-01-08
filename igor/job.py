@@ -165,7 +165,7 @@ class Job(object):
         """Finish one test step
         """
         logger.debug("%s: Finishing step %s: %s (%s)" % (self.cookie, n, \
-                                                             is_success, note))
+                                                         is_success, note))
         if self.state() != s_running:
             raise Exception(("Can not finish step %s of job %s, it is not" + \
                              "running anymore: %s") % (n, self.cookie, \
@@ -210,9 +210,8 @@ class Job(object):
         if is_abort:
             logger.debug("Aborting at step %s (%s)" % (n, \
                                                         current_testcase.name))
-            self.watchdog.stop()
             self.state(s_aborted)
-        if is_skipped:
+        elif is_skipped:
             logger.debug("Skipping step %s (%s)" % (n, \
                                                         current_testcase.name))
         elif is_success is True:
