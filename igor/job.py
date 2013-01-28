@@ -119,6 +119,9 @@ class Job(object):
                 utils.PollingWorkerDaemon.__init__(self)
 
             def work(self):
+                logger.debug("Watching current step: %s" % self.job.current_step)
+                logger.debug("Allowed time up to now: %s" %
+                             self.job.allowed_time_up_to_current_testcase(self))
                 if self.job.is_timedout():
                     with _high_state_change_lock:
                         logger.debug("Watchdog for job %s: timed out." % \
@@ -411,12 +414,18 @@ class Job(object):
         """
         is_timeout = False
 
-        timeout = Job._calculate_timeout_for_tcs(self.testsuite.testcases(),
-                                                 self.current_step)
+        timeout = self.allowed_time_up_to_current_testcase()
         if self.runtime() > timeout:
             is_timeout = True
 
         return is_timeout
+
+    def allowed_time_up_to_current_testcase(self):
+        """Doesn't return the whole timeout of the whole job, but the time
+        allowed until the current step
+        """
+        return Job._calculate_timeout_for_tcs(self.testsuite.testcases(),
+                                              self.current_step)
 
     @staticmethod
     def _calculate_timeout_for_tcs(all_tcs, cur):
