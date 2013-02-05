@@ -121,7 +121,7 @@ class Job(object):
             def work(self):
                 logger.debug("Watching current step: %s" % self.job.current_step)
                 logger.debug("Allowed time up to now: %s" %
-                             self.job.allowed_time_up_to_current_testcase(self))
+                             self.job.allowed_time_up_to_current_testcase())
                 if self.job.is_timedout():
                     with _high_state_change_lock:
                         logger.debug("Watchdog for job %s: timed out." % \
