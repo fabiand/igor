@@ -41,7 +41,7 @@ password = cobbler
 ssh_uri  = cobbler.example.com
 
 # Where - on the remote server - should files (vmlinuz, ...) be placed
-remote_path_prefix = /tmp
+remote_path_prefix = /var/tmp
 
 
 [Cobbler.Hosts]
