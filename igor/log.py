@@ -22,7 +22,7 @@ import logging
 import logging.config
 import tempfile
 
-cache_fileobj = tempfile.NamedTemporaryFile()
+fs_fileobj = open("/tmp/igord.log", "a+")
 
 log_config = {
     "version": 1,
@@ -39,16 +39,16 @@ log_config = {
             "class": "logging.StreamHandler",
             "formatter": "default",
         },
-        "cache": {
+        "filesystem": {
             "class": "logging.StreamHandler",
             "formatter": "default",
-            "stream": cache_fileobj
+            "stream": fs_fileobj
         }
     },
 
     "loggers": {
         "": {
-            "handlers": ["console", "cache"],
+            "handlers": ["console", "filesystem"],
             "level": "DEBUG",
             "propagate": True
         }
@@ -60,7 +60,7 @@ logging.config.dictConfig(log_config)
 
 def backlog():
     r = None
-    cache_fileobj.flush()
-    with open(cache_fileobj.name, "r") as f:
+    fs_fileobj.flush()
+    with open(fs_fileobj.name, "r") as f:
         r = f.read()
     return r
