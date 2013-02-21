@@ -40,6 +40,10 @@ password = cobbler
 # SSH URI (passwordless authentication) to import profiles
 ssh_uri  = cobbler.example.com
 
+# Where - on the remote server - should files (vmlinuz, ...) be placed
+remote_path_prefix = /tmp
+
+
 [Cobbler.Hosts]
 # This expression needs to be in the hostname, so igor manages it
 identification_expression = igor-

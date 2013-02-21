@@ -38,8 +38,10 @@ class ProfileOrigin(igor.main.Origin):
     """
     cobbler = None
 
-    def __init__(self, server_url, user, pw, ssh_uri):
+    def __init__(self, server_url, user, pw, ssh_uri,
+                 remote_path_prefix="/tmp"):
         self.cobbler = Cobbler(server_url, (user, pw), ssh_uri)
+        self.remote_path_prefix = remote_path_prefix
 
     def name(self):
         return "CobblerProfilesOrigin(%s)" % self.cobbler.server_url
@@ -54,7 +56,7 @@ class ProfileOrigin(igor.main.Origin):
         return items
 
     def create_item(self, pname, kernel_file, initrd_file, kargs_file):
-        profile = Profile(self.cobbler, pname)
+        profile = Profile(self.cobbler, pname, self.remote_path_prefix)
         profile.populate_with(kernel_file, initrd_file, kargs_file)
 
 
@@ -152,11 +154,12 @@ class Profile(igor.main.Profile):
     system_existed = False
     previous_profile = None
 
-    remote_path = None
+    remote_path_prefix = None
 
-    def __init__(self, remote, profile_name):
+    def __init__(self, remote, profile_name, remote_path_prefix="/tmp"):
         self.remote = remote
         self.name = profile_name
+        self.remote_path_prefix = remote_path_prefix
 
     def get_name(self):
         return self.name
@@ -248,13 +251,15 @@ class Profile(igor.main.Profile):
                 trials -= 1
 
     def delete(self):
-        self.remote_path = "/tmp/igor-cobbler-%s" % self.get_name()
-        self.__ssh_remove_remote_distro_profile_and_files(self.remote_path)
+        remote_path = "%s/igor-cobbler-%s" % (self.remote_path_prefix,
+                                              self.get_name())
+        self.__ssh_remove_remote_distro_profile_and_files(remote_path)
 
     def populate_with(self, vmlinuz, initrd, kargs):
-        self.remote_path = "/tmp/igor-cobbler-%s" % self.get_name()
-        self.__scp_files_to_remote(self.remote_path, vmlinuz, initrd, kargs)
-        self.__ssh_create_remote_distro_and_profile(self.remote_path, \
+        remote_path = "%s/igor-cobbler-%s" % (self.remote_path_prefix,
+                                              self.get_name())
+        self.__scp_files_to_remote(remote_path, vmlinuz, initrd, kargs)
+        self.__ssh_create_remote_distro_and_profile(remote_path, \
                                                     vmlinuz, initrd, kargs)
 
     def __scp_files_to_remote(self, remote_path, vmlinuz, initrd, kargs):

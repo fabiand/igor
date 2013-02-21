@@ -59,7 +59,8 @@ testsuite_origins = {
 
 profile_origins = {
     "cobbler": \
-        igor.backends.cobbler.ProfileOrigin(*__cobbler_origin_args)
+        igor.backends.cobbler.ProfileOrigin(*__cobbler_origin_args,
+        remote_path_prefix=CONFIG.get("cobbler.remote_path_prefix", "/tmp"))
 }
 
 host_origins = {
