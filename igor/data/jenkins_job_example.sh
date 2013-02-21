@@ -2,7 +2,56 @@
 #
 # Example script for jenkins
 #
-# Pass the following env vars:
+# Pass the following env vars (explanantions, examples and jenkins
+# snippet below):
+# APIURL
+# IGORCLIENTURL
+# TESTPLAN
+# PROFILENAME
+
+# Examples for the required env vars (whcih can be defined by/within Jenkins):
+#
+# APIURL - The URL where we can reach Igord
+#          By default Igord is launched on port 8080 and listening on all
+#          interfaces
+# APIURL="http://igor.example.com:8080/"
+#
+# IGORCLIENTURL - The URL where we can fetch the latest igorclient tool
+#                 (deployed with igor)
+# IGORCLIENTURL="${APIURL}static/data/igorclient.sh"
+#
+# TESTPLAN - The testplan which shall be run
+# TESTPLAN="ai_basic"
+#
+# ISONAME - This ISO is used to create the profile PROFILENAME, if it
+#           does not exist already
+#           OPTIONAL: Only needed if profile $PROFILENAME does not exist
+# ISONAME=$(ls *.edited.iso)
+#
+# PROFILENAME - The name of an existing or to be created profile
+#               There are two ways how this PROFILENAME is used:
+#               Igor checks if this profile exists:
+#               (a) It exists: Igor is using the existsing profile
+#               (b) It does not exist: Igor creates the profile using
+#                   the given ISO (ISONAME)
+# PROFILENAME="fdeutsch-$ISONAME"
+
+
+# A Jenkins shell snippet could look like:
+# Assumptions: SELECTED_TESTPLAN is a build parameter
+#              An ISO was created by a previous job containing the igor-client
+# <code>
+# export APIURL="http://igor.example.com:8080/"
+# export IGORCLIENTURL="${APIURL}static/data/igorclient.sh"
+# export TESTPLAN="${SELECTED_TESTPLAN:-ai_basic}"   
+#
+# export ISONAME=$(ls *.edited.iso)    # Grab the iso of the previous jenkins job
+# export PROFILENAME="fdeutsch-$ISONAME"
+#
+# curl --silent -O "${APIURL}static/data/jenkins_job_example.sh"
+# bash -x "jenkins_job_example.sh"
+# </code>
+
 
 [[ -z $IGORCLIENTURL ]] && exit 1
 [[ -z $APIURL ]] && exit 1
@@ -24,12 +73,13 @@ highlight "Fetching igor client from server"
     [[ -e igorclient.sh ]]
 
 CREATE_PROFILE=true
-bash ./igorclient.sh profiles | grep -q "\"$PROFILENAME\"" && {
+if $(bash ./igorclient.sh profiles | grep -q "\"$PROFILENAME\"")
+then
     highlight "Profile '$PROFILENAME' exists, reusing this."
     CREATE_PROFILE=false
-} || {
+else
     highlight "Profile '$PROFILENAME' does not exists, creating new one."
-}
+fi
 
 $CREATE_PROFILE && {
     # This is an artifact from a previous job
