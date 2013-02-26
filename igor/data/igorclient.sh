@@ -62,6 +62,12 @@ view() # View the source of function FUNCNAME
   typeset -f $1
 }
 
+check() # Check the syntax of this script
+{
+  bash -n $0
+}
+
+
 #
 # API stateless functions
 #
@@ -196,10 +202,12 @@ add_profile() # Add a profile from kernel, initrd and kargs files
   }
 
   ARCHIVE="/tmp/$PNAME_files.tar"
+  debug "Creating '$ARCHIVE' with kernel, initrd and kargs"
   # Use transform to strip all leading paths
   tar --create --transform="s#^.*/##" --file="$ARCHIVE" $KERNEL $INITRD $KARGS
 
   URL=$(_api_url profiles/$PNAME)
+  debug "Putting $ARCHIVE to $URL"
   curl --header "x-kernel-filename: $(basename $KERNEL)" \
        --header "x-initrd-filename: $(basename $INITRD)" \
        --header "x-kargs-filename: $(basename $KARGS)" \
@@ -208,13 +216,16 @@ add_profile() # Add a profile from kernel, initrd and kargs files
   rm -f $ARCHIVE
 # Slow:  curl -F "kernel=@$KERNEL" -F"initrd=@$INITRD" -F"kargs=@$KARGS" "$URL"
 }
+
 remove_profile() # Remove a profile
 {
   FUNC_USAGE="$0 $FUNCNAME <PROFILENAME>"
   PNAME=$1
   [[ -z $PNAME ]] && die "Profile name is mandatory."
+  debug "Removing profile '$PNAME'"
   api /profiles/$PNAME/remove
 }
+
 profile_kargs() # Set the kernel arguments of a profile
 {
   FUNC_USAGE="$0 $FUNCNAME <PROFILENAME> <KARGS>"
@@ -223,6 +234,7 @@ profile_kargs() # Set the kernel arguments of a profile
   [[ -z $PNAME ]] && die "Profile name is mandatory."
   [[ -z $KARGS ]] && die "kargs are mandatory."
   URL=$(_api_url profiles/$PNAME)
+  debug "Updating '$PNAME' kargs to: $KARGS"
   curl --data "kargs=$KARGS" "$URL"
 }
 
@@ -238,6 +250,7 @@ testplan_submit() # Submit a testplan to be run, optional a query param with sub
     QUERY="?$KARGS"
   }
 
+  debug "Submitting testplan '$PNAME' with query '$QUERY'"
   api /testplans/$PNAME/submit$QUERY
 }
 
@@ -368,6 +381,7 @@ add_profile_from_iso() # Add a new profile from a livecd iso <isofilename>
   # " local_boot_trigger=${APIURL}testjob/{igor_cookie}"
   [[ -z $PROFILENAME ]] && die "Profilename name is mandatory."
   [[ -z $ISONAME ]] && die "Isoname name is mandatory."
+  debug "Extracting livecd"
   sudo livecd-iso-to-pxeboot "$ISONAME"
   KERNEL=vmlinuz0
   INITRD=initrd0.img
@@ -378,6 +392,7 @@ add_profile_from_iso() # Add a new profile from a livecd iso <isofilename>
   echo "$ADDITIONAL_KARGS" >> $KARGS
   ln tftpboot/$KERNEL $KERNEL
   ln tftpboot/$INITRD $INITRD
+  debug "Uploading files"
   add_profile "$PROFILENAME" "$KERNEL" "$INITRD" "$KARGS"
   sudo rm -rf tftpboot $KERNEL $INITRD $KARGS
 }
@@ -423,4 +438,4 @@ else
   exit 1
 fi
 
-# vim: sw=80 tw=2:
+# vim: sw=80:
