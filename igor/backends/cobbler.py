@@ -285,7 +285,7 @@ class Profile(igor.main.Profile):
                     --kernel=\"{vmlinuz}\" \\
                     --initrd=\"{initrd}\" \\
                     --arch=\"{arch}\" \\
-                    --breed=\"other\" \\
+                    --breed=\"generic\" \\
                     --os-version=\"\" \\
                     --comment=\"{identification_tag}\"
 
