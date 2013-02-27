@@ -201,7 +201,7 @@ add_profile() # Add a profile from kernel, initrd and kargs files
     die "'testjob' url missing in kargs $KARGS"
   }
 
-  ARCHIVE="/tmp/$PNAME_files.tar"
+  ARCHIVE="/tmp/${PNAME}_files.tar"
   debug "Creating '$ARCHIVE' with kernel, initrd and kargs"
   # Use transform to strip all leading paths
   tar --create --transform="s#^.*/##" --file="$ARCHIVE" $KERNEL $INITRD $KARGS
