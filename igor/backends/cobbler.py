@@ -39,7 +39,7 @@ class ProfileOrigin(igor.main.Origin):
     cobbler = None
 
     def __init__(self, server_url, user, pw, ssh_uri,
-                 remote_path_prefix="/tmp"):
+                 remote_path_prefix):
         self.cobbler = Cobbler(server_url, (user, pw), ssh_uri)
         self.remote_path_prefix = remote_path_prefix
 
@@ -50,7 +50,7 @@ class ProfileOrigin(igor.main.Origin):
         items = {}
         with self.cobbler as remote:
             for c_pname in remote.profiles():
-                i_profile = Profile(remote, c_pname)
+                i_profile = Profile(remote, c_pname, self.remote_path_prefix)
                 i_profile.origin = self
                 items[c_pname] = i_profile
         return items
@@ -156,7 +156,7 @@ class Profile(igor.main.Profile):
 
     remote_path_prefix = None
 
-    def __init__(self, remote, profile_name, remote_path_prefix="/tmp"):
+    def __init__(self, remote, profile_name, remote_path_prefix):
         self.remote = remote
         self.name = profile_name
         self.remote_path_prefix = remote_path_prefix
