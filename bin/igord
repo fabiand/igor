@@ -263,7 +263,17 @@ def list_artifact(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
-    return to_json(j.list_artifacts())
+    data = to_json(j.list_artifacts())
+    return data
+
+
+@app.route('/jobs/<cookie>/archive')
+def get_artifacts_archive(cookie):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job '%s'" % cookie)
+    j = jc.jobs[cookie]
+    bottle.response.content_type = "application/x-bzip2"
+    return j.get_artifacts_archive().getvalue()
 
 
 @app.route('/jobs/<cookie>/artifacts/<name>', method='PUT')
@@ -284,15 +294,6 @@ def get_artifact(cookie, name):
     j = jc.jobs[cookie]
     bottle.response.content_type = "text/plain; charset=utf8"
     return str(j.get_artifact(name))
-
-
-@app.route('/jobs/<cookie>/artifacts/download')
-def get_artifacts(cookie):
-    if cookie not in jc.jobs:
-        bottle.abort(404, "Unknown job '%s'" % cookie)
-    j = jc.jobs[cookie]
-    bottle.response.content_type = "application/x-bzip2"
-    return j.get_artifacts_archive().getvalue()
 
 
 @app.route('/firstboot/<cookie>')
