@@ -369,3 +369,92 @@ class ExistingDomainHostOrigin(CommonLibvirtHostOrigin):
         for key in hosts:
             hosts[key].origin = self
         return hosts
+
+
+class LibvirtProfile(igor.main.Profile):
+    """A kernel, initrd + kargs
+    A libvirt profile is actually just a dict with kernel,initrd and kargs
+    Assigning happens by populating the domain definition with this values
+    """
+
+    origin = None
+
+    name = None
+
+    values = {"kernel": None,
+              "initrd": None,
+              "cmdline": None}
+
+    __previous_values = {}
+
+    def __init__(self, name):
+        self.name = name
+        super(LibvirtProfile, self).__init__()
+
+    def get_name(self):
+        self.name
+
+    def assign_to(self, host, additional_kargs=""):
+        assert VMHost in host.__class__.mro()
+        self.__previous_values = self.__populate_dom(host, self.values)
+
+    def __populate_dom(self, host, values):
+        dom = etree.XML(host.dumpxml())
+        os_node = dom.xpath("/domain/os")
+        previous_values = {}
+        for node_name in ["kernel", "initrd", "cmdline"]:
+            child_nodes = os_node.xpath(node_name)
+            if child_nodes:
+                child_node = child_nodes[0]
+            else:
+                child_node = etree.SubElement(os_node, node_name)
+
+            previous_values[node_name] = child_node.text
+            child_node.text = values[node_name]
+
+        return previous_values
+
+    def enable_pxe(self, enable):
+        raise Exception("Not implemented.")
+
+    def kargs(self, kargs):
+        raise Exception("Not implemented.")
+
+    def revoke_from(self, host):
+        self.__populate_dom(host, self.__previous_values)
+
+    def delete(self):
+        pass
+
+    def populate_with(self, kernel_file, initrd_file, kargs_file):
+        files = {"kernel": kernel_file, "initrd": initrd_file,
+                 "cmdline": kargs_file}
+        for tag, filename in files.items():
+            with open(filename) as f:
+                data = f.read()
+            self.values[tag] = data
+
+
+class ProfileOrigin(igor.main.Origin):
+    """Origin for libvirt profiles
+    """
+
+    __profiles = []
+
+    def __init__(self):
+        pass
+
+    def name(self):
+        return "libvirt origin FIXME"
+
+    def items(self):
+        """Retrieve all available profiles
+        """
+        items = {}
+        for p in self.__profiles:
+            items[p.get_name()] = p
+        return items
+
+    def create_item(self, pname, kernel_file, initrd_file, kargs_file):
+        profile = LibvirtProfile(pname)
+        profile.populate_with(kernel_file, initrd_file, kargs_file)
