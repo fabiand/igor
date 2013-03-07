@@ -41,7 +41,7 @@ Hierarchy
 
 ::
 
-  Testplan (TBD)
+  Testplan
   |
   + Testsuite
   | |
@@ -77,6 +77,7 @@ Blank lines are ignored.
 Additionall libraries can be added with lines starting with ``lib:``, e.g.:
 ``lib:libs/common`` would add the folder ``common`` into the testsuite
 (omitting the dirname). This can be useful to add 3rd party libraries.
+
 
 Protocol - How to define a **testsuite**
 ----------------------------------------
@@ -124,6 +125,24 @@ the network connectivity::
   EOF
   $
 
+
+2.a Advanced: Adding runtime dependencies to a testcase
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Sometimes you want a testcase only to run if some other testcase passed.
+For example: Testsing layer-3 network connectivity should only be done in
+the case that a layer-2 connection was established.
+
+That's were testcase dependencies come into play::
+
+   $ cat > tcs/has_network_link.sh.deps <<EOF
+   configure_network_link.sh
+   EOF
+
+
+This .deps file tells igor to only run the `has_network_link.sh` testcase
+when the `configure_network_link.sh` testcase passed.
+
+
 3. Creating a testset and testsuite
 -----------------------------------
 The testcase itself can not be run easily, it has to be part of a larger
@@ -132,6 +151,7 @@ The testcase itself can not be run easily, it has to be part of a larger
   $ echo has_network_link.sh > network_eth.set
   $ echo network_eth.set > network.suite
   $
+
 
 4. Adding a library - for common operations
 -------------------------------------------
