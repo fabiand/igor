@@ -28,57 +28,61 @@ logger.info("Starting igor daemon")
 
 BOTTLE_MAX_READ_SIZE = 1024 * 1024 * 512
 
+# Enabled backends:
+enabled_backends = CONFIG["backends.enable"]
+
 #
 # Parse the config at first
 #
 CONFIG = config.parse_config()
 
-__cobbler_origin_args = (CONFIG["cobbler.url"], \
-                         CONFIG["cobbler.username"], \
-                         CONFIG["cobbler.password"], \
-                         CONFIG["cobbler.ssh_uri"])
-
-__libvirt_con_args = (CONFIG["libvirtd.connection_uri"], \
-                      CONFIG["libvirtd.virt-install.storage_pool"], \
-                      CONFIG["libvirtd.virt-install.network_configuration"])
-
 #
 # Now define our origins, where we get the items (hosts, profiles, …) from
 #
-plan_origins = {
-    "filesystem": \
+plan_origins = {}
+testsuite_origins = {}
+profile_origins = {}
+host_origins = {}
+
+if "files" in enabled_backends:
+    plan_origins["files"] = \
         igor.backends.files.TestplansOrigin( \
                     CONFIG["testplans.path"].split(":"))
-}
 
-testsuite_origins = {
-    "filesystem": \
+    testsuite_origins["files"] = \
         igor.backends.files.TestsuitesOrigin( \
                     CONFIG["testcases.path"].split(":"))
-}
 
-profile_origins = {
-    "cobbler": \
-        igor.backends.cobbler.ProfileOrigin(*__cobbler_origin_args,
+    host_origins["files"] = \
+            igor.backends.files.HostsOrigin(CONFIG["hosts.path"].split(":"))
+
+if "cobbler" in enabled_backends:
+    __cobbler_origin_args = (CONFIG["cobbler.url"], \
+                             CONFIG["cobbler.username"], \
+                             CONFIG["cobbler.password"], \
+                             CONFIG["cobbler.ssh_uri"])
+    c_profiles = igor.backends.cobbler.ProfileOrigin(*__cobbler_origin_args,
         remote_path_prefix=CONFIG.get("cobbler.remote_path_prefix", "/tmp"))
-}
+    profile_origins["cobbler"] = c_profiles
 
-host_origins = {
-    "libvirt-create": \
-        igor.backends.libvirt.CreateDomainHostOrigin(*__libvirt_con_args),
-
-    "libvirt-existing": \
-        igor.backends.libvirt.ExistingDomainHostOrigin(*__libvirt_con_args),
-
-    "cobbler": \
-        # Just systems with igor- prefix
-        igor.backends.cobbler.HostsOrigin(*__cobbler_origin_args, \
+    # Just systems with igor- prefix
+    c_hosts = igor.backends.cobbler.HostsOrigin(*__cobbler_origin_args, \
                 expression=CONFIG["cobbler.hosts.identification_expression"], \
-                whitelist=CONFIG["cobbler.hosts.whitelist"]),
+                whitelist=CONFIG["cobbler.hosts.whitelist"])
+    host_origins["cobbler"] = c_hosts
 
-    "files": \
-        igor.backends.files.HostsOrigin(CONFIG["hosts.path"].split(":"))
-}
+if "libvirt" in enabled_backends:
+    __libvirt_con_args = (CONFIG["libvirtd.connection_uri"], \
+    CONFIG["libvirtd.virt-install.storage_pool"], \
+    CONFIG["libvirtd.virt-install.network_configuration"])
+
+    l_hosts = {"libvirt-create": \
+        igor.backends.libvirt.CreateDomainHostOrigin(*__libvirt_con_args),
+        "libvirt-existing": \
+        igor.backends.libvirt.ExistingDomainHostOrigin(*__libvirt_con_args)
+        }
+    host_origins.update(l_hosts)
+
 
 #
 # Now prepare the essential objects

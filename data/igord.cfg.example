@@ -1,5 +1,4 @@
 
-
 [Testcases]
 # Path of testcases relative to runpath
 # Separate multiple paths by ":"
@@ -61,3 +60,7 @@ storage_pool = default
 # As described in man virt-install
 network_configuration  = network=default
 
+
+[Backends]
+# A space separated list of enabled backends
+enable = files libvirt cobbler
