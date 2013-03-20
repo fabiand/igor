@@ -50,7 +50,8 @@ Hierarchy
   | | + Testcase
   | | + Testcase
   | | + Testcase
-  : : :
+  | |
+  : :
 
 
 Protocol - How **testcases** have to behave

@@ -34,16 +34,16 @@ logger = logging.getLogger(__name__)
 def run(cmd, with_retval=False):
     import subprocess
     logger.debug("Running: %s" % cmd)
-    proc = subprocess.Popen(cmd, shell=True, \
+    child = subprocess.Popen(cmd, shell=True, \
                             stdout=subprocess.PIPE, \
                             stderr=subprocess.PIPE)
-    (stdout, stderr) = proc.communicate()
-    proc.wait()
+    (stdout, stderr) = child.communicate()
+    child.wait()
     if stderr:
         logger.warning(stderr)
     r = str(stdout).strip()
     if with_retval:
-        r = (proc.returncode, str(stdout).strip())
+        r = (child.returncode, str(stdout).strip())
     return r
 
 
@@ -83,7 +83,7 @@ class MountedArchive:
         self.mountpoint = self.mount(self.isofilename)
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, typ, value, traceback):
         logger.debug("Unmounting ISO: %s" % self.isofilename)
         self.umount()
 
@@ -143,7 +143,7 @@ class TemporaryDirectory:
     def __enter__(self):
         return self.tmpdir
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, typ, value, traceback):
         pass
 
     def cleanfile(self, f):
@@ -243,8 +243,8 @@ class State(object):
     def __init__(self, n):
         self.name = n
 
-    def transition(self, input):
-        next_states = [s for f, s in self.map if f(input)]
+    def transition(self, val):
+        next_states = [s for f, s in self.map if f(val)]
         assert len(next_states) >= 1, "faulty transition rule"
         return next_states[0]
 
