@@ -16,18 +16,18 @@ def build_testcases_filelist(dst, path):
 
 setup(
     name='igor',
-    version='0.1.0',
+    version='0.3.0',
     author='Fabian Deutsch',
     author_email='fabiand@fedoraproject.org',
-    packages=['igor', 'igor.test'],
+    packages=['igor', 'igor.backends'],
     package_data={'igor': ['data/*.xsl', 'data/*.sh']},
-    scripts=['bin/igord', 'bin/igor-status-to-report'],
-    data_files=[('/lib/systemd/system', ['data/igord.service']),
+    scripts=['bin/igord'],
+    data_files=[('lib/systemd/system', ['data/igord.service']),
                 ('/etc/igord', ['data/igord.cfg.example']),
                 ('/srv/igord', []),
-                ('/usr/lib/igord/testcases', [])], # FIXME testcases are missing
+                ('lib/igord/testcases', [])], # FIXME testcases are missing
     url='http://www.gitorious.org/ovirt/igord',
-    license='LGPLv2.1',
+    license='LGPLv2',
     description='Testing a Linux distribution',
     long_description=open('README.txt').read(),
 )

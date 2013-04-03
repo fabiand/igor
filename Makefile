@@ -84,3 +84,6 @@ pyflakes:
 
 run:
 	PYTHONPATH=. python bin/igord
+
+
+.PHONY: dist
