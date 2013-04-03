@@ -28,14 +28,14 @@ logger.info("Starting igor daemon")
 
 BOTTLE_MAX_READ_SIZE = 1024 * 1024 * 512
 
-# Enabled backends:
-enabled_backends = CONFIG["backends.enable"]
-
 #
 # Parse the config at first
 #
 CONFIG = config.parse_config()
 
+# Enabled backends:
+enabled_backends = CONFIG["backends.enabled"].split()
+primary_profile_backend = CONFIG["backends.primary_profile"]
 #
 # Now define our origins, where we get the items (hosts, profiles, …) from
 #
@@ -83,6 +83,9 @@ if "libvirt" in enabled_backends:
         }
     host_origins.update(l_hosts)
 
+    l_profiles = {"libvirt": igor.backends.libvirt.ProfileOrigin(
+    *__libvirt_con_args)}
+    profile_origins.update(l_profiles)
 
 #
 # Now prepare the essential objects
@@ -505,7 +508,7 @@ def profile_from_vmlinuz_put(pname):
         print written_files
         if not all([r in written_files.keys() for r in reqfiles]):
             bottle.abort(412, "Expecting %s files" % str(reqfiles))
-        inventory.create_profile(oname="cobbler", pname=pname, \
+        inventory.create_profile(oname=primary_profile_backend, pname=pname, \
                                  **written_files)
     _tmpdir.clean()
 

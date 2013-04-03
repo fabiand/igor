@@ -3,7 +3,6 @@ igor-0.3.0
 - Add testcase dependencies
 - Add timeout on testcase granularity
 - Synchronize jobs, add variables and arguments to testplans
-- Persistent VMs
 
 igor-0.2.3
 - Better documentation

@@ -291,7 +291,7 @@ class NewVMHost(VMHost):
         super(NewVMHost, self).remove_images()
 
 
-class CommonLibvirtHostOrigin(igor.main.Origin):
+class CommonLibvirtOrigin(igor.main.Origin):
     connection_uri = None
     storage_pool = None
     network_configuration = None
@@ -331,7 +331,7 @@ class CommonLibvirtHostOrigin(igor.main.Origin):
         return NotImplementedError
 
 
-class CreateDomainHostOrigin(CommonLibvirtHostOrigin):
+class CreateDomainHostOrigin(CommonLibvirtOrigin):
     def name(self):
         return "VMAlwaysCreateHostOrigin(%s)" % str(self.__dict__)
 
@@ -342,7 +342,7 @@ class CreateDomainHostOrigin(CommonLibvirtHostOrigin):
         return hosts
 
 
-class ExistingDomainHostOrigin(CommonLibvirtHostOrigin):
+class ExistingDomainHostOrigin(CommonLibvirtOrigin):
     """Provides access to all existing g    uests
     """
 
@@ -380,6 +380,9 @@ class LibvirtProfile(igor.main.Profile):
     origin = None
 
     name = None
+
+    # FIXME
+    _datadir = "/var/tmp"
 
     values = {"kernel": None,
               "initrd": None,
@@ -435,14 +438,11 @@ class LibvirtProfile(igor.main.Profile):
             self.values[tag] = data
 
 
-class ProfileOrigin(igor.main.Origin):
+class ProfileOrigin(CommonLibvirtOrigin):
     """Origin for libvirt profiles
     """
 
     __profiles = []
-
-    def __init__(self):
-        pass
 
     def name(self):
         return "libvirt origin FIXME"
