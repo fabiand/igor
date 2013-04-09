@@ -47,7 +47,7 @@ Now run it::
 
     $ cp data/igord.cfg.example ~/igord.cfg     # Or: /etc/igord/igord.conf
     $ edit ~/igord.cfg
-    $ mkdir /srv/igord
+    $ mkdir /var/run/igord
     $ PYTHONPATH=. ./bin/igord
 
 Or: Build and install igord::

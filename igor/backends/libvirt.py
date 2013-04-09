@@ -25,6 +25,8 @@ import igor.partition
 import logging
 import os
 import re
+import shutil
+import subprocess
 import tempfile
 
 
@@ -95,6 +97,25 @@ class VMHost(igor.main.Host):
         files = dom.xpath(path)
         return files
 
+    def __get_cdrom_target_name(self):
+        path = ("/domain/devices/disk[@device='cdrom']/target/@dev")
+        dom = etree.XML(self.dumpxml())
+        targets = dom.xpath(path)
+        return sorted(targets)[0]
+
+    def change_cdrom_source(self, filename):
+        """Set the <source file='...' /> of the first device which is a cdrom
+        """
+        target = self.__get_cdrom_target_name()
+        if filename:
+            cmd = "change-media --domain %s --path %s --source %s --force" % \
+                (self.vm_name, target, filename)
+        else:
+            # Eject otherwise
+            cmd = "change-media --domain %s --path %s --eject --force" % \
+                (self.vm_name, target)
+        self._virsh(cmd)
+
     def prepare(self):
         """There is nothing much to do
         We are just shutting down the machine - ungracefully ...
@@ -156,7 +177,7 @@ class VMHost(igor.main.Host):
         >>> b = VMHost("bar")
         >>> a == b
         False
-        >>> pool = [a, b]
+        >>> pool = [a, b] 
         >>> VMHost("foo") in pool
         True
         >>> VMHost("baz") in pool
@@ -240,7 +261,8 @@ class NewVMHost(VMHost):
             "cpu": "host",
             "ram": "1024",
             "os-type": "linux",
-            "boot": "network",
+            "boot": "cdrom,network,hd",
+            "disk" : "device=cdrom,bus=ide,format=raw,path=/dev/null",
             "network": self.network_configuration,
             "graphics": "spice",
             "video": "vga",
@@ -382,7 +404,11 @@ class LibvirtProfile(igor.main.Profile):
     name = None
 
     # FIXME
-    _datadir = "/var/tmp"
+    _datadir_prefix = "/var/tmp/igor"
+    _datadir = None
+    _boot_iso = None
+
+    __isolinux_bin = "/usr/share/syslinux/isolinux.bin"
 
     values = {"kernel": None,
               "initrd": None,
@@ -390,59 +416,139 @@ class LibvirtProfile(igor.main.Profile):
 
     __previous_values = {}
 
+    __host = None
+    __additional_kargs = None
+
     def __init__(self, name):
         self.name = name
+        self._datadir = os.path.join(self._datadir_prefix, self.name)
+        if not os.path.isdir(self._datadir):
+            os.makedirs(self._datadir)
+
+        self._root_dir = os.path.join(self._datadir, "iso_root")
+        self._isolinux_dir = os.path.join(self._root_dir, "isolinux")
+
+        self._boot_iso = os.path.join(self._datadir, "boot.iso")
+
+        self.__created_files = []
         super(LibvirtProfile, self).__init__()
 
     def get_name(self):
-        self.name
+        return self.name
 
     def assign_to(self, host, additional_kargs=""):
         assert VMHost in host.__class__.mro()
-        self.__previous_values = self.__populate_dom(host, self.values)
 
-    def __populate_dom(self, host, values):
-        dom = etree.XML(host.dumpxml())
-        os_node = dom.xpath("/domain/os")
-        previous_values = {}
-        for node_name in ["kernel", "initrd", "cmdline"]:
-            child_nodes = os_node.xpath(node_name)
-            if child_nodes:
-                child_node = child_nodes[0]
-            else:
-                child_node = etree.SubElement(os_node, node_name)
+        self.__host = host
+        self.__additional_kargs = additional_kargs
 
-            previous_values[node_name] = child_node.text
-            child_node.text = values[node_name]
-
-        return previous_values
-
-    def enable_pxe(self, enable):
-        raise Exception("Not implemented.")
-
-    def kargs(self, kargs):
-        raise Exception("Not implemented.")
+        self.__mkiso(additional_kargs)
+        self.__host.change_cdrom_source(self._boot_iso)
 
     def revoke_from(self, host):
-        self.__populate_dom(host, self.__previous_values)
+        assert self.__host == host
+        try:
+            self.__host.change_cdrom_source(None)
+        except etree.XMLSyntaxError:
+            logger.debug("Can' revoke profile from %s, might be deleted." %
+                         host)
+
+    def kargs(self, kargs):
+        """get or set kargs
+        """
+        self.__mkiso(kargs)
+
+    def enable_pxe(self, host, enable):
+        if enable:
+            self.assign_to(host, self.__additional_kargs)
+        else:
+            self.revoke_from(host)
 
     def delete(self):
-        pass
+        for filename in self.__created_files:
+            logger.debug("Removing %s" % filename)
+            os.remove(filename)
+        self.__created_files = []
 
     def populate_with(self, kernel_file, initrd_file, kargs_file):
+        self.__prepare_iso_root(kernel_file, initrd_file, kargs_file)
+
+    def __prepare_iso_root(self, kernel_file, initrd_file, cmdline_file):
+        # Dir containing the ISO contents
+        if not os.path.isdir(self._root_dir):
+            os.mkdir(self._root_dir)
+
+        # Subdir containing isolinux+kernel stuff
+        if not os.path.isdir(self._isolinux_dir):
+            os.mkdir(self._isolinux_dir)
+
+        # Copy isolinux
+        isolinuxbin_dst = os.path.join(self._isolinux_dir,
+                                       os.path.basename(self.__isolinux_bin))
+        logger.debug("Copying %s -> %s" % (self.__isolinux_bin,
+                                           isolinuxbin_dst))
+        shutil.copyfile(self.__isolinux_bin, isolinuxbin_dst)
+
+        # Copy kernel+initrd
         files = {"kernel": kernel_file, "initrd": initrd_file,
-                 "cmdline": kargs_file}
-        for tag, filename in files.items():
-            with open(filename) as f:
-                data = f.read()
-            self.values[tag] = data
+                 "cmdline": cmdline_file}
+        for component in files.keys():
+            srcfilename = files[component]
+            dstfile = os.path.join(self._isolinux_dir, component)
+            logger.debug("Copying %s -> %s" % (srcfilename, dstfile))
+            shutil.copyfile(srcfilename, dstfile)
+            self.__created_files += [dstfile]
+
+    def __mkiso(self, additional_kargs):
+        """This is a hack as long as igor doesn't use isos directly
+        http://www.syslinux.org/wiki/index.php/ISOLINUX
+        """
+        cmdlinefile = os.path.join(self._isolinux_dir, "cmdline")
+
+        with open(cmdlinefile) as cmdline:
+            kargs = cmdline.read().strip()
+        logger.debug("Read kargs: %s" % kargs)
+        logger.debug("Additional kargs: %s" % additional_kargs)
+
+        cookie = self.__host.session.cookie
+        appendline = " ".join(kargs.split() + additional_kargs.split())
+        appendline = appendline.format(igor_cookie=cookie)
+
+        # Create isolinux.cfg
+        isolinuxcfgdata = "\n".join(["default {name}",
+                                     "label {name}",
+                                     "    kernel kernel",
+                                     "    initrd initrd",
+                                     "    append {kargs}"])
+
+        # Write config
+        isolinuxcfg = os.path.join(self._isolinux_dir, "isolinux.cfg")
+        with open(isolinuxcfg, "w") as cfg:
+            data = isolinuxcfgdata.format(name=self.name,
+                                          kargs=appendline)
+            cfg.write(data)
+
+        cmd = ["mkisofs",
+               "-output", self._boot_iso,
+               "-no-emul-boot",
+               "-eltorito-boot", "isolinux/isolinux.bin",
+               "-eltorito-catalog", "isolinux/boot.cat",
+               "-boot-load-size", "4",
+               "-boot-info-table",
+               self._root_dir]
+
+        subprocess.check_output(cmd)
 
 
 class ProfileOrigin(CommonLibvirtOrigin):
     """Origin for libvirt profiles
     """
 
-    __profiles = []
+    __profiles = None
+
+    def __init__(self, *args, **kwargs):
+        super(ProfileOrigin, self).__init__(*args, **kwargs)
+        self.__profiles = []
 
     def name(self):
         return "libvirt origin FIXME"
@@ -450,11 +556,16 @@ class ProfileOrigin(CommonLibvirtOrigin):
     def items(self):
         """Retrieve all available profiles
         """
+        logger.debug("Retrieving all libvirt profile items: %s" %
+                     self.__profiles)
         items = {}
         for p in self.__profiles:
             items[p.get_name()] = p
         return items
 
     def create_item(self, pname, kernel_file, initrd_file, kargs_file):
+        logger.debug("Creating libvirt profile: %s" % pname)
         profile = LibvirtProfile(pname)
         profile.populate_with(kernel_file, initrd_file, kargs_file)
+        self.__profiles.append(profile)
+        logger.debug("Created libvirt profile: %s" % profile)

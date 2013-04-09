@@ -36,6 +36,9 @@ CONFIG = config.parse_config()
 # Enabled backends:
 enabled_backends = CONFIG["backends.enabled"].split()
 primary_profile_backend = CONFIG["backends.primary_profile"]
+logger.info("Enabled backends: %s" % enabled_backends)
+assert primary_profile_backend in enabled_backends
+
 #
 # Now define our origins, where we get the items (hosts, profiles, …) from
 #
@@ -509,29 +512,6 @@ def profile_from_vmlinuz_put(pname):
         if not all([r in written_files.keys() for r in reqfiles]):
             bottle.abort(412, "Expecting %s files" % str(reqfiles))
         inventory.create_profile(oname=primary_profile_backend, pname=pname, \
-                                 **written_files)
-    _tmpdir.clean()
-
-
-@app.route('/profiles/<pname>', method='POST')
-def profile_from_vmlinuz_post(pname):
-    reqfiles = set(["kernel", "initrd", "kargs"])
-    _tmpdir = igor.utils.TemporaryDirectory(reqfiles)
-    with _tmpdir as tmpdir:
-        logger.debug("Using tmpdir %s" % tmpdir)
-        if not all([r in bottle.request.files.keys() for r in reqfiles]):
-            bottle.abort(412, "Not all required files given: %s" % reqfiles)
-        file_dict = {field: store for field, store \
-                                  in bottle.request.files.items()}
-        written_files = {}
-        for filename in reqfiles:
-            store = file_dict[filename]
-            dstn = os.path.join(tmpdir, os.path.basename(store.filename))
-            with open(dstn, "wb") as d:
-                logger.debug("Writing '%s'" % d)
-                d.write(store.file.read())
-                written_files[filename] = dstn
-        inventory.create_profile(oname="cobbler", pname=pname, \
                                  **written_files)
     _tmpdir.clean()
 

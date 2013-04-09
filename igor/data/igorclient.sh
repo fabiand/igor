@@ -388,8 +388,7 @@ add_profile_from_iso() # Add a new profile from a livecd iso <isofilename>
   KARGS=kargs
   # Get the default kargs from the isolinux cfg and remove some kargs to not exceed the 256 chars limit of pxelinux
   echo $(sed -n "/APPEND/s/[[:space:]]*APPEND//p" tftpboot/pxelinux.cfg/default \
-         | egrep -o "(root|ro|live|check|rhgb|quiet|rd)[^[:space:]]*") > $KARGS
-  echo "$ADDITIONAL_KARGS" >> $KARGS
+         | egrep -o "(root|ro|live|check|rhgb|quiet|rd)[^[:space:]]*") $ADDITIONAL_KARGS > $KARGS
   ln tftpboot/$KERNEL $KERNEL
   ln tftpboot/$INITRD $INITRD
   debug "Uploading files"

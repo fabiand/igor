@@ -120,6 +120,9 @@ class Profile(UpdateableObject):
     def delete(self):
         raise Exception("Not implemented.")
 
+    def __repr__(self):
+        return "<%s name='%s'>" % (self.__class__.__name__, self.get_name())
+
     def __to_dict__(self):
         return {
                 "name": self.get_name(),
@@ -224,6 +227,7 @@ class Inventory(object):
         return all_items
 
     def _lookup(self, k, q=None):
+        logger.debug("Looking up %s: %s" % (k, q))
         if q is None:
             return self._items(k)
         item = None

@@ -19,13 +19,13 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import main
+import os
 import threading
 import time
-import os
+import utils
 import yaml
 
-import main
-import utils
 
 logger = logging.getLogger(__name__)
 
@@ -519,8 +519,8 @@ class JobCenter(object):
     def __init__(self, session_path, hooks_path=None):
         self.session_path = session_path
         self.hooks_path = hooks_path
-        assert os.path.exists(self.session_path), \
-               "Session path does not exist: %s" % session_path
+        if not os.path.exists(self.session_path):
+            os.makedirs(self.session_path)
 
         logger.debug("JobCenter opened in %s" % self.session_path)
 

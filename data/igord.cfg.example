@@ -27,7 +27,7 @@ path = /etc/igor.d/
 
 [Session]
 # Path to store the sessions in
-path = /srv/igord/
+path = /var/run/igord/
 
 
 [Cobbler]

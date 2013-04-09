@@ -38,12 +38,14 @@ def run(cmd, with_retval=False):
                             stdout=subprocess.PIPE, \
                             stderr=subprocess.PIPE)
     (stdout, stderr) = child.communicate()
+    # pylint: disable-msg=E1101
     child.wait()
     if stderr:
         logger.warning(stderr)
     r = str(stdout).strip()
     if with_retval:
         r = (child.returncode, str(stdout).strip())
+    # pylint: enable-msg=E1101
     return r
 
 

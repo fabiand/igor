@@ -24,7 +24,7 @@ setup(
     scripts=['bin/igord'],
     data_files=[('lib/systemd/system', ['data/igord.service']),
                 ('/etc/igord', ['data/igord.cfg.example']),
-                ('/srv/igord', []),
+                ('/var/run/igord', []),
                 ('lib/igord/testcases', [])], # FIXME testcases are missing
     url='http://www.gitorious.org/ovirt/igord',
     license='LGPLv2',
