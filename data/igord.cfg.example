@@ -63,5 +63,5 @@ network_configuration  = network=default
 
 [Backends]
 # A space separated list of enabled backends
-enable = files libvirt cobbler
+enabled = files libvirt cobbler
 primary_profile = cobbler
