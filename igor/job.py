@@ -222,11 +222,11 @@ class Job(object):
             logger.debug("Finished step %s (%s) succesfully" % (n, \
                                                         current_testcase.name))
         elif is_success is False and current_testcase.expect_failure is True:
-            logger.info("Finished step %s (%s) unsucsessfull as expected" % ( \
+            logger.info("Finished step %s (%s) unsuccessful as expected" % ( \
                                                         n, \
                                                         current_testcase.name))
         elif is_success is False:
-            logger.info("Finished step %s (%s) unsucsessfull" % (n, \
+            logger.info("Finished step %s (%s) unsuccessful" % (n, \
                                                         current_testcase.name))
             self.state(s_failed)
 
