@@ -52,6 +52,7 @@ class Job(object):
     finish_step(..), [...] | abort()
     end()
     """
+    job_center = None
     session_path = None
 
     cookie = None
@@ -75,9 +76,10 @@ class Job(object):
 
     _watchdog = None
 
-    def __init__(self, cookie, jobspec, session_path="/tmp"):
+    def __init__(self, job_center, cookie, jobspec, session_path="/tmp"):
         """Create a new job to run the testsuite on host prepared with profile
         """
+        self.job_center = job_center
         self.session_path = session_path
 
         assert cookie is not None, "Cookie can not be None"
@@ -240,6 +242,8 @@ class Job(object):
             logger.debug("Awaiting results for step %s: %s" % (n + 1, \
                                             self.testsuite.testcases()[n + 1]))
 
+        self.job_center._run_hook("post-testcase", self.cookie)
+
         self.current_step += 1
         return self.current_step
 
@@ -343,6 +347,7 @@ class Job(object):
             self._state = new_state
             self.state_changed.set()
             self.state_changed.clear()
+            self.job_center._run_hook("post-state-change", self.cookie)
         return self._state
 
     def result(self):
@@ -557,7 +562,7 @@ class JobCenter(object):
         """
         cookie = self._generate_cookie(cookie_req)
 
-        j = Job(cookie, jobspec, session_path=self.session_path)
+        j = Job(self, cookie, jobspec, session_path=self.session_path)
         j.created_at = time.time()
 
         self.jobs[cookie] = j
@@ -650,7 +655,8 @@ class JobCenter(object):
         return self._running_plans[name].stop()
 
     def _run_hook(self, hook, cookie):
-        allowed_hooks = ["pre-job", "post-job"]
+        allowed_hooks = ["pre-job", "post-job", "post-testcase",
+                         "post-state-change"]
         if hook in allowed_hooks:
             hook_dir = self.hooks_path.format(hook=hook)
             if not os.path.exists(hook_dir):

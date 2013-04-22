@@ -21,8 +21,9 @@ setup(
     author_email='fabiand@fedoraproject.org',
     packages=['igor', 'igor.backends'],
     package_data={'igor': ['data/*.xsl', 'data/*.sh']},
-    scripts=['bin/igord'],
-    data_files=[('lib/systemd/system', ['data/igord.service']),
+    scripts=['bin/igord', 'bin/igord-event-publisher'],
+    data_files=[('lib/systemd/system', ['data/igord.service',
+                                        'data/igord-event-publisher.service']),
                 ('/etc/igord', ['data/igord.cfg.example']),
                 ('/var/run/igord', []),
                 ('lib/igord/testcases', [])], # FIXME testcases are missing

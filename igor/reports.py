@@ -28,6 +28,7 @@ import utils
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 TRANSFORM_MAP = {
     "job-rst": os.path.join(BASE_PATH, "data", "job-report.rst.xsl"),
+    "job-junit": os.path.join(BASE_PATH, "data", "report.junit.xsl"),
     "testplan-rst": os.path.join(BASE_PATH, "data", "testplan-report.rst.xsl"),
     "testplan-junit-xml": os.path.join(BASE_PATH, "data", \
                                                   "testplan-report.junit.xsl"),
@@ -46,6 +47,10 @@ def job_status_to_report(d):
     """
     return _map_transform(d, "job-rst")
 
+def job_status_to_junit(d):
+    """Transform a job status dict to a report
+    """
+    return _map_transform(d, "job-junit")
 
 def testplan_status_to_report(d):
     """Transform a testplan status dict to a report
