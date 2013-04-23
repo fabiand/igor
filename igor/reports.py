@@ -28,7 +28,7 @@ import utils
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 TRANSFORM_MAP = {
     "job-rst": os.path.join(BASE_PATH, "data", "job-report.rst.xsl"),
-    "job-junit": os.path.join(BASE_PATH, "data", "report.junit.xsl"),
+    "job-junit": os.path.join(BASE_PATH, "data", "job-report.junit.xsl"),
     "testplan-rst": os.path.join(BASE_PATH, "data", "testplan-report.rst.xsl"),
     "testplan-junit-xml": os.path.join(BASE_PATH, "data", \
                                                   "testplan-report.junit.xsl"),
@@ -50,7 +50,7 @@ def job_status_to_report(d):
 def job_status_to_junit(d):
     """Transform a job status dict to a report
     """
-    return _map_transform(d, "job-junit")
+    return _map_transform(d, "job-junit", "job")
 
 def testplan_status_to_report(d):
     """Transform a testplan status dict to a report
@@ -61,7 +61,7 @@ def testplan_status_to_report(d):
 def testplan_status_to_junit_report(d):
     """Transform a testplan status dict to a junit report
     """
-    return _map_transform(d, "testplan-junit-xml")
+    return _map_transform(d, "testplan-junit-xml", "testplan")
 
 
 def _map_transform(d, t, rootname="status"):
@@ -73,10 +73,18 @@ def transform_dict(stylefile, d, rootname):
     """Apply a transformation to a dict
     """
     xml = utils.obj2xml(rootname, d)
+    return transform_xml(stylefile, xml)
+
+
+def transform_xml(stylefile, xml):
+    """Transform an XML Object into another XML objcet using a stylesheet
+    """
     transform = etree.XSLT(etree.parse(stylefile))
     report = transform(xml)
     return report
 
 
 def to_xml_str(etree_obj):
+    """Convert a Tree into a str
+    """
     return etree.tostring(etree_obj, pretty_print=True)

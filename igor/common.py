@@ -32,6 +32,7 @@ class routes(object):
     job_abort = '/jobs/<cookie>/abort'
     job_status = '/jobs/<cookie>/status'
     job_report = '/jobs/<cookie>/report'
+    job_report_junit = '/jobs/<cookie>/report/junit'
     job_testsuite = '/jobs/<cookie>/testsuite'
     job_artifacts = '/jobs/<cookie>/artifacts'
     job_artifacts_archive = '/jobs/<cookie>/archive' # FIXME

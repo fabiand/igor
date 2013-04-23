@@ -150,6 +150,7 @@ class Job(object):
         logger.debug("Assigning profile %s" % self.profile.get_name())
         self.profile.assign_to(self.host, self.additional_kargs)
         self.state(s_prepared)
+        self.job_center._run_hook("post-setup", self.cookie)
 
     @utils.synchronized(_high_state_change_lock)
     def start(self):
@@ -164,6 +165,7 @@ class Job(object):
         self.state(s_running)
         self.host.start()
         self.watchdog.start()
+        self.job_center._run_hook("post-start", self.cookie)
 
     @utils.synchronized(_high_state_change_lock)
     def finish_step(self, n, is_success, note=None, is_abort=False,
@@ -266,6 +268,7 @@ class Job(object):
         notes.append(note)
         data = yaml.dump_all(notes)
         self.add_artifact(filename, data)
+        self.job_center._run_hook("post-annotate", self.cookie)
 
     def annotations(self, step="current"):
         filename = "annotations.yaml"
@@ -324,6 +327,7 @@ class Job(object):
         self.profile.revoke_from(self.host)
         self._ended = True
         self._ended_at = time.time()
+        self.job_center._run_hook("post-end", self.cookie)
 
     def ended_within(self, span):
         return (time.time() - self._ended_at) < span
@@ -347,7 +351,6 @@ class Job(object):
             self._state = new_state
             self.state_changed.set()
             self.state_changed.clear()
-            self.job_center._run_hook("post-state-change", self.cookie)
         return self._state
 
     def result(self):
@@ -491,6 +494,7 @@ class Job(object):
             "host": self.host.get_name(),
             "testsuite": self.testsuite.__to_dict__(),
             "state": self.state(),
+            "is_endstate": self.state() in endstates,
             "current_step": self.current_step,
             "results": self.results,
             "timeout": self.timeout(),
@@ -656,15 +660,18 @@ class JobCenter(object):
 
     def _run_hook(self, hook, cookie):
         allowed_hooks = ["pre-job", "post-job", "post-testcase",
-                         "post-state-change"]
-        if hook in allowed_hooks:
-            hook_dir = self.hooks_path.format(hook=hook)
-            if not os.path.exists(hook_dir):
-                return
-            for hookfile in os.listdir(hook_dir):
-                script = os.path.join(hook_dir, hookfile)
-                logger.debug("Running hook: %s" % script)
-                os.system(script + " " + cookie)
+                         "post-setup", "post-start", "post-annotate",
+                         "post-end"]
+        cmd_tpl = "{script} {hook} {cookie}"
+        if hook in allowed_hooks and os.path.isdir(self.hooks_path):
+            for scriptfile in os.listdir(self.hooks_path):
+                script = os.path.join(self.hooks_path, scriptfile)
+                cmd = cmd_tpl.format(script=script, hook=hook,
+                                     cookie=cookie)
+                logger.debug("Running hook: %s" % cmd)
+                os.system(cmd)
+        elif hook not in allowed_hooks:
+            logger.warning("Unknown hook: %s" % hook)
 
     class PlanWorker(threading.Thread):
         jc = None

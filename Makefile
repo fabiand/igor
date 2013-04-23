@@ -1,5 +1,5 @@
 
-PYTHONSOURCES=$(shell find igor -name \*.py -not -path */hacks.py) bin/igord
+PYTHONSOURCES=$(shell find igor -name \*.py -not -path */hacks.py) bin/igord bin/igorc
 XMLSOURCES=$(shell find . -name \*.xml -or -name \*.xsl)
 
 SHELL := /bin/bash

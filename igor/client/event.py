@@ -22,15 +22,13 @@
 # DESCRTIPTION
 #
 
+from igor import reports
 from lxml import etree
-import os
-import popen2
 import socket
-import subprocess
 import sys
-import urllib2
 
 REPORTBASE="http://{host}:{port}/jobs/{sessionid}/status?format=xml"
+
 
 def follow_events(server, port):
     family = socket.AF_INET6 if ":" in server else socket.AF_INET
@@ -43,24 +41,25 @@ def follow_events(server, port):
             yield event.attrib
     sf.close()
 
-def retrieve_report(remote, port, sessionid):
-    xsltfile = os.path.dirname(os.path.abspath(__file__)) + "/../data/report.junit.xsl"
+
+def __FIXME_retrieve_report(remote, port, sessionid):
     url = REPORTBASE.format(host=remote, port=port, sessionid=sessionid)
-    print "Fetching %s" % url
+    print("Fetching %s" % url)
     #statusdata = urllib2.urlopen(url).read()
     _statusfile = "/home/fdeutsch/dev/ovirt/igor/daemon/igor/data/st.xml"
     _junitfile = "/home/fdeutsch/dev/ovirt/igor/daemon/igor/data/st.junit.xml"
     statusdata = open(_statusfile).read()
-    #print statusdata
-    stdout, stdin = popen2.popen4(["xsltproc", xsltfile, "-"])
-    stdin.write(statusdata)
-    stdin.close()
-    junitdata = stdout.read()
-    stdout.close()
+
+    xsltfile = reports.TRANSFORM_MAP["job-junit"]
+    statusxml = etree.XML(statusdata)
+    junitxml = reports.transform_xml(xsltfile, statusxml)
+    junitdata = reports.to_xml_str(junitxml)
+
     return junitdata
+
 
 if __name__ == "__main__":
     remote=sys.argv[1]
     port=8090
     for evnt in follow_events(remote, port):
-        retrieve_report(evnt["session"])
+        __FIXME_retrieve_report(remote, port, evnt["session"])

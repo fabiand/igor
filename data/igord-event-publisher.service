@@ -1,0 +1,9 @@
+[Unit]
+Description=Igor event publisher
+Requires=igord.service
+
+[Service]
+ExecStart=/usr/bin/igord-event-publisher
+
+[Install]
+WantedBy=default.target

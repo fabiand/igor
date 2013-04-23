@@ -9,14 +9,18 @@
 
 <xsl:output method="xml" indent="yes"/>
 
-<xsl:template match="/result">
-<xsl:apply-templates select="testsuite"/>
+<xsl:template match="/">
+    <xsl:apply-templates />
+</xsl:template>
+
+<xsl:template match="job">
+    <xsl:apply-templates select="testsuite" />
 </xsl:template>
 
 <xsl:template match="testsuite">
 <testsuite>
   <xsl:variable name="id" select="position()" />
-  <xsl:variable name="job" select="/result" />
+  <xsl:variable name="job" select=".." />
 
   <xsl:attribute name="name">     <xsl:value-of select="name"/></xsl:attribute>
   <xsl:attribute name="hostname"> <xsl:value-of select="$job/host"/></xsl:attribute>
@@ -47,6 +51,9 @@
     <property name="status">
       <xsl:attribute name="value"><xsl:value-of select="$job/state"/></xsl:attribute>
     </property>
+    <property name="is_endstate">
+      <xsl:attribute name="value"><xsl:value-of select="$job/is_endstate"/></xsl:attribute>
+    </property>
   </properties>
 
   <xsl:for-each select="testsets/testcases">
@@ -66,35 +73,45 @@
   <xsl:variable name="result" select="$job/results[$id]" />
   <xsl:attribute name="name"><xsl:value-of select="concat($id, '-', name)"/></xsl:attribute>
   <xsl:attribute name="time"><xsl:value-of select="$result/runtime"/></xsl:attribute>
-  <xsl:attribute name="testset"><xsl:value-of select="../name"/></xsl:attribute>
-  <xsl:if test="$job/state = 'running' and count($job/results)+1 = $id">
-    <xsl:attribute name="running">running</xsl:attribute>
-    <error>
-    <xsl:attribute name="message">Running, awaiting results</xsl:attribute>
-    </error>
-  </xsl:if>
-  <xsl:if test="$job/state = 'running' and count($job/results)+1 &lt; $id">
-    <xsl:attribute name="queued">queued</xsl:attribute>
-    <error>
-    <xsl:attribute name="message">Queued</xsl:attribute>
-    </error>
-  </xsl:if>
-  <xsl:if test="$result/is_passed = 'False'">
-    <failure>
-    <xsl:attribute name="message"><xsl:value-of select="$result/note"/></xsl:attribute>
-    </failure>
-  </xsl:if>
+  <xsl:attribute name="part-of-testset"><xsl:value-of select="../name"/></xsl:attribute>
+
   <xsl:if test="$result/is_skipped = 'True'">
     <xsl:attribute name="skipped">skipped</xsl:attribute>
     <error>
     <xsl:attribute name="message">Skipped</xsl:attribute>
     </error>
   </xsl:if>
-  <xsl:if test="/status/status = 'stopped' and count($job/results) &lt; $id">
+  <xsl:if test="$result/is_abort = 'True'">
+    <xsl:attribute name="aborted">aborted</xsl:attribute>
+    <error>
+    <xsl:attribute name="message">aborted</xsl:attribute>
+    </error>
+  </xsl:if>
+  <xsl:if test="$job/is_endstate = 'False' and count($job/results)+1 = $id">
+    <xsl:attribute name="running">running</xsl:attribute>
+    <error>
+    <xsl:attribute name="message">Running, awaiting results</xsl:attribute>
+    </error>
+  </xsl:if>
+  <xsl:if test="$job/is_endstate = 'False' and count($job/results)+1 &lt; $id">
+    <xsl:attribute name="queued">queued</xsl:attribute>
+    <error>
+    <xsl:attribute name="message">Queued</xsl:attribute>
+    </error>
+  </xsl:if>
+  <xsl:if test="$job/is_endstate = 'True' and count($job/results) &lt; $id">
+  <xsl:attribute name="notrun">notrun</xsl:attribute>
     <error>
     <xsl:attribute name="message">Not run</xsl:attribute>
     </error>
   </xsl:if>
+
+  <xsl:if test="$result/is_passed = 'False'">
+    <failure>
+    <xsl:attribute name="message"><xsl:value-of select="$result/note"/></xsl:attribute>
+    </failure>
+  </xsl:if>
+
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]><!--xsl:value-of select="$result/log" /--></system-err>
 </testcase>

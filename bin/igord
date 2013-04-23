@@ -208,6 +208,15 @@ def job_report(cookie):
     return str(igor.reports.job_status_to_report(j.__to_dict__()))
 
 
+@app.route(common.routes.job_report_junit)
+def job_report_junit(cookie):
+    if cookie not in jc.jobs:
+        bottle.abort(404, "Unknown job '%s'" % cookie)
+    j = jc.jobs[cookie]
+    bottle.response.content_type = "application/xml; charset=utf8"
+    return str(igor.reports.job_status_to_junit(j.__to_dict__()))
+
+
 @app.route(common.routes.job_step_skip)
 def skip_step(cookie, n):
     if cookie not in jc.jobs:
@@ -439,7 +448,7 @@ def testplan_junit_report(name):
     if name not in inventory.plans():
         bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.status_plan(name)
-    bottle.response.content_type = "text/plain; charset=utf8"
+    bottle.response.content_type = "application/xml; charset=utf8"
     xml = igor.reports.testplan_status_to_junit_report(r)
     return igor.reports.to_xml_str(xml)
 

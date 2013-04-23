@@ -172,8 +172,8 @@ class Log(object):
 
 
 if False:
-    print ansi("foo").green.bold
-    print ansi("_underline_ and *bold*").markup
+    print(ansi("foo").green.bold)
+    print(ansi("_underline_ and *bold*").markup)
 
     log = Log()
 
@@ -204,6 +204,9 @@ class LogBuilder(object):
         root = etree.XML(txt)
         return self.build(root)
 
+    def from_xml(self, xml):
+        return self.build(xml)
+
     def build(self, node):
         builder_for_node = {
             "testsuites": self._build_testsuites,
@@ -227,10 +230,10 @@ class LogBuilder(object):
 
         props = {e.attrib["name"]: e.attrib["value"]
                  for e in node.findall("properties/property")}
-        self.log.debug(u"Session: %s" % node.attrib["id"])
-        self.log.debug(u"Host: %s" % props["host"])
-        self.log.debug(u"Profile: %s" % props["profile"])
-        self.log.debug(u"Cmdline 𝚫: %s" % props["additional_kargs"])
+        self.log.writeln(u"Session: %s" % node.attrib["id"])
+        self.log.writeln(u"Host: %s" % props["host"])
+        self.log.writeln(u"Profile: %s" % props["profile"])
+        self.log.writeln(u"Cmdline 𝚫: %s" % props["additional_kargs"])
 
         with self.log.indented():
             for testcase in node.iter("testcase"):
@@ -257,6 +260,8 @@ class LogBuilder(object):
         is_skipped = "skipped" in node.attrib
         is_running = "running" in node.attrib
         is_queued = "queued" in node.attrib
+        is_notrun = "notrun" in node.attrib
+        is_aborted = "aborted" in node.attrib
 
         def sanitize_name(name):
             name = name.replace("_", " ")
@@ -269,27 +274,30 @@ class LogBuilder(object):
             return name
         # ⏲   ✓ ☀ ⛖ ⛗   ✗ ⛔ ⛈ ☁   ⛅
 
-        testset = node.attrib["testset"]
+        testset = node.attrib["part-of-testset"]
         if testset != self._last_testset:
             testsetname = sanitize_name(testset)
             self.log.subhead("\n%s" % testsetname)
             self._last_testset = testset
 
-        _fmt = ansi(" %s%s")
-        if is_failure:
+        _fmt = ansi(" {name}{time}")
+        if is_aborted:
+            fmt = ansi(u"⛔" + _fmt).white
+        elif is_failure:
             fmt = ansi(u"⛈" + _fmt).red
-        elif is_skipped:
-            fmt = ansi(u"⏩" + _fmt).yellow
         elif is_running:
             fmt = ansi(u"⏲" + _fmt).magenta
-        elif is_queued:
-            fmt = ansi(u"◌" + _fmt).white
+        elif is_skipped:
+            fmt = ansi(u"⏩" + _fmt).yellow
+        elif is_queued or is_notrun:
+            fmt = ansi(u"◌").white + _fmt
         else:
             fmt = ansi(u"☀").green + _fmt
+
         name = sanitize_name(node.attrib["name"])
         time = " (%.2fs)" % float(node.attrib["time"]) \
             if node.attrib["time"] else ""
-        self.log.write(fmt % (name, time))
+        self.log.write(fmt.format(name=name, time=time))
 
 
 

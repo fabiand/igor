@@ -404,8 +404,7 @@ class Testplan(object):
         return str(self.__to_dict__())
 
     def __to_dict__(self):
-        return {
-                "name": self.name,
+        return {"name": self.name,
                 "description": self.description,
                 "job_layouts": self.job_layouts,
                 "timeout": self.timeout()
@@ -460,13 +459,12 @@ class Testsuite(object):
     def __to_dict__(self):
         """Is used to derive a JSON and XML description.
         """
-        return { \
-            "name": self.name,
-            "timeout": self.timeout(),
-            "testsets": [t.__to_dict__() for t in self.testsets],
-            "libs": self.libs(),
-            "description": self.description
-            }
+        return {"name": self.name,
+                "timeout": self.timeout(),
+                "testsets": [t.__to_dict__() for t in self.testsets],
+                "libs": self.libs(),
+                "description": self.description
+                }
 
     def get_archive(self, subdir="testcases"):
         """Creates an archive containing all testcases and optional testcase
@@ -514,14 +512,15 @@ class Testsuite(object):
         """
         stepn = 0
         for testcase in self.testcases():
-            logger.debug("Adding testcase #%s: %s" % (stepn, \
+            logger.debug("Adding testcase #%s: %s" % (stepn,
                                                       testcase.name))
             if testcase.filename is None:
                 logger.warning("Empty testcase: %s" % testcase.name)
                 continue
 
-            arcname = os.path.join(subdir, "%d-%s" % (stepn, \
-                                      os.path.basename(testcase.filename)))
+            arcname = os.path.join(subdir, "%d-%s" %
+                                   (stepn,
+                                   os.path.basename(testcase.filename)))
             self.__add_testcase_to_archive(archive, arcname, testcase)
             stepn += 1
 
@@ -543,7 +542,7 @@ class Testsuite(object):
         if os.path.exists(testcaseextradir):
             logger.debug("Adding extra dir: %s" % testcaseextradir)
             arcname += ".d"
-            archive.add(testcaseextradir, arcname=arcname, \
+            archive.add(testcaseextradir, arcname=arcname,
                         recursive=True)
 
     def __add_data_to_archive(self, archive, arcname, data):
@@ -558,15 +557,15 @@ class Testsuite(object):
     def __add_libs_to_archive(self, archive, subdir):
         for libname, libpath in self.libs().items():
             if not os.path.exists(libpath):
-                logger.warning(("Adding lib '%s' / '%s' failed " + \
-                                "because path does not exist.") % ( \
-                                    libname, libpath))
+                msg = ("Adding lib '%s' / '%s' failed because path does " +
+                       "not exist.") % (libname, libpath)
+                logger.warning(msg)
                 continue
 
             arcname = os.path.join(subdir, libname)
             if arcname in archive.getnames():
-                logger.warning("Adding lib failed because arcname " + \
-                             "with name '%s' already exists" % libname)
+                logger.warning("Adding lib failed because arcname " +
+                               "with name '%s' already exists" % libname)
                 continue
 
             logger.debug("Adding library '%s' from '%s'" % (libname, libpath))
@@ -634,12 +633,12 @@ class Testset(object):
         """Convenience function to add a testcase by filename or as an object.
         """
         for c in cs:
-            self._testcases.append(c if isinstance(c, Testcase) \
-                                     else Testcase(c))
+            self._testcases.append(c if isinstance(c, Testcase)
+                                   else Testcase(c))
 
     def __str__(self):
-        return "%s: %s" % (self.name, str(["%s: %s" % (n, c) for n, c in \
-                                                enumerate(self.testcases())]))
+        return "%s: %s" % (self.name, str(["%s: %s" % (n, c) for n, c in
+                                           enumerate(self.testcases())]))
 
     def __to_dict__(self):
         """Is used to derive a JSON and XML description.
@@ -704,7 +703,7 @@ class TestSession(UpdateableObject):
 
         self.do_cleanup = cleanup
         self.cookie = cookie
-        self.dirname = tempfile.mkdtemp(suffix="-" + self.cookie, \
+        self.dirname = tempfile.mkdtemp(suffix="-" + self.cookie,
                                         dir=session_path)
         os.mkdir(self.__artifacts_path())
         run("chmod -R a+X '%s'" % self.dirname)
@@ -719,9 +718,8 @@ class TestSession(UpdateableObject):
 
         remaining_files = os.listdir(self.dirname)
         if len(remaining_files) > 0:
-            logger.warning("Remaining files for session '%s': %s" % ( \
-                                                            self.cookie, \
-                                                            remaining_files))
+            logger.warning("Remaining files for session '%s': %s" %
+                           (self.cookie, remaining_files))
         else:
             logger.debug("Removing testdir '%s'" % self.dirname)
             os.rmdir(self.dirname)
@@ -733,8 +731,8 @@ class TestSession(UpdateableObject):
             try:
                 os.remove(artifact)
             except Exception as e:
-                logger.warning("Exception while removing '%s': %s" % \
-                                                         (artifact, e.message))
+                logger.warning("Exception while removing '%s': %s" %
+                               (artifact, e.message))
 
     def __artifacts_path(self, name=""):
         """Returns the absoulte path to the artifacts folder
@@ -777,7 +775,7 @@ class TestSession(UpdateableObject):
         dirname = self.__artifacts_path()
         fns = os.listdir(dirname)
         if use_abs:
-            fns = [self.__artifacts_path(fn) \
+            fns = [self.__artifacts_path(fn)
                    for fn in fns]
         return fns
 
@@ -786,8 +784,8 @@ class TestSession(UpdateableObject):
         """
         selection = selection or self.artifacts()
         container = io.BytesIO()
-        logger.debug("Preparing artifacts archive for session %s" % \
-                                                                   self.cookie)
+        logger.debug("Preparing artifacts archive for session %s" %
+                     self.cookie)
         with tarfile.open(fileobj=container, mode="w:bz2") as archive:
             for artifact in selection:
                 if artifact not in self.artifacts():

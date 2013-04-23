@@ -270,7 +270,8 @@ class NewVMHost(VMHost):
             "noautoconsole": None,      # Prevents opening a window
             "import": None,
             "dry-run": None,
-            "print-xml": None
+            "print-xml": None,
+            "force": None
         }
 
         virtinstall_args.update(self.custom_install_args)
