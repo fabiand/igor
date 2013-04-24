@@ -40,7 +40,7 @@ convert_to_xml()
 {
   debug "Preparing translator"
   sed -u \
-      -e "/.\+/ s/\(.*\)/<event type='update' session='&' \/>/" \
+      -e "/.\+/ s/\(.*\)\s\+\(.*\)/<event type='\\1' session='\\2' \/>/" \
       -e "/^\s*\$/ c <noop/>"
 }
 
