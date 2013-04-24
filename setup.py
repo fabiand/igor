@@ -16,15 +16,17 @@ def build_testcases_filelist(dst, path):
 
 setup(
     name='igor',
-    version='0.3.0',
+    version='0.4.0',
     author='Fabian Deutsch',
     author_email='fabiand@fedoraproject.org',
     packages=['igor', 'igor.backends'],
     package_data={'igor': ['data/*.xsl', 'data/*.sh']},
-    scripts=['bin/igord', 'bin/igord-event-publisher'],
+    scripts=['bin/igord', 'bin/igorc'],
     data_files=[('lib/systemd/system', ['data/igord.service',
                                         'data/igord-event-publisher.service']),
                 ('/etc/igord', ['data/igord.cfg.example']),
+                ('/etc/igord/hook.d', ['data/notify-event-publisher-hook']),
+                ('libexec', ['bin/igord-event-publisher']),
                 ('/var/run/igord', []),
                 ('lib/igord/testcases', [])], # FIXME testcases are missing
     url='http://www.gitorious.org/ovirt/igord',

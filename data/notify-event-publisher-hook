@@ -1,0 +1,10 @@
+#
+# This is a small hook which notifies the event publisher of new events
+#
+
+HOOKNAME=$1
+COOKIE=$2
+
+EVENTFILE=/tmp/igord-events
+
+echo $COOKIE > $EVENTFILE
