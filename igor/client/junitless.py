@@ -230,9 +230,9 @@ class LogBuilder(object):
 
         props = {e.attrib["name"]: e.attrib["value"]
                  for e in node.findall("properties/property")}
-        self.log.writeln(u"Session: %s" % node.attrib["id"])
-        self.log.writeln(u"Host: %s" % props["host"])
-        self.log.writeln(u"Profile: %s" % props["profile"])
+        self.log.writeln(u"Session:  %s" % node.attrib["id"])
+        self.log.writeln(u"Host:     %s" % props["host"])
+        self.log.writeln(u"Profile:  %s" % props["profile"])
         self.log.writeln(u"Cmdline 𝚫: %s" % props["additional_kargs"])
 
         with self.log.indented():

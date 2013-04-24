@@ -39,9 +39,8 @@ event_stream()
 convert_to_xml()
 {
   debug "Preparing translator"
-  sed -u \
-      -e "/.\+/ s/\(.*\)\s\+\(.*\)/<event type='\\1' session='\\2' \/>/" \
-      -e "/^\s*\$/ c <noop/>"
+  sed -n -u \
+      -e "/.\+\s\+.\+/ s/\(.*\)\s\+\(.*\)/<event type='\\1' session='\\2' \/>/ p"
 }
 
 publish()
