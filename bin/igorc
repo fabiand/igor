@@ -27,6 +27,7 @@ import cmd
 import logging
 import os
 import shlex
+import subprocess
 import urlparse
 
 
@@ -261,6 +262,17 @@ class IgorClient(cmd.Cmd):
 
         except KeyboardInterrupt:
             self.logger.debug("event watcher got interrupted.")
+
+    def do_firewall_open(self, args):
+        """firewall_open
+        Open relevant ports
+        """
+        ports = [self.ctx.port, self.ctx.event_port]
+        self.logger.debug("About to open the relevant TCP ports: %s" % ports)
+        for port in ports:
+            print("Opening %s/tcp" % port)
+            print(subprocess.check_output(["sudo", "firewall-cmd",
+                                           "--add-port=%s/tcp" % port]))
 
 
 if __name__ == "__main__":
