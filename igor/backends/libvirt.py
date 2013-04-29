@@ -18,6 +18,7 @@
 #
 # -*- coding: utf-8 -*-
 
+from igor.partition import DiskImage
 from igor.utils import run, dict_to_args
 from lxml import etree
 import igor.main
@@ -50,6 +51,10 @@ class VMImage(igor.partition.Layout):
 
 class LibvirtConnection(object):
     connection_uri = None
+    poolname = "default"
+
+    def __init__(self, connection_uri):
+        self.connection_uri = connection_uri
 
     def virsh(self, cmd):
         return LibvirtConnection._virsh(cmd, self.connection_uri)
@@ -57,6 +62,76 @@ class LibvirtConnection(object):
     @staticmethod
     def _virsh(cmd, connection_uri):
         return run("LC_ALL=C virsh --connect='%s' %s" % (connection_uri, cmd))
+
+    def volume_list(self):
+        data = self.virsh("vol-list --pool " +
+                          "'{pool}'".format(pool=self.poolname))
+        assert data
+
+        vols = []
+        for line in data.strip().split("\n")[2:]:
+            vol, path = re.split("\s+", line, 1)
+            vols.append(vol)
+        return vols
+
+    def create_volume(self, image, volname=None):
+        """Create a volume on the server side and populate it
+
+        Args:
+            image: VMMImage to be uploaded and created
+            volname: (optional) name of the new volume
+
+        Returns:
+            The pool/volname on the server side
+        """
+        if not DiskImage in type(image).mro():
+            raise RuntimeError("Unknown type: %s" % image)
+        disk = image.filename
+        volname = volname or os.path.basename(disk)
+        poolvol = "%s/%s" % (self.poolname, volname)
+        if volname not in self.volume_list():
+            logger.debug("Creating volume")
+            self.virsh(("vol-create-as --name '%s' --capacity '%s' " +
+                        "--format '%s' --pool '%s'") %
+                        (volname, image.size, image.format, self.poolname))
+        logger.debug("Uploading disk image '%s' to volume '%s'" %
+                     (disk, poolvol))
+        self.upload_volume(volname, disk)
+        return poolvol
+
+    def upload_volume(self, volname, filename):
+        """Upload a file to a volume
+
+        Args:
+            volanme: Name of the volume on the server side
+            filename: Filename of the local file to be uploaded
+        """
+        self.virsh(("vol-upload --vol '{vol}' --file '{file}' " +
+                    "--pool '{pool}'").format(vol=volname,
+                                              file=filename,
+                                              pool=self.poolname))
+
+    def delete_volume(self, volname):
+        """Delete a volume on the server side
+
+        Args:
+            volname: Volume to be deleted
+        """
+        self.virsh("vol-delete --vol " +
+                   "'{vol}' --pool '{pool}'".format(pool=self.poolname,
+                                                    vol=volname))
+
+    def volume_path(self, volname):
+        """Return the FS path 8server side) for the volume
+
+        Args:
+            volname: The name of the volume
+        Returns:
+            The absolute pathname for the folume on the server
+        """
+        return self.virsh(("vol-path --pool '{pool}' " +
+                           "{vol}").format(pool=self.poolname,
+                                           vol=volname))
 
 
 class VMHost(igor.main.Host):
@@ -71,13 +146,16 @@ class VMHost(igor.main.Host):
 
     remove_afterwards = True
 
+    _connection = None
+
     def __init__(self, name, remove=True):
         super(VMHost, self).__init__()
         self.vm_name = name
         self.remove_afterwards = remove
+        self._connection = LibvirtConnection(self.connection_uri)
 
     def _virsh(self, cmd):
-        return LibvirtConnection._virsh(cmd, self.connection_uri)
+        return self._connection.virsh(cmd)
 
     def start(self):
         self.boot()
@@ -103,11 +181,12 @@ class VMHost(igor.main.Host):
         targets = dom.xpath(path)
         return sorted(targets)[0]
 
-    def change_cdrom_source(self, filename):
+    def change_cdrom_source(self, volname):
         """Set the <source file='...' /> of the first device which is a cdrom
         """
         target = self.__get_cdrom_target_name()
-        if filename:
+        if volname:
+            filename = self._connection.volume_path(volname)
             cmd = "change-media --domain %s --path %s --source %s --force" % \
                 (self.vm_name, target, filename)
         else:
@@ -131,8 +210,7 @@ class VMHost(igor.main.Host):
     def remove_images(self):
         for image in self.get_disk_images():
             volname = os.path.basename(image)
-            self._virsh("vol-delete --vol '%s' --pool '%s'" % (volname, \
-                                                               self.poolname))
+            self._connection.delete_volume(volname)
 
     def remove(self):
         '''
@@ -280,28 +358,15 @@ class NewVMHost(VMHost):
         cmd += dict_to_args(virtinstall_args)
 
         for image_spec in self.image_specs:
-            poolvol = self._upload_image(image_spec)
+            assert type(image_spec) is VMImage
+            image_spec.compress()
+            poolvol = self._connection.create_volume(image_spec)
             cmd += " --disk vol=%s,device=disk,bus=%s,format=%s" % (poolvol, \
                                          self.disk_bus_type, image_spec.format)
 
         definition = run(cmd)
 
         self.define(definition)
-
-    def _upload_image(self, image_spec):
-        image_spec.compress()
-        disk = image_spec.filename
-        volname = os.path.basename(disk)
-        poolvol = "%s/%s" % (self.poolname, volname)
-        logger.debug("Uploading disk image '%s' to new volume '%s'" % (disk, \
-                                                                      poolvol))
-        self._virsh(("vol-create-as --name '%s' --capacity '%s' " + \
-                     "--format %s --pool '%s'") % (volname, image_spec.size, \
-                                                 image_spec.format, \
-                                                 self.poolname))
-        self._virsh("vol-upload --vol '%s' --file '%s' --pool '%s'" % ( \
-                                                 volname, disk, self.poolname))
-        return poolvol
 
     def remove_images(self):
         # Remove or local images (created initially)
@@ -420,6 +485,8 @@ class LibvirtProfile(igor.main.Profile):
     __host = None
     __additional_kargs = None
 
+    _volname = None
+
     def __init__(self, name):
         self.name = name
         self._datadir = os.path.join(self._datadir_prefix, self.name)
@@ -443,8 +510,9 @@ class LibvirtProfile(igor.main.Profile):
         self.__host = host
         self.__additional_kargs = additional_kargs
 
+        self._volname = "%s-boot" % self.get_name()
         self.__mkiso(additional_kargs)
-        self.__host.change_cdrom_source(self._boot_iso)
+        self.__host.change_cdrom_source(self._volname)
 
     def revoke_from(self, host):
         assert self.__host == host
@@ -470,6 +538,7 @@ class LibvirtProfile(igor.main.Profile):
             logger.debug("Removing %s" % filename)
             os.remove(filename)
         self.__created_files = []
+        self.__host._connection.delete_volume(self._volname)
 
     def populate_with(self, kernel_file, initrd_file, kargs_file):
         self.__prepare_iso_root(kernel_file, initrd_file, kargs_file)
@@ -504,6 +573,8 @@ class LibvirtProfile(igor.main.Profile):
         """This is a hack as long as igor doesn't use isos directly
         http://www.syslinux.org/wiki/index.php/ISOLINUX
         """
+        assert self.__host
+
         cmdlinefile = os.path.join(self._isolinux_dir, "cmdline")
 
         with open(cmdlinefile) as cmdline:
@@ -539,6 +610,10 @@ class LibvirtProfile(igor.main.Profile):
                self._root_dir]
 
         subprocess.check_output(cmd)
+
+        image = DiskImage(self._boot_iso, "256M", "raw")
+        self.__host._connection.create_volume(image, self._volname)
+        return self._volname
 
 
 class ProfileOrigin(CommonLibvirtOrigin):

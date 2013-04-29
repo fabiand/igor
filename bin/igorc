@@ -41,6 +41,7 @@ class Context(object):
         self.port = "8080"
         self.event_port = "8090"
         self.session = ""
+        self.notify = False
 
 
 class IgorClient(cmd.Cmd):
@@ -275,6 +276,27 @@ class IgorClient(cmd.Cmd):
                                            "--add-port=%s/tcp" % port]))
 
 
+class Notify(object):
+    def notify(self, summary, body="", urgency="low", icon=None,
+               expiretime=2000):
+        cmd = ["notify-send",
+               "--expire-time", expiretime,
+               "--urgency", urgency,
+               "--summary", summary
+               ]
+        if icon:
+            cmd += ["--icon", icon]
+        if body:
+            cmd += ["--body", body]
+        subprocess.check_call(cmd)
+
+    def ok(self, summary, body=None):
+        self.notify(summary, body, "low", "weather-clear")
+
+    def failure(self, summary, body=None):
+        self.notify(summary, body, "urgent", "weather-showers")
+
+
 if __name__ == "__main__":
     # Parse args
     parser = argparse.ArgumentParser(description="Communicate with igord")
@@ -285,6 +307,9 @@ if __name__ == "__main__":
                         help="Print informational messages")
     parser.add_argument("-d", "--debug", action="store_true",
                         help="Print debug messages")
+    parser.add_argument("-n", "--notify",
+                        action="store_true",
+                        help="Enable desktop notifications using libnotify")
     parser.add_argument("command", metavar="CMD", nargs="*",
                         help="Run this command(s) and quit")
     namespace = parser.parse_args()
@@ -299,6 +324,7 @@ if __name__ == "__main__":
     client = IgorClient()
     client.ctx.remote = url.hostname
     client.ctx.port = url.port
+    client.ctx.notify = namespace.notify
 
     if namespace.command:
         for command in namespace.command:

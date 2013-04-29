@@ -28,7 +28,20 @@ from igor.utils import run
 logger = logging.getLogger(__name__)
 
 
-class Layout(igor.main.UpdateableObject):
+class DiskImage(igor.main.UpdateableObject):
+    filename = None
+    size = None
+    format = None
+
+    def __init__(self, filename, size, format):
+        if not any(size.lower().endswith(s) for s in ["m", "g"]):
+            raise Exception("Disk size needs to be suffixed with M or G")
+        self.filename = filename
+        self.size = size
+        self.format = format
+
+
+class Layout(DiskImage):
     '''
     An image specififcation for a VMHost.
     This are actually params for truncate and parted.
@@ -41,22 +54,16 @@ class Layout(igor.main.UpdateableObject):
         label in ['gpt', 'mbr', 'loop']
     partitions : Array of Partitions
     '''
-    filename = None
-    size = None
     label = None
     partitions = None
-    format = None
+
 
     def __init__(self, size, partitions, label="gpt", filename=None):
-        if not any(size.lower().endswith(s) for s in ["m", "g"]):
-            raise Exception("Disk size needs to be suffixed with M or G")
+        super(Layout, self).__init__(filename, size or 4, "raw")
         if label not in ["gpt", "mbr"]:
             raise Exception("Disk label must be gpt or mbr")
-        self.filename = filename
-        self.size = size or 4
         self.partitions = partitions or [{}]
         self.label = label
-        self.format = "raw"
 
     def create(self, session_dir):
         if self.filename is None:
