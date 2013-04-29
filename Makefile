@@ -1,11 +1,18 @@
 
-PYTHONSOURCES=$(shell find igor -name \*.py -not -path */hacks.py) bin/igord bin/igorc
-XMLSOURCES=$(shell find . -name \*.xml -or -name \*.xsl)
+PYTHONBINS := bin/igord bin/igorc
+PYTHONSOURCES := $(shell find igor -name \*.py -not -path */hacks.py)
+PYTHONSOURCES += $(PYTHONBINS)
+XMLSOURCES := $(shell find . -name \*.xml -or -name \*.xsl)
 
 SHELL := /bin/bash
+.PHONY: dist
+
 
 all: rpm dist
 	echo Done
+
+run:
+	PYTHONPATH=. python bin/igord
 
 build:
 	python setup.py build -f
@@ -19,71 +26,40 @@ dist: build
 clean:
 	rm -rvf dist build
 
-install: rpm
-	yum -y localinstall dist/igor-*.noarch.rpm
-	-systemctl daemon-reload
 
-start:
-#	-systemctl enable igord.service
-	-systemctl start igord.service
-	-systemctl status igord.service
+#
+# Check related stuff
+#
+check-local: check-static-doctests check-static-pep8 check-static-pyflakes check-static-pylint
+	@echo -e "---\n Passed $@\n---"
 
-stop:
-	-systemctl stop igord.service
+check-static-xmllint: $(XMLSOURCES:%=%.xmllint)
+	@echo Passed $@
 
-uninstall: stop
-	-systemctl disable igord.service
-	-yum -y remove igor
+%.xmllint:
+	xmllint --noout "$*"
 
-check-local: doctests pep8 pyflakes pylint
-	@echo -e "---\n Passed.\n---"
+check-static-doctests: $(PYTHONSOURCES:%=%.doctest)
+	@echo Passed $@
 
-check-local-fast:
-	@for M in $(PYTHONSOURCES); \
-	do export PARENT=$$$$ ; \
-		echo "Fast checks on '$$M'"; \
-		PYTHONPATH=. python -m doctest $$M || kill $$PARENT & \
-		PYTHONPATH=. pep8 -r $$M || kill $$PARENT & \
-		PYTHONPATH=. pyflakes $$M || kill $$PARENT & \
-	done ; wait
-	@for M in $(XMLSOURCES); \
-	do export PARENT=$$$$ ; \
-		echo "Fast checks on '$$M'"; \
-		xmllint --noout $$M || kill $$PARENT & \
-	done ; wait
+%.doctest:
+	PYTHONPATH=. python -m doctest "$*"
 
+check-static-pep8: $(PYTHONSOURCES:%=%.pep8)
+	@echo Passed $@
 
-doctests:
-	@for M in $(PYTHONSOURCES); \
-	do \
-		echo Doctest on "$$M"; \
-		PYTHONPATH=. python -m doctest $$M || exit 1; \
-	done
-
-pep8:
-	@for M in $(PYTHONSOURCES); \
-	do \
-		echo pep8 on "$$M"; \
-		PYTHONPATH=. pep8 -r $$M || exit 1; \
-	done
+%.pep8:
+	PYTHONPATH=. pep8 -r "$*"
 
 PYLINT=pylint -f parseable --include-ids=yes --rcfile=.pylintrc
-pylint:
-	@for M in $(PYTHONSOURCES); \
-	do \
-		echo pylint on "$$M"; \
-		PYTHONPATH=. $(PYLINT) $$M || exit 1; \
-	done
+check-static-pylint: $(PYTHONSOURCES:%=%.pylint)
+	@echo Passed $@
 
-pyflakes:
-	@for M in $(PYTHONSOURCES); \
-	do \
-		echo pyflakes on "$$M"; \
-		PYTHONPATH=. pyflakes $$M || exit 1; \
-	done
+%.pylint:
+	PYTHONPATH=. $(PYLINT) "$*"
 
-run:
-	PYTHONPATH=. python bin/igord
+check-static-pyflakes: $(PYTHONSOURCES:%=%.pyflakes)
+	@echo Passed $@
 
-
-.PHONY: dist
+%.pyflakes:
+	PYTHONPATH=. pyflakes "$*"
