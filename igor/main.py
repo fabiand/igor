@@ -88,10 +88,8 @@ class Host(UpdateableObject):
         raise Exception("Not implemented.")
 
     def __to_dict__(self):
-        return {
-                "name": self.get_name(),
-                "origin": self.origin
-            }
+        return {"name": self.get_name(),
+                "origin": self.origin}
 
 
 class Profile(UpdateableObject):
@@ -124,10 +122,8 @@ class Profile(UpdateableObject):
         return "<%s name='%s'>" % (self.__class__.__name__, self.get_name())
 
     def __to_dict__(self):
-        return {
-                "name": self.get_name(),
-                "origin": self.origin
-            }
+        return {"name": self.get_name(),
+                "origin": self.origin}
 
 
 class Origin(object):
@@ -154,9 +150,7 @@ class Origin(object):
         raise Exception("Not implemented.")
 
     def __to_dict__(self):
-        return {
-                "name": self.name(),
-            }
+        return {"name": self.name()}
 
 
 class Inventory(object):
@@ -199,8 +193,9 @@ class Inventory(object):
             "profiles": {},
             "hosts": {}
         }
-        for (k, origins) in [("plans", plans), ("testsuites", testsuites), \
-                         ("profiles", profiles), ("hosts", hosts)]:
+        key_to_origin = [("plans", plans), ("testsuites", testsuites),
+                         ("profiles", profiles), ("hosts", hosts)]
+        for (k, origins) in key_to_origin:
             self._add_origins(k, origins)
 
     def _add_origins(self, k, origins):
@@ -219,7 +214,7 @@ class Inventory(object):
             items = origin.items()
             for item in items:
                 if item in all_items:
-                    raise Exception(("Item name is not unique over all %s " + \
+                    raise Exception(("Item name is not unique over all %s " +
                                      "origins: %s") % (k, item))
             if type(items) is not dict:
                 raise Exception("%s did not return a dict." % k)
@@ -256,13 +251,14 @@ class Inventory(object):
         prs = self.profiles()
         hs = self.hosts()
         n = 10
-        logger.debug("Found %d plan(s): %s …" % (len(ps), ps.keys()[0:n]))
-        logger.debug("Found %d testsuite(s): %s …" % (len(ts), \
-                                                      ts.keys()[0:n]))
-        logger.debug("Found %d profiles(s): %s …" % (len(prs), \
-                                                     prs.keys()[0:n]))
-        logger.debug("Found %d hosts(s): %s …" % (len(hs), \
-                                                      hs.keys()[0:n]))
+        logger.debug("Found %d plan(s): %s …" %
+                     (len(ps), ps.keys()[0:n]))
+        logger.debug("Found %d testsuite(s): %s …" %
+                     (len(ts), ts.keys()[0:n]))
+        logger.debug("Found %d profiles(s): %s …" %
+                     (len(prs), prs.keys()[0:n]))
+        logger.debug("Found %d hosts(s): %s …" %
+                     (len(hs), hs.keys()[0:n]))
 
     def create_profile(self, oname, pname, kernel, initrd, kargs):
         """Create a profile in the profile origin with the name.
@@ -333,7 +329,7 @@ class Testplan(object):
         inventory and objects are created.
         """
         self.variables["planid"] = self.id
-        logger.debug("Replacing vars in spec %s: %s" % (self.name, \
+        logger.debug("Replacing vars in spec %s: %s" % (self.name,
                                                         self.variables))
         for layout in self.job_layouts:
             """A generator is used (yield), because a followup spec might
@@ -381,19 +377,19 @@ class Testplan(object):
         kwargs = {}
         if type(value) is list:
             if len(value) != 2:
-                raise RuntimeError(("Expecting the testplan value for '%s' " \
-                                    "to be either a single string or a list " \
-                                    "with two items (name, additional_" \
+                raise RuntimeError(("Expecting the testplan value for '%s' " +
+                                    "to be either a single string or a list " +
+                                    "with two items (name, additional_" +
                                     "kwarguments), it is: %s") % (key, value))
             value, kwargs = value[0], \
-                            {k: v.format(**self.variables) if type(v) in
-                             [str, unicode] else v for k, v
-                             in value[1].items()}
+                {k: v.format(**self.variables) if type(v) in
+                 [str, unicode] else v for k, v
+                 in value[1].items()}
         value = value.format(**self.variables)
 
         if any(("{" or "}") in val for val in [value] + kwargs.values()
                if type(val) in [str, unicode]):
-            raise Exception(("Variables (%s) could not be substituted " + \
+            raise Exception(("Variables (%s) could not be substituted " +
                              "in plan %s: %s / %s") % (self.variables,
                                                        self.name, value,
                                                        kwargs))

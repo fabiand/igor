@@ -141,7 +141,7 @@ class IgorClient(cmd.Cmd):
         """profile_from_livecd <profilename> <isoname> [<additional_kargs>]
         """
         pargs = [("profilename", {}),
-                 ("isoname", {})
+                 ("isoname", {}),
                  ("additional_kargs", {"nargs": "?"})]
         _args = self._parse_do_args("profile_from_livecd", line, pargs)
         profile = self.__igorapi().profile(_args.profilename)
@@ -223,7 +223,6 @@ class IgorClient(cmd.Cmd):
             return testplan.report_junit()
 
         self.watch_events(job_reportxml_cb)
-
 
     def watch_events(self, reportxml_cb):
         remote = self.ctx.remote

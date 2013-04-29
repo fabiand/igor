@@ -57,7 +57,6 @@ class Layout(DiskImage):
     label = None
     partitions = None
 
-
     def __init__(self, size, partitions, label="gpt", filename=None):
         super(Layout, self).__init__(filename, size or 4, "raw")
         if label not in ["gpt", "mbr"]:
@@ -67,7 +66,7 @@ class Layout(DiskImage):
 
     def create(self, session_dir):
         if self.filename is None:
-            self.filename = run("mktemp --tmpdir='%s' 'vmimage-XXXX.img'" % \
+            self.filename = run("mktemp --tmpdir='%s' 'vmimage-XXXX.img'" %
                                 session_dir)
         logger.debug("Creating VM image '%s'" % self.filename)
         self.__truncate()
@@ -125,5 +124,5 @@ class Partition(igor.main.UpdateableObject):
         self.fs_type = fst
 
     def __to_parted__(self):
-        return "mkpart %s %s %s %s" % (self.part_type, self.fs_type, \
+        return "mkpart %s %s %s %s" % (self.part_type, self.fs_type,
                                        self.start, self.end)

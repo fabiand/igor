@@ -12,13 +12,10 @@ import yaml
 
 import igor.log
 import igor.main
-import igor.backends.libvirt
-import igor.backends.cobbler
 import igor.job
 import igor.utils
 import igor.reports
-import igor.backends.files
-from igor import common
+from igor import common, backends
 from igor.hacks import IgordJSONEncoder
 
 import igor.config as config
@@ -50,45 +47,47 @@ host_origins = {}
 
 if "files" in enabled_backends:
     plan_origins["files"] = \
-        igor.backends.files.TestplansOrigin( \
-                    CONFIG["testplans.path"].split(":"))
+        backends.files.TestplansOrigin(CONFIG["testplans.path"].split(":"))
 
     testsuite_origins["files"] = \
-        igor.backends.files.TestsuitesOrigin( \
-                    CONFIG["testcases.path"].split(":"))
+        backends.files.TestsuitesOrigin(CONFIG["testcases.path"].split(":"))
 
     host_origins["files"] = \
-            igor.backends.files.HostsOrigin(CONFIG["hosts.path"].split(":"))
+        backends.files.HostsOrigin(CONFIG["hosts.path"].split(":"))
 
 if "cobbler" in enabled_backends:
-    __cobbler_origin_args = (CONFIG["cobbler.url"], \
-                             CONFIG["cobbler.username"], \
-                             CONFIG["cobbler.password"], \
+    __cobbler_origin_args = (CONFIG["cobbler.url"],
+                             CONFIG["cobbler.username"],
+                             CONFIG["cobbler.password"],
                              CONFIG["cobbler.ssh_uri"])
-    c_profiles = igor.backends.cobbler.ProfileOrigin(*__cobbler_origin_args,
-        remote_path_prefix=CONFIG.get("cobbler.remote_path_prefix", "/tmp"))
+    __cb_kwargs = {"remote_path_prefix":
+                   CONFIG.get("cobbler.remote_path_prefix", "/tmp")}
+    c_profiles = backends.cobbler.ProfileOrigin(*__cobbler_origin_args,
+                                                **__cb_kwargs)
     profile_origins["cobbler"] = c_profiles
 
     # Just systems with igor- prefix
-    c_hosts = igor.backends.cobbler.HostsOrigin(*__cobbler_origin_args, \
-                expression=CONFIG["cobbler.hosts.identification_expression"], \
-                whitelist=CONFIG["cobbler.hosts.whitelist"])
+    __cb_kwargs = {"expression":
+                   CONFIG["cobbler.hosts.identification_expression"],
+                   "whitelist": CONFIG["cobbler.hosts.whitelist"]}
+    c_hosts = backends.cobbler.HostsOrigin(*__cobbler_origin_args,
+                                           **__cb_kwargs)
     host_origins["cobbler"] = c_hosts
 
 if "libvirt" in enabled_backends:
-    __libvirt_con_args = (CONFIG["libvirtd.connection_uri"], \
-    CONFIG["libvirtd.virt-install.storage_pool"], \
-    CONFIG["libvirtd.virt-install.network_configuration"])
+    __con_args = (CONFIG["libvirtd.connection_uri"],
+                  CONFIG["libvirtd.virt-install.storage_pool"],
+                  CONFIG["libvirtd.virt-install.network_configuration"])
 
-    l_hosts = {"libvirt-create": \
-        igor.backends.libvirt.CreateDomainHostOrigin(*__libvirt_con_args),
-        "libvirt-existing": \
-        igor.backends.libvirt.ExistingDomainHostOrigin(*__libvirt_con_args)
-        }
+    l_hosts = {"libvirt-create":
+               backends.libvirt.CreateDomainHostOrigin(*__con_args),
+               "libvirt-existing":
+               backends.libvirt.ExistingDomainHostOrigin(*__con_args)
+               }
     host_origins.update(l_hosts)
 
-    l_profiles = {"libvirt": igor.backends.libvirt.ProfileOrigin(
-    *__libvirt_con_args)}
+    l_profiles = {"libvirt":
+                  backends.libvirt.ProfileOrigin(*__con_args)}
     profile_origins.update(l_profiles)
 
 #
@@ -97,10 +96,10 @@ if "libvirt" in enabled_backends:
 jc = igor.job.JobCenter(session_path=CONFIG["session.path"],
                         hooks_path=CONFIG["hooks.path"])
 
-inventory = igor.main.Inventory( \
-    plans=plan_origins, \
-    testsuites=testsuite_origins, \
-    profiles=profile_origins, \
+inventory = igor.main.Inventory(
+    plans=plan_origins,
+    testsuites=testsuite_origins,
+    profiles=profile_origins,
     hosts=host_origins)
 inventory.check()
 
@@ -160,18 +159,19 @@ def static_data(filename):
 
 
 @app.route('/jobs/submit/<tname>/with/<pname>/on/<hname>')
-@app.route('/jobs/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>') # FIXME
+@app.route('/jobs/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')  # FIXME
 def submit_testsuite(tname, pname, hname, cookiereq=None):
-    for key, name in [("testsuites", tname), \
-                      ("profiles", pname), \
+    for key, name in [("testsuites", tname),
+                      ("profiles", pname),
                       ("hosts", hname)]:
         item = inventory._lookup(key, name)
         if item is None:
             bottle.abort(412, "Unknown %s '%s'" % (key, name))
+    xkargs = bottle.request.query.additional_kargs
     spec = igor.main.JobSpec(testsuite=inventory.testsuites()[tname],
-               profile=inventory.profiles()[pname],
-               host=inventory.hosts()[hname],
-               additional_kargs=bottle.request.query.additional_kargs or "")
+                             profile=inventory.profiles()[pname],
+                             host=inventory.hosts()[hname],
+                             additional_kargs=xkargs or "")
     logger.debug("Submitting with args: %s" % str(spec))
     resp = jc.submit(spec, cookiereq)
 
@@ -413,7 +413,7 @@ def run_plans(name):
         bottle.abort(404, "Unknown plan: %s" % name)
     plan = inventory.plans()[name]
     plan.inventory = inventory      # FIXME not very nice
-    plan.variables.update({k: bottle.request.query[k] \
+    plan.variables.update({k: bottle.request.query[k]
                            for k in bottle.request.query.keys()})
     worker = jc.submit_plan(plan)
     return to_json(worker.__to_dict__())
@@ -490,7 +490,7 @@ def testcase_source(suitename, setname, casename):
     if case is None:
         bottle.abort(404, "Unknown testcase '%s'" % casename)
     source = case.source()
-    if source == None:
+    if source is None:
         bottle.abort(404, "No source '%s'" % casename)
     else:
         bottle.response.content_type = "text/plain"
@@ -507,8 +507,8 @@ def profile_from_vmlinuz_put(pname):
             arcfiles = tarball.getnames()
             logger.debug("PUT %s" % arcfiles)
             for arcfile in arcfiles:
-                assert os.path.basename(arcfile) == arcfile, \
-                       "not paths allowed"
+                assert (os.path.basename(arcfile) == arcfile,
+                        "not paths allowed")
             tarball.extractall(path=tmpdir)
         written_files = {}
         for rf in reqfiles:
@@ -521,7 +521,7 @@ def profile_from_vmlinuz_put(pname):
         print written_files
         if not all([r in written_files.keys() for r in reqfiles]):
             bottle.abort(412, "Expecting %s files" % str(reqfiles))
-        inventory.create_profile(oname=primary_profile_backend, pname=pname, \
+        inventory.create_profile(oname=primary_profile_backend, pname=pname,
                                  **written_files)
     _tmpdir.clean()
 
@@ -535,8 +535,8 @@ def profile_kargs(pname):
     n_kargs = "NO_KARGS_FOUND"
     if kargs:
         if "{igor_cookie}" not in kargs:
-            bottle.abort(412, "{igor_cookie} not found in kargs, this is " + \
-                              "needed to initiate the callback to Igor, " + \
+            bottle.abort(412, "{igor_cookie} not found in kargs, this is " +
+                              "needed to initiate the callback to Igor, " +
                               "e.g. boot_trigger=igor/testjob/{igor_cookie}")
         n_kargs = inventory.profiles()[pname].kargs(kargs)
     else:

@@ -19,18 +19,22 @@
 # MA  02110-1301, USA.  A copy of the GNU General Public License is
 # also available at http://www.gnu.org/copyleft/gpl.html.
 
-# http://www.darkcoding.net/software/pretty-command-line-console-output-on-unix-in-python-and-go-lang/
+# http://www.darkcoding.net/software/pretty-command-line-console-output-on-\
+# unix-in-python-and-go-lang/
 # http://bergie.iki.fi/files/nexus10-shell.png
 # https://github.com/gruntjs/grunt/blob/master/lib/grunt/log.js
-# http://superuser.com/questions/270214/how-can-i-change-the-colors-of-my-xterm-using-ansi-escape-sequences
+# http://superuser.com/questions/270214/how-can-i-change-the-colors-of-my-\
+# xterm-using-ansi-escape-sequences
 
 from lxml import etree
 import sys
 import datetime
 import re
 
+
 def clearscreen():
     print('\033[H\033[2J')
+
 
 class ansi(unicode):
     def __init__(self, txt, with_markup=True):
@@ -64,12 +68,12 @@ class ansi(unicode):
         underline_pat = "(\s|^)_(\S|\S[\s\S]+?\S)_(?=[\s,.!?]|$)"
         txt = re.sub(underline_pat,
                      lambda m: m.groups()[0] + ansi(m.groups()[1]).underline,
-                     txt);
+                     txt)
         # Make *foo* bold.
         bold_pat = "(\s|^)\*(\S|\S[\s\S]+?\S)\*(?=[\s,.!?]|$)"
         txt = re.sub(bold_pat,
-                    lambda m: m.groups()[0] + ansi(m.groups()[1]).bold,
-                    txt);
+                     lambda m: m.groups()[0] + ansi(m.groups()[1]).bold,
+                     txt)
         return ansi(txt)
 
     @staticmethod
@@ -128,11 +132,14 @@ class Log(object):
 
     def indented(self, size=1):
         parent = self
+
         class IndentedLog(Log):
             def __enter__(self):
                 parent._indent += size
+
             def __exit__(self, exc_type, exc_value, traceback):
                 parent._indent -= size
+
         return IndentedLog()
 
     def _indented(self, msg):
@@ -155,21 +162,19 @@ class Log(object):
             self.writeln(ansi("OK").green)
 
     def success(self, msg):
-        self.writeln(ansi(msg).green);
+        self.writeln(ansi(msg).green)
 
     def fail(self, msg):
-        self.writeln(ansi(msg).red);
+        self.writeln(ansi(msg).red)
 
     def header(self, msg):
-        self.writeln(ansi(msg).underline);
+        self.writeln(ansi(msg).underline)
 
     def subhead(self, msg):
-        self.writeln(ansi(msg).bold);
+        self.writeln(ansi(msg).bold)
 
     def debug(self, msg):
-        self.writeln('[D] %s' % ansi(msg).magenta);
-
-
+        self.writeln('[D] %s' % ansi(msg).magenta)
 
 if False:
     print(ansi("foo").green.bold)
@@ -187,6 +192,7 @@ if False:
     log.debug("Details ...")
 
     #print ansi.all_colors()
+
 
 class LogBuilder(object):
     _last_testset = None
@@ -298,8 +304,6 @@ class LogBuilder(object):
         time = " (%.2fs)" % float(node.attrib["time"]) \
             if node.attrib["time"] else ""
         self.log.write(fmt.format(name=name, time=time))
-
-
 
 
 if __name__ == "__main__":

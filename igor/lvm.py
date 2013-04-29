@@ -41,8 +41,8 @@ class PhysicalVolume(object):
             dev = losetup.device
             run("pvcreate -ff -y -v '%s'" % dev)
             self.uuid = run("pvs --noheadings -o uuid '%s'" % dev)
-            logger.debug("PV with UUID %s created on %s" % (self.uuid, \
-                                                            self.image))
+            logger.debug("PV with UUID %s created on %s" %
+                         (self.uuid, self.image))
 
     def losetup(self):
         return Losetup(self.image)
@@ -81,8 +81,8 @@ class VolumeGroup(object):
                     continue
                 vg_cmd = "vgextend -v '%s' '%s'" % (self.name, losetup.device)
                 run(vg_cmd)
-                logger.debug("VG with UUID %s extended with PV %s" % ( \
-                                                         self.uuid, self.name))
+                logger.debug("VG with UUID %s extended with PV %s" %
+                             (self.uuid, self.name))
 
     def losetup(self):
         class VGMultiLosetup(MultiLosetup):
@@ -90,8 +90,8 @@ class VolumeGroup(object):
 
             def __init__(self, vg):
                 self.vg = vg
-                MultiLosetup.__init__(self, [(pv, pv.image) for pv \
-                                                            in self.vg.pvs])
+                MultiLosetup.__init__(self, [(pv, pv.image)
+                                             for pv in self.vg.pvs])
 
             def __enter__(self):
                 MultiLosetup.__enter__(self)
@@ -104,7 +104,7 @@ class VolumeGroup(object):
         return VGMultiLosetup(self)
 
     def scan_lvs(self):
-        str_lvs = run("lvs --noheadings -o vg_name,lv_name,lv_path " + \
+        str_lvs = run("lvs --noheadings -o vg_name,lv_name,lv_path " +
                       "--separator '|'")
         infos = parse_lvm(str_lvs, "|", ["vg_name", "name", "path"])
         lvs = {}
@@ -130,8 +130,8 @@ class LogicalVolume(object):
         self.vg.create()
 
         with self.vg.losetup():
-            vg_cmd = "lvcreate -v -L '%s' -n '%s' '%s'" % (self.size, \
-                                                       self.name, self.vg.name)
+            vg_cmd = ("lvcreate -v -L '%s' -n '%s' '%s'" %
+                      (self.size, self.name, self.vg.name))
             run(vg_cmd)
 
     def losetup(self):
@@ -191,7 +191,7 @@ class Losetup:
 
     def __enter__(self):
         logger.debug("Setting up: %s" % self.image)
-        _txt_devices = run(("losetup -v -f '%s'" + \
+        _txt_devices = run(("losetup -v -f '%s'" +
                             " | egrep -o 'is /dev/loop[0-9]+'") % self.image)
         devices = str(_txt_devices).split(" ")
         self.device = devices[1]
@@ -225,10 +225,8 @@ class MultiLosetup(object):
 if __name__ == "__main__":
     run("rm a.img ; truncate -s 2G a.img")
     run("rm b.img ; truncate -s 2G b.img")
-    pvs = [ \
-        PhysicalVolume("a.img"), \
-        PhysicalVolume("b.img") \
-    ]
+    pvs = [PhysicalVolume("a.img"),
+           PhysicalVolume("b.img")]
     vg = VolumeGroup("abc", pvs)
     lv = LogicalVolume("abc-lv", vg, "1G")
     lv.create()

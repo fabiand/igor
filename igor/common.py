@@ -35,7 +35,7 @@ class routes(object):
     job_report_junit = '/jobs/<cookie>/report/junit'
     job_testsuite = '/jobs/<cookie>/testsuite'
     job_artifacts = '/jobs/<cookie>/artifacts'
-    job_artifacts_archive = '/jobs/<cookie>/archive' # FIXME
+    job_artifacts_archive = '/jobs/<cookie>/archive'  # FIXME
     job_artifact = '/jobs/<cookie>/artifacts/<name>'
 
     job_step_skip = '/jobs/<cookie>/step/<n:int>/skip'

@@ -67,8 +67,8 @@ class HostsOrigin(igor.main.Origin):
     expression = None
     whitelist = []
 
-    def __init__(self, server_url, user, pw, ssh_uri, expression="igor-", \
-                       whitelist=[]):
+    def __init__(self, server_url, user, pw, ssh_uri, expression="igor-",
+                 whitelist=[]):
         self.cobbler = Cobbler(server_url, (user, pw), ssh_uri)
         self.expression = expression
         self.whitelist = whitelist
@@ -82,8 +82,8 @@ class HostsOrigin(igor.main.Origin):
             for sysname in remote.systems():
                 match = False
                 if self.expression in sysname:
-                    logger.debug("cobbler host '%s' matched expression" % \
-                                                                       sysname)
+                    logger.debug("cobbler host '%s' matched expression" %
+                                 sysname)
                     match = True
                 if sysname in self.__get_whitelist():
                     logger.debug("cobbler host '%s' is in whitelist" % sysname)
@@ -170,16 +170,15 @@ class Profile(igor.main.Profile):
                 logger.info("Available profiles: %s" % remote.profiles())
                 raise Exception("Unknown profile '%s'" % (self.name))
 
-            system_handle = self.__get_or_create_system(remote, \
+            system_handle = self.__get_or_create_system(remote,
                                                         host)
 
             kargs_txt = (self.kargs() + " " + additional_kargs)
-            kargs = {"kernel_options": kargs_txt.format(
-                        igor_cookie=host.session.cookie)
-                    }
+            kargs = {"kernel_options":
+                     kargs_txt.format(igor_cookie=host.session.cookie)}
 
-            remote.assign_defaults(system_handle, \
-                                   profile=self.name, \
+            remote.assign_defaults(system_handle,
+                                   profile=self.name,
                                    additional_args=kargs)
 
             remote.set_netboot_enable(host.get_name(), True)
@@ -199,13 +198,11 @@ class Profile(igor.main.Profile):
         else:
             logger.info("Creating new system %s" % name)
             system_handle = remote.new_system()
-            remote.modify_profile(system_handle, {
-                    "name": name,
+            args = {"name": name,
                     "mac": host.get_mac_address(),
                     "modify_interface": {
-                        "macaddress-eth0": host.get_mac_address()
-                    }
-                })
+                        "macaddress-eth0": host.get_mac_address()}}
+            remote.modify_profile(system_handle, args)
         return system_handle
 
     def kargs(self, kargs=None):
@@ -213,9 +210,8 @@ class Profile(igor.main.Profile):
         with self.remote as remote:
             if kargs:
                 handle = remote.get_profile_handle(self.get_name())
-                remote.modify_profile(handle, {
-                        "kernel_options": kargs
-                    })
+                args = {"kernel_options": kargs}
+                remote.modify_profile(handle, args)
             n_kargs = remote.profile(self.get_name())["kernel_options"]
         return n_kargs
 
@@ -259,24 +255,22 @@ class Profile(igor.main.Profile):
         remote_path = "%s/igor-cobbler-%s" % (self.remote_path_prefix,
                                               self.get_name())
         self.__scp_files_to_remote(remote_path, vmlinuz, initrd, kargs)
-        self.__ssh_create_remote_distro_and_profile(remote_path, \
+        self.__ssh_create_remote_distro_and_profile(remote_path,
                                                     vmlinuz, initrd, kargs)
 
     def __scp_files_to_remote(self, remote_path, vmlinuz, initrd, kargs):
         cmd = """
             ssh {url} "mkdir -p '{remote_path}'"
             scp "{vmlinuz}" "{initrd}" "{kargs}" "{url}:/{remote_path}/"
-        """.format(
-                url=self.remote.ssh_uri,
-                remote_path=remote_path,
-                profilename=self.get_name(),
-                vmlinuz=vmlinuz,
-                initrd=initrd,
-                kargs=kargs
-                )
+        """.format(url=self.remote.ssh_uri,
+                   remote_path=remote_path,
+                   profilename=self.get_name(),
+                   vmlinuz=vmlinuz,
+                   initrd=initrd,
+                   kargs=kargs)
         igor.utils.run(cmd)
 
-    def __ssh_create_remote_distro_and_profile(self, remote_path, vmlinuz, \
+    def __ssh_create_remote_distro_and_profile(self, remote_path, vmlinuz,
                                                initrd, kargs):
         cmd = """
             ssh {remote_url} '
@@ -297,22 +291,23 @@ class Profile(igor.main.Profile):
                     --repos=\"\" \\
                     --comment=\"{identification_tag}\"
                 '
-        """.format(
-            remote_url=self.remote.ssh_uri,
-            profilename=self.get_name(),
-            vmlinuz=os.path.join(remote_path, os.path.basename(vmlinuz)),
-            initrd=os.path.join(remote_path, os.path.basename(initrd)),
-            kargs=os.path.join(remote_path, os.path.basename(kargs)),
-#            kargs=open(kargs).read().strip(),
-            arch="x86_64",
-            identification_tag=identification_tag
-            )
+        """.format(remote_url=self.remote.ssh_uri,
+                   profilename=self.get_name(),
+                   vmlinuz=os.path.join(remote_path,
+                                        os.path.basename(vmlinuz)),
+                   initrd=os.path.join(remote_path,
+                                       os.path.basename(initrd)),
+                   kargs=os.path.join(remote_path,
+                                      os.path.basename(kargs)),
+                   #kargs=open(kargs).read().strip(),
+                   arch="x86_64",
+                   identification_tag=identification_tag)
         igor.utils.run(cmd)
 
     def __ssh_remove_remote_distro_profile_and_files(self, remote_path):
         profile_comment = self.remote.profile(self.get_name())["comment"]
         if identification_tag not in profile_comment:
-            raise Exception("Profile '%s' is not managed by igor" % \
+            raise Exception("Profile '%s' is not managed by igor" %
                             self.get_name())
         cmd = """
             ssh {remote_url} "
@@ -321,11 +316,9 @@ class Profile(igor.main.Profile):
                 rm -v \"{remote_path}\"/*
                 rmdir -v \"{remote_path}\"
                 "
-        """.format(
-            remote_url=self.remote.ssh_uri,
-            remote_path=remote_path,
-            profilename=self.get_name()
-            )
+        """.format(remote_url=self.remote.ssh_uri,
+                   remote_path=remote_path,
+                   profilename=self.get_name())
         igor.utils.run(cmd)
 
 
@@ -422,15 +415,15 @@ class Cobbler(object):
             logger.warning("name: %s, token: %s" % (name, self.token))
 
     def profiles(self):
-        return [e["name"] for e in self.server.get_profiles(self.token, \
-                                                    1, 1000)]
+        return [e["name"]
+                for e in self.server.get_profiles(self.token, 1, 1000)]
 
     def profile(self, name):
         return self.server.get_blended_data(name, "")
 
     def systems(self):
-        return [e["name"] for e in self.server.get_systems(self.token, \
-                                                    1, 1000)]
+        return [e["name"]
+                for e in self.server.get_systems(self.token, 1, 1000)]
 
     def system(self, name):
         return self.server.get_system(name, True)
@@ -441,10 +434,9 @@ class Cobbler(object):
     def power_system(self, name, power):
         assert power in ["on", "off", "status", "reboot"]
         logger.debug("Setting power '%s' on '%s'" % (power, name))
-        return self.server.background_power_system({
-            "power": power,
-            "systems": [name]
-            }, self.token)
+        args = {"power": power,
+                "systems": [name]}
+        return self.server.background_power_system(args, self.token)
 
 
 def example():

@@ -34,9 +34,9 @@ logger = logging.getLogger(__name__)
 def run(cmd, with_retval=False):
     import subprocess
     logger.debug("Running: %s" % cmd)
-    child = subprocess.Popen(cmd, shell=True, \
-                            stdout=subprocess.PIPE, \
-                            stderr=subprocess.PIPE)
+    child = subprocess.Popen(cmd, shell=True,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
     (stdout, stderr) = child.communicate()
     # pylint: disable-msg=E1101
     child.wait()
@@ -50,8 +50,8 @@ def run(cmd, with_retval=False):
 
 
 def dict_to_args(d):
-    return " ".join(["--%s" % k if v is None else \
-                     "--%s=%s" % (k, v) \
+    return " ".join(["--%s" % k if v is None else
+                     "--%s=%s" % (k, v)
                      for k, v in d.items()])
 
 
@@ -99,9 +99,9 @@ class MountedArchive:
 class GvfsMountedArchive(MountedArchive):
     def mount(self, iso):
         isobasename = os.path.basename(iso)
-        run("gvfs-mount '%s'" % ("archive://file%3a%2f%2f" \
+        run("gvfs-mount '%s'" % ("archive://file%3a%2f%2f"
                                  + urllib.quote_plus(iso)))
-        self.gvfs_url = run(("gvfs-mount -l " + \
+        self.gvfs_url = run(("gvfs-mount -l " +
                              "| awk '$2 == \"%s\" {print $4;}'") % isobasename)
         return "~/.gvfs/%s/" % isobasename
 
@@ -313,8 +313,8 @@ class Factory(object):
     def __open(filename, fileobj=None):
         if filename:
             if not os.path.exists(filename):
-                raise Exception("Can't find %s rel. to %s" % (filename, \
-                                                              os.getcwd()))
+                raise Exception("Can't find %s rel. to %s" %
+                                (filename, os.getcwd()))
             fileobj = open(filename, "r")
         if fileobj is None:
             raise Exception("filename or fileobj must be given")

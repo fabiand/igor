@@ -86,9 +86,9 @@ class Job(object):
         self.cookie = cookie
         self.session = main.TestSession(cookie, self.session_path)
 
-        testsuite, profile, host, additional_kargs = (jobspec.testsuite, \
-                                                      jobspec.profile, \
-                                                      jobspec.host, \
+        testsuite, profile, host, additional_kargs = (jobspec.testsuite,
+                                                      jobspec.profile,
+                                                      jobspec.host,
                                                       jobspec.additional_kargs)
 
         assert host is not None, "host can not be None"
@@ -121,14 +121,15 @@ class Job(object):
                 utils.PollingWorkerDaemon.__init__(self)
 
             def work(self):
-                logger.debug("Watching current step: %s" % self.job.current_step)
+                logger.debug("Watching current step: %s" %
+                             self.job.current_step)
                 logger.debug("%ss of %ss (timeout) passed" % (
                              self.job.runtime(),
                              self.job.allowed_time_up_to_current_testcase()))
                 if self.job.is_timedout():
                     with _high_state_change_lock:
-                        logger.debug("Watchdog for job %s: timed out." % \
-                                                           self.job.cookie)
+                        logger.debug("Watchdog for job %s: timed out." %
+                                     self.job.cookie)
                         self.job.state(s_timedout)
                     self.stop()
 
@@ -140,8 +141,8 @@ class Job(object):
         """Prepare a host to get started
         """
         if self.state() != s_open:
-            raise Exception(("Can not setup job %s: %s") % (self.cookie, \
-                                                           self.state()))
+            raise Exception(("Can not setup job %s: %s") % (self.cookie,
+                                                            self.state()))
 
         logger.info("Setting up job %s" % self.cookie)
         self.state(s_preparing)
@@ -159,7 +160,7 @@ class Job(object):
         calling in to fetch it
         """
         if self.state() != s_prepared:
-            raise Exception(("Can not start job %s: %s") % (self.cookie, \
+            raise Exception(("Can not start job %s: %s") % (self.cookie,
                                                             self.state()))
         logger.debug("Starting job %s" % (self.cookie))
         self.state(s_running)
@@ -172,11 +173,11 @@ class Job(object):
                     is_skipped=False):
         """Finish one test step
         """
-        logger.debug("%s: Finishing step %s: %s (%s)" % (self.cookie, n, \
+        logger.debug("%s: Finishing step %s: %s (%s)" % (self.cookie, n,
                                                          is_success, note))
         if self.state() != s_running:
-            raise Exception(("Can not finish step %s of job %s, it is not" + \
-                             "running anymore: %s") % (n, self.cookie, \
+            raise Exception(("Can not finish step %s of job %s, it is not" +
+                             "running anymore: %s") % (n, self.cookie,
                                                        self.state()))
 
         if self.current_step != n:
@@ -202,36 +203,33 @@ class Job(object):
         except Exception as e:
             logger.debug("No annotation or error: %s" % e.message)
 
-        self.results.append({
-            "created_at": time.time(),
-            "testcase": current_testcase.__to_dict__(),
-            "is_success": is_success,
-            "is_passed": is_passed,
-            "is_abort": is_abort,
-            "is_skipped": is_skipped,
-            "note": note,
-            "runtime": time.time() - last_timestamp,
-            "log": log,
-            "annotations": annotations
-            })
+        self.results.append({"created_at": time.time(),
+                             "testcase": current_testcase.__to_dict__(),
+                             "is_success": is_success,
+                             "is_passed": is_passed,
+                             "is_abort": is_abort,
+                             "is_skipped": is_skipped,
+                             "note": note,
+                             "runtime": time.time() - last_timestamp,
+                             "log": log,
+                             "annotations": annotations})
 
         if is_abort:
-            logger.debug("Aborting at step %s (%s)" % (n, \
-                                                        current_testcase.name))
+            logger.debug("Aborting at step %s (%s)" %
+                         (n, current_testcase.name))
             self.state(s_aborted)
         elif is_skipped:
-            logger.debug("Skipping step %s (%s)" % (n, \
-                                                        current_testcase.name))
+            logger.debug("Skipping step %s (%s)" %
+                         (n, current_testcase.name))
         elif is_success is True:
-            logger.debug("Finished step %s (%s) succesfully" % (n, \
-                                                        current_testcase.name))
+            logger.debug("Finished step %s (%s) succesfully" %
+                         (n, current_testcase.name))
         elif is_success is False and current_testcase.expect_failure is True:
-            logger.info("Finished step %s (%s) unsuccessful as expected" % ( \
-                                                        n, \
-                                                        current_testcase.name))
+            logger.info("Finished step %s (%s) unsuccessful as expected" %
+                        (n, current_testcase.name))
         elif is_success is False:
-            logger.info("Finished step %s (%s) unsuccessful" % (n, \
-                                                        current_testcase.name))
+            logger.info("Finished step %s (%s) unsuccessful" %
+                        (n, current_testcase.name))
             self.state(s_failed)
 
         if len(self.testcases()) == len(self.results) and is_passed:
@@ -241,8 +239,8 @@ class Job(object):
             logger.debug("Finished job %s: %s" % (self.cookie, self.state()))
             self.watchdog.stop()
         else:
-            logger.debug("Awaiting results for step %s: %s" % (n + 1, \
-                                            self.testsuite.testcases()[n + 1]))
+            logger.debug("Awaiting results for step %s: %s" %
+                         (n + 1, self.testsuite.testcases()[n + 1]))
 
         self.job_center._run_hook("post-testcase", self.cookie)
 
@@ -255,7 +253,7 @@ class Job(object):
         filename = "annotations.yaml"
         if step == "current":
             filename = "%s-%s" % (self.current_step, filename)
-        elif step != None:
+        elif step is not None:
             filename = "%s-%s" % (step, filename)
 
         notes = []
@@ -274,7 +272,7 @@ class Job(object):
         filename = "annotations.yaml"
         if step == "current":
             filename = "%s-%s" % (self.current_step, filename)
-        elif step != None:
+        elif step is not None:
             filename = "%s-%s" % (step, filename)
         return list(yaml.load_all(self.get_artifact(filename)))
 
@@ -306,12 +304,12 @@ class Job(object):
         """Abort the test
         """
         if self.state() != s_running:
-            raise Exception(("Can not abort step %s of job %s, it is not" + \
-                             "running: %s") % (self.current_step, \
-                                               self.cookie, \
+            raise Exception(("Can not abort step %s of job %s, it is not" +
+                             "running: %s") % (self.current_step,
+                                               self.cookie,
                                                self.state()))
 
-        self.finish_step(self.current_step, is_success=False, note="aborted", \
+        self.finish_step(self.current_step, is_success=False, note="aborted",
                          is_abort=True)
 
     @utils.synchronized(_high_state_change_lock)
@@ -320,8 +318,8 @@ class Job(object):
         """
         logger.debug("Tearing down job %s" % self.cookie)
         if self.state() not in [s_running] + endstates:
-            raise Exception("Job %s can not yet be torn down: %s" % ( \
-                                                    self.cookie, self.state()))
+            raise Exception("Job %s can not yet be torn down: %s" %
+                            (self.cookie, self.state()))
 
         self.host.purge()
         self.profile.revoke_from(self.host)
@@ -396,8 +394,8 @@ class Job(object):
         """
         runtime = 0
         now = time.time()
-        get_first_state_change = lambda q: [s for s in self._state_history \
-                                                       if s["state"] == q][0]
+        get_first_state_change = lambda q: [s for s in self._state_history
+                                            if s["state"] == q][0]
         if self.state() == s_running:
             time_started = get_first_state_change(s_running)["created_at"]
             runtime = now - time_started
@@ -484,25 +482,23 @@ class Job(object):
             self.state_changed.wait()
 
     def __str__(self):
-        return "ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" % (self.cookie, \
-                self.state(), self.current_step, self.testsuite)
+        return ("ID: %s\nState: %s\nStep: %d\nTestsuite:\n%s" %
+                (self.cookie, self.state(), self.current_step, self.testsuite))
 
     def __to_dict__(self):
-        return { \
-            "id": self.cookie,
-            "profile": self.profile.get_name(),
-            "host": self.host.get_name(),
-            "testsuite": self.testsuite.__to_dict__(),
-            "state": self.state(),
-            "is_endstate": self.state() in endstates,
-            "current_step": self.current_step,
-            "results": self.results,
-            "timeout": self.timeout(),
-            "runtime": self.runtime(),
-            "created_at": self._created_at,
-            "artifacts": self._artifacts,
-            "additional_kargs": self.additional_kargs
-            }
+        return {"id": self.cookie,
+                "profile": self.profile.get_name(),
+                "host": self.host.get_name(),
+                "testsuite": self.testsuite.__to_dict__(),
+                "state": self.state(),
+                "is_endstate": self.state() in endstates,
+                "current_step": self.current_step,
+                "results": self.results,
+                "timeout": self.timeout(),
+                "runtime": self.runtime(),
+                "created_at": self._created_at,
+                "artifacts": self._artifacts,
+                "additional_kargs": self.additional_kargs}
 
 
 class JobCenter(object):
@@ -542,21 +538,19 @@ class JobCenter(object):
 
     @utils.synchronized(_jobcenter_lock)
     def get_jobs(self):
-        return {
-            "all": self.jobs,
-            "closed": self.closed_jobs
-            }
+        return {"all": self.jobs,
+                "closed": self.closed_jobs}
 
     def _generate_cookie(self, cookie_req=None):
         cookie = cookie_req
         self._cookie_lock.acquire()
         while cookie is None or cookie in self.jobs.keys():
-            cookie = "%s-%d" % (time.strftime("%Y%m%d-%H%M%S"), \
-                                 len(self.jobs.items()))
+            cookie = "%s-%d" % (time.strftime("%Y%m%d-%H%M%S"),
+                                len(self.jobs.items()))
             cookie = "i" + utils.surl(cookie.replace("-", ""))
         self._cookie_lock.release()
-        assert cookie is not None, "Cookie creation failed: %s -> %s" % ( \
-                                                            cookie_req, cookie)
+        assert cookie is not None, ("Cookie creation failed: %s -> %s" %
+                                    (cookie_req, cookie))
         return cookie
 
     @utils.synchronized(_jobcenter_lock)
@@ -580,8 +574,8 @@ class JobCenter(object):
     @utils.synchronized(_jobcenter_lock)
     def start_job(self, cookie):
         self._queue_of_pending_jobs.append(cookie)
-        return "Started job %s. %d in queue" % (cookie, \
-                                              len(self._queue_of_pending_jobs))
+        return "Started job %s. %d in queue" % \
+            (cookie, len(self._queue_of_pending_jobs))
 
     def _start_job(self, cookie):
         job = self.jobs[cookie]
@@ -637,7 +631,7 @@ class JobCenter(object):
 
     def submit_plan(self, plan):
         if plan.name in self._running_plans:
-            raise Exception("Plan with same name already running: %s" % \
+            raise Exception("Plan with same name already running: %s" %
                             plan.name)
         running_plan = JobCenter.PlanWorker(self, plan)
         running_plan.start()
@@ -712,7 +706,7 @@ class JobCenter(object):
                     self.passed = False
                     break
 
-            self.passed = all([r.state() == s_passed \
+            self.passed = all([r.state() == s_passed
                                for r in self.jobs])
 #            self.jobs.reverse()
             self.status = "stopped"
@@ -736,7 +730,7 @@ class JobCenter(object):
                 "plan": self.plan.__to_dict__(),
                 "jobs": [r.__to_dict__() for r in self.jobs],
                 "current_job_cookie": self.current_job.cookie
-                                        if self.current_job else "",
+                if self.current_job else "",
                 "passed": self.passed,
                 "runtime": self.runtime(),
                 "created_at": self.created_at,
@@ -761,10 +755,10 @@ class JobCenter(object):
                 # FIXME this doesn't respect the order
                 for cookie in self.jc._queue_of_pending_jobs:
                     candidate = self.jc.jobs[cookie]
-                    logger.debug("Checking if host is in use: %s" % \
+                    logger.debug("Checking if host is in use: %s" %
                                  candidate.host)
                     if candidate.host in self.jc._pool_of_hosts_in_use:
-                        self._debug("Host of candidate %s is still in use" % \
+                        self._debug("Host of candidate %s is still in use" %
                                     cookie)
                     else:
                         self._debug("Starting job %s" % cookie)

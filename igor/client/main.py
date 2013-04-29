@@ -31,7 +31,6 @@ import urllib
 import urllib2
 
 
-
 def check_isfile(filename):
     if not os.path.isfile(filename):
         raise RuntimeError("File '%s' does not exist." % filename)
@@ -65,9 +64,9 @@ class IgordAPI(object):
             self.logger.debug("New Query: %s" % _query)
             raise RuntimeError("Some placeholders weren't filled in route.")
         return "http://{host}:{port}{route}{query}".format(host=self.host,
-                                                    port=self.port,
-                                                    route=_route,
-                                                    query=_query)
+                                                           port=self.port,
+                                                           route=_route,
+                                                           query=_query)
 
     def request(self, url):
         """Request a page from a URL
@@ -93,7 +92,8 @@ class IgordAPI(object):
         self.logger.debug("PUT: %s" % url)
         opener = urllib2.build_opener(urllib2.HTTPHandler)
         request = urllib2.Request(url, data=data, headers=headers)
-        #request.add_header('Content-Type', 'application/octet-stream') #text/plain')
+        #request.add_header('Content-Type', 'application/octet-stream')
+        #text/plain')
         request.get_method = lambda: 'PUT'
         return opener.open(request)
 
@@ -129,7 +129,6 @@ class IgordAPI(object):
         return TestplanAPI(self.host, self.port, name)
 
 
-
 class JobAPI(IgordAPI):
     """An interface to the job related REST-API
     """
@@ -162,12 +161,13 @@ class JobAPI(IgordAPI):
                                   n=n)
 
     def step_finish(self, n, result="success"):
-        return self.route_request(routes.job_step_finish, cookie=self.sessionid,
+        return self.route_request(routes.job_step_finish,
+                                  cookie=self.sessionid,
                                   n=n, result=result)
 
     def step_result(self, n):
-        return self.route_request(routes.job_step_result, cookie=self.sessionid,
-                                  n=n)
+        return self.route_request(routes.job_step_result,
+                                  cookie=self.sessionid, n=n)
 
     def step_annotate(self, n):
         raise NotImplementedError("Needs to use PUT")

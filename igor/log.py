@@ -20,7 +20,6 @@
 
 import logging
 import logging.config
-import tempfile
 
 fs_fileobj = open("/tmp/igord.log", "a+")
 
@@ -29,7 +28,7 @@ log_config = {
 
     "formatters": {
         "default": {
-            "format": '%(levelname)-8s - %(asctime)s - ' + \
+            "format": '%(levelname)-8s - %(asctime)s - ' +
                       '%(name)-15s - %(message)s'
         }
     },

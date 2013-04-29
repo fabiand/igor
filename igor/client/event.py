@@ -27,7 +27,7 @@ from lxml import etree
 import socket
 import sys
 
-REPORTBASE="http://{host}:{port}/jobs/{sessionid}/status?format=xml"
+REPORTBASE = "http://{host}:{port}/jobs/{sessionid}/status?format=xml"
 
 
 def follow_events(server, port):
@@ -47,7 +47,7 @@ def __FIXME_retrieve_report(remote, port, sessionid):
     print("Fetching %s" % url)
     #statusdata = urllib2.urlopen(url).read()
     _statusfile = "/home/fdeutsch/dev/ovirt/igor/daemon/igor/data/st.xml"
-    _junitfile = "/home/fdeutsch/dev/ovirt/igor/daemon/igor/data/st.junit.xml"
+    #_junitfile = "/home/fdeutsch/dev/ovirt/igor/daemon/igor/data/st.junit.xml"
     statusdata = open(_statusfile).read()
 
     xsltfile = reports.TRANSFORM_MAP["job-junit"]
@@ -59,7 +59,7 @@ def __FIXME_retrieve_report(remote, port, sessionid):
 
 
 if __name__ == "__main__":
-    remote=sys.argv[1]
-    port=8090
+    remote = sys.argv[1]
+    port = 8090
     for evnt in follow_events(remote, port):
         __FIXME_retrieve_report(remote, port, evnt["session"])

@@ -49,6 +49,6 @@ def parse_config(fn="igord.cfg"):
             cfg.read(filename)
             was_read = True
             break
-    assert was_read == True, "Config file not found"
+    assert was_read, "Config file not found"
 
     return flatten_config(cfg)

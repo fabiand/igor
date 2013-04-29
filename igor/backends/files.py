@@ -18,13 +18,13 @@
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
 
-import logging
-import os
+from igor import utils
 import glob
-import yaml
-
 import igor.main
 import igor.utils
+import logging
+import os
+import yaml
 
 
 logger = logging.getLogger(__name__)
@@ -52,12 +52,12 @@ class Host(igor.main.Host):
         return self.mac
 
     def start(self):
-        logger.debug("Powering on %s: %s" % (self.get_name(), \
-                                          igor.utils.run(self.poweron_script)))
+        logger.debug("Powering on %s: %s" %
+                     (self.get_name(), utils.run(self.poweron_script)))
 
     def purge(self):
-        logger.debug("Powering off %s: %s" % (self.get_name(), \
-                                         igor.utils.run(self.poweroff_script)))
+        logger.debug("Powering off %s: %s" %
+                     (self.get_name(), utils.run(self.poweroff_script)))
 
     def __str__(self):
         return "%s <%s>" % (self.get_name(), self.get_mac_address())
@@ -142,7 +142,7 @@ class Factory(igor.utils.Factory):
         layout_fields = ["testsuite", "profile", "host"]  # kargs
 
         properties, layouts = (documents[0],
-                               [d for d in documents[1:] if d != None])
+                               [d for d in documents[1:] if d is not None])
 
         assert all([set(layout_fields) - set(l.keys()) == set([])
                     for l in layouts])
@@ -249,7 +249,7 @@ class Factory(igor.utils.Factory):
 #        set_fields = ["sets"]  # searchpath
 
         properties, blocks = (documents[0],
-                              [d for d in documents[1:] if d != None])
+                              [d for d in documents[1:] if d is not None])
 
         sets = []
         testsuitedir = os.path.dirname(filename)
@@ -292,7 +292,7 @@ class Factory(igor.utils.Factory):
         documents = Factory.__read_yaml(filename)
 
         properties, layouts = (documents[0],
-                               [d for d in documents[1:] if d != None])
+                               [d for d in documents[1:] if d is not None])
 
         searchpath = "."
         if "searchpath" in properties:

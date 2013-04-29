@@ -18,7 +18,7 @@
 #
 # -*- coding: utf-8 -*-
 
-from igor.partition import DiskImage
+from igor.partition import DiskImage, Partition
 from igor.utils import run, dict_to_args
 from lxml import etree
 import igor.main
@@ -41,8 +41,8 @@ class VMImage(igor.partition.Layout):
         assert dst_fmt in ["raw", "qcow2"], "Only qcow2 and raw allowed"
 
         dst_filename = "%s.%s" % (self.filename, dst_fmt)
-        cmd = "nice time qemu-img convert -c -O %s '%s' '%s'" % (dst_fmt, \
-                                                   self.filename, dst_filename)
+        cmd = ("nice time qemu-img convert -c -O %s '%s' '%s'" %
+               (dst_fmt, self.filename, dst_filename))
         run(cmd)
         cmd = "mv '%s' '%s'" % (dst_filename, self.filename)
         run(cmd)
@@ -69,7 +69,7 @@ class LibvirtConnection(object):
         assert data
 
         vols = []
-        for line in data.strip().split("\n")[2:]:
+        for line in unicode(data).strip().split("\n")[2:]:
             vol, path = re.split("\s+", line, 1)
             vols.append(vol)
         return vols
@@ -93,7 +93,7 @@ class LibvirtConnection(object):
             logger.debug("Creating volume")
             self.virsh(("vol-create-as --name '%s' --capacity '%s' " +
                         "--format '%s' --pool '%s'") %
-                        (volname, image.size, image.format, self.poolname))
+                       (volname, image.size, image.format, self.poolname))
         logger.debug("Uploading disk image '%s' to volume '%s'" %
                      (disk, poolvol))
         self.upload_volume(volname, disk)
@@ -255,7 +255,7 @@ class VMHost(igor.main.Host):
         >>> b = VMHost("bar")
         >>> a == b
         False
-        >>> pool = [a, b] 
+        >>> pool = [a, b]
         >>> VMHost("foo") in pool
         True
         >>> VMHost("baz") in pool
@@ -340,7 +340,7 @@ class NewVMHost(VMHost):
             "ram": "1024",
             "os-type": "linux",
             "boot": "cdrom,network,hd",
-            "disk" : "device=cdrom,bus=ide,format=raw,path=/dev/null",
+            "disk": "device=cdrom,bus=ide,format=raw,path=/dev/null",
             "network": self.network_configuration,
             "graphics": "spice",
             "video": "vga",
@@ -361,8 +361,8 @@ class NewVMHost(VMHost):
             assert type(image_spec) is VMImage
             image_spec.compress()
             poolvol = self._connection.create_volume(image_spec)
-            cmd += " --disk vol=%s,device=disk,bus=%s,format=%s" % (poolvol, \
-                                         self.disk_bus_type, image_spec.format)
+            cmd += (" --disk vol=%s,device=disk,bus=%s,format=%s" %
+                    (poolvol, self.disk_bus_type, image_spec.format))
 
         definition = run(cmd)
 
@@ -396,11 +396,8 @@ class CommonLibvirtOrigin(igor.main.Origin):
 
     def _create_default_host(self):
         name = "default-{identifier}"
-        host = NewVMHost(name=name, image_specs=[ \
-                 VMImage("8G", [ \
-                   igor.partition.Partition("pri", "1M", "1G") \
-                 ]) \
-               ])
+        image_specs = [VMImage("8G", [Partition("pri", "1M", "1G")])]
+        host = NewVMHost(name=name, image_specs=image_specs)
         self.__set_host_props(host)
 
         return host
