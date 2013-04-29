@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/bin/bash
 #
 # Copyright (C) 2013  Red Hat, Inc.
 #
@@ -19,7 +19,7 @@
 #
 
 #
-# A simple tool which reads liens from a file, xml-ifies and publishes them
+# A simple tool which reads lines from a file, xml-ifies and publishes them
 # Goal: Tell clients about updates to igor reports
 #
 

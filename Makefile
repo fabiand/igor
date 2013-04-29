@@ -1,7 +1,5 @@
 
-PYTHONBINS := bin/igord bin/igorc
 PYTHONSOURCES := $(shell find igor -name \*.py -not -path */hacks.py)
-PYTHONSOURCES += $(PYTHONBINS)
 XMLSOURCES := $(shell find . -name \*.xml -or -name \*.xsl)
 
 SHELL := /bin/bash
