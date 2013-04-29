@@ -36,13 +36,6 @@ event_stream()
   tailf "$EVENTFILE"
 }
 
-convert_to_xml()
-{
-  debug "Preparing translator"
-  sed -n -u \
-      -e "/.\+\s\+.\+/ s/\(.*\)\s\+\(.*\)/<event type='\\1' session='\\2' \/>/ p"
-}
-
 publish()
 {
   debug "Publishing on $PORT"
@@ -52,7 +45,7 @@ publish()
 main()
 {
   debug "PORT=$PORT EVENTFILE=$EVENTFILE"
-  event_stream | convert_to_xml | publish
+  event_stream | publish
 }
 
 main

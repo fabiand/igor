@@ -1,5 +1,6 @@
 #
 # This is a small hook which notifies the event publisher of new events
+# The hookname and cookie are translated into XML
 #
 
 HOOKNAME=$1
@@ -7,4 +8,9 @@ COOKIE=$2
 
 EVENTFILE=/tmp/igord-events
 
-echo $HOOKNAME $COOKIE > $EVENTFILE
+if [[ -z "$HOOKNAME" -o -z "$COOKIE" ]];
+then
+    echo "Hookname or cookie missing: $@" >&2
+else
+    echo "<event type='$HOOKNAME' session='$COOKIE' />"  > $EVENTFILE
+fi
