@@ -38,6 +38,8 @@ def check_isfile(filename):
 
 
 class IgordAPI(object):
+    """An interface to the basic REST-API of igor
+    """
     def __init__(self, host="127.0.0.1", port=8080):
         self.host = host
         self.port = port
@@ -129,6 +131,8 @@ class IgordAPI(object):
 
 
 class JobAPI(IgordAPI):
+    """An interface to the job related REST-API
+    """
     def __init__(self, host, port, sessionid):
         super(JobAPI, self).__init__(host, port)
         self.sessionid = sessionid
@@ -147,40 +151,41 @@ class JobAPI(IgordAPI):
         return self.request(url)
 
     def report_junit(self):
-        _statusfile = "/home/fdeutsch/dev/ovirt/igor/daemon/igor/data/st.xml"
-        _junitfile = "/home/fdeutsch/dev/ovirt/igor/daemon/igor/data/st.junit.xml"
-        statusdata = open(_junitfile).read()
-        return etree.XML(statusdata)
-        return self.route_request(routes.job_report_junit, cookie=self.sessionid)
+        return self.route_request(routes.job_report_junit,
+                                  cookie=self.sessionid)
 
     def artifacts(self):
         return self.route_request(routes.job_artifacts, cookie=self.sessionid)
 
     def step_skip(self, n):
         return self.route_request(routes.job_step_skip, cookie=self.sessionid,
-                                n=n)
+                                  n=n)
 
     def step_finish(self, n, result="success"):
         return self.route_request(routes.job_step_finish, cookie=self.sessionid,
-                                n=n, result=result)
+                                  n=n, result=result)
 
     def step_result(self, n):
         return self.route_request(routes.job_step_result, cookie=self.sessionid,
-                                n=n)
+                                  n=n)
 
     def step_annotate(self, n):
         raise NotImplementedError("Needs to use PUT")
         return self.route_request(routes.job_step_annotate,
-                                cookie=self.sessionid, n=n)
+                                  cookie=self.sessionid, n=n)
 
 
 class TestsuiteAPI(IgordAPI):
+    """An (dummy) interface to the testsuite related REST-API
+    """
     def __init__(self, host, port, name):
         super(TestsuiteAPI, self).__init__(host, port)
         self.name = name
 
 
 class ProfileAPI(IgordAPI):
+    """An interface to the profile related REST-API
+    """
     def __init__(self, host, port, name):
         super(ProfileAPI, self).__init__(host, port)
         self.name = name
@@ -247,7 +252,10 @@ class ProfileAPI(IgordAPI):
         if os.path.isdir("tftpboot"):
             subprocess.check_call(["sudo", "rm", "-rvf", "tftpboot"])
 
+
 class TestplanAPI(IgordAPI):
+    """An interface to the testplan related REST-API
+    """
     def __init__(self, host, port, name):
         super(TestplanAPI, self).__init__(host, port)
         self.name = name
@@ -268,4 +276,3 @@ class TestplanAPI(IgordAPI):
 
     def report_junit(self):
         return self.route_request(routes.testplan_report_junit, name=self.name)
-
