@@ -24,7 +24,6 @@ import os
 from utils import run
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 class PhysicalVolume(object):

@@ -18,9 +18,9 @@
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
 
-import os
-import ConfigParser
 import logging
+import os
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -30,25 +30,21 @@ search_paths = [".", "~/.igord", "/etc/igord"]
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
-def flatten_config(cfg):
-    cfgdict = {}
-    for section in cfg.sections():
-        for name, value in cfg.items(section):
-            key = "%s.%s" % (section.lower(), name)
-            cfgdict[key] = value
-    return cfgdict
+def locate_config_file(fn="igord.cfg"):
+    filename = None
+    for sp in search_paths:
+        _filename = os.path.join(sp, fn)
+        if os.path.exists(_filename):
+            filename = _filename
+            break
 
+    if not filename:
+        raise RuntimeError("No configuration file found in %s" % search_paths)
+
+    return filename
 
 def parse_config(fn="igord.cfg"):
-    cfg = ConfigParser.SafeConfigParser()
-    was_read = False
-    for sp in search_paths:
-        filename = os.path.join(sp, fn)
-        if os.path.exists(filename):
-            logger.info("Loading config from '%s'" % filename)
-            cfg.read(filename)
-            was_read = True
-            break
-    assert was_read, "Config file not found"
-
-    return flatten_config(cfg)
+    filename = locate_config_file(fn)
+    logger.info("Loading config from: %s" % filename)
+    with open(filename) as src:
+        return yaml.load(src.read())

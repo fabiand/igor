@@ -36,14 +36,14 @@ identification_tag = "managed-by-igor"
 def initialize_origins(category, CONFIG):
     origins = []
 
-    __cobbler_origin_args = (CONFIG["cobbler.url"],
-                             CONFIG["cobbler.username"],
-                             CONFIG["cobbler.password"],
-                             CONFIG["cobbler.ssh_uri"])
+    __cobbler_origin_args = (CONFIG["url"],
+                             CONFIG["username"],
+                             CONFIG["password"],
+                             CONFIG["ssh_uri"])
 
     if category == "profile":
         __cb_kwargs = {"remote_path_prefix":
-                       CONFIG.get("cobbler.remote_path_prefix", "/tmp")}
+                       CONFIG.get("remote_path_prefix", "/tmp")}
 
         origins += [("cobbler",
                      ProfileOrigin(*__cobbler_origin_args, **__cb_kwargs))]
@@ -51,8 +51,8 @@ def initialize_origins(category, CONFIG):
     if category == "host":
         # Just systems with igor- prefix
         __cb_kwargs = {"expression":
-                       CONFIG["cobbler.hosts.identification_expression"],
-                       "whitelist": CONFIG["cobbler.hosts.whitelist"]}
+                       CONFIG["hosts"]["identification_expression"],
+                       "whitelist": CONFIG["hosts"]["whitelist"]}
         origins += [("cobbler",
                      HostsOrigin(*__cobbler_origin_args, **__cb_kwargs))]
 

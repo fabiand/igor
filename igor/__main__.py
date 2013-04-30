@@ -1,36 +1,40 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
 
+from igor import common, log
+from igor.hacks import IgordJSONEncoder
+from string import Template
+import argparse
+import bottle
+import igor.config as config
+import igor.job
+import igor.main
+import igor.reports
+import igor.utils
+import importlib
 import json
 import os
-import logging
-import logging.config
-import bottle
 import tarfile
-from string import Template
 import yaml
 
-import igor.log
-import igor.main
-import igor.job
-import igor.utils
-import igor.reports
-from igor import common
-from igor.hacks import IgordJSONEncoder
-import importlib
 
-import igor.config as config
 
-logger = logging.getLogger(__name__)
+#logging.basicConfig(level=logging.DEBUG)
+
+logger = log.configure()
 
 logger.info("Starting igor daemon")
 
+
 BOTTLE_MAX_READ_SIZE = 1024 * 1024 * 512
 
-#
-# Parse the config at first
-#
+parser = argparse.ArgumentParser()
+parser.add_argument("-c", "--config", help="Config file to use",
+                    default="igord.cfg")
+ctx = parser.parse_args()
+
 CONFIG = config.parse_config()
+logger.debug("Config: %s" % CONFIG)
 
 plan_backends = []
 profile_backends = []
@@ -61,24 +65,25 @@ def load_backends(hosts, profiles, testsuites, testplans):
         logger.info("Loading %s backends from %s" % (category, srcs))
         for modulename in srcs:
             m = importlib.import_module(modulename)
-            module_origins = m.initialize_origins(category, CONFIG)
+            reload(m)
+            module_origins = m.initialize_origins(category, CONFIG[modulename])
             origin_priority[category].extend(x[0] for x in module_origins)
             origin.update(dict(module_origins))
             dst.append(m)
         logger.info("Origins for %s: %s" % (category, origin))
     logger.info("Priority: %s" % (origin_priority))
 
-load_backends(CONFIG["backends.hosts"].split(),
-              CONFIG["backends.profiles"].split(),
-              CONFIG["backends.testsuites"].split(),
-              CONFIG["backends.testplans"].split())
+load_backends(CONFIG["daemon"]["enable-backends"]["hosts"],
+              CONFIG["daemon"]["enable-backends"]["profiles"],
+              CONFIG["daemon"]["enable-backends"]["testsuites"],
+              CONFIG["daemon"]["enable-backends"]["testplans"])
 
 
 #
 # Now prepare the essential objects
 #
-jc = igor.job.JobCenter(session_path=CONFIG["session.path"],
-                        hooks_path=CONFIG["hooks.path"])
+jc = igor.job.JobCenter(session_path=CONFIG["daemon"]["session"]["path"],
+                        hooks_path=CONFIG["daemon"]["hooks"]["path"])
 
 inventory = igor.main.Inventory(
     plans=plan_origins,

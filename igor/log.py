@@ -17,7 +17,6 @@
 #
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
-
 import logging
 import logging.config
 
@@ -48,17 +47,19 @@ log_config = {
     "loggers": {
         "": {
             "handlers": ["console", "filesystem"],
-            "level": "DEBUG",
-            "propagate": True
+            "level": "DEBUG"
         }
     }
 }
 
-logging.config.dictConfig(log_config)
+def configure():
+    logging.config.dictConfig(log_config)
+    logger = logging.getLogger("")
+    logger.debug("Configured logging")
+    return logger
 
 
 def backlog():
-    r = None
     fs_fileobj.flush()
     with open(fs_fileobj.name, "r") as f:
         r = f.read()

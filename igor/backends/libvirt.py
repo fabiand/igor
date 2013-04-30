@@ -37,9 +37,9 @@ logger = logging.getLogger(__name__)
 def initialize_origins(category, CONFIG):
     origins = []
 
-    __con_args = (CONFIG["libvirtd.connection_uri"],
-                  CONFIG["libvirtd.virt-install.storage_pool"],
-                  CONFIG["libvirtd.virt-install.network_configuration"])
+    __con_args = (CONFIG["connection_uri"],
+                  CONFIG["virt-install"]["storage_pool"],
+                  CONFIG["virt-install"]["network_configuration"])
 
     if category == "host":
         origins += [("libvirt-create",

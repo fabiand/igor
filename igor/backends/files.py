@@ -29,7 +29,6 @@ import tarfile
 import tempfile
 import yaml
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -42,17 +41,17 @@ def initialize_origins(category, CONFIG):
         origins += [("draft-files",
                      superorigin.get_testplans_origin()),
                      ("files",
-                     TestplansOrigin(CONFIG["testplans.path"].split(":")))]
+                     TestplansOrigin(CONFIG["testplans"]["paths"]))]
 
     if category == "testsuite":
         origins += [("draft-files",
                      superorigin.get_testsuites_origin()),
                      ("files",
-                     TestsuitesOrigin(CONFIG["testcases.path"].split(":")))]
+                     TestsuitesOrigin(CONFIG["testcases"]["paths"]))]
 
     if category == "host":
         origins += [("files",
-                     HostsOrigin(CONFIG["hosts.path"].split(":")))]
+                     HostsOrigin(CONFIG["hosts"]["paths"]))]
 
     return origins
 
