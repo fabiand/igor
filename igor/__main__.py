@@ -15,9 +15,9 @@ import igor.main
 import igor.job
 import igor.utils
 import igor.reports
-from igor.backends import files, libvirt, cobbler
 from igor import common
 from igor.hacks import IgordJSONEncoder
+import importlib
 
 import igor.config as config
 
@@ -32,11 +32,11 @@ BOTTLE_MAX_READ_SIZE = 1024 * 1024 * 512
 #
 CONFIG = config.parse_config()
 
-# Enabled backends:
-enabled_backends = CONFIG["backends.enabled"].split()
-primary_profile_backend = CONFIG["backends.primary_profile"]
-logger.info("Enabled backends: %s" % enabled_backends)
-assert primary_profile_backend in enabled_backends
+plan_backends = []
+profile_backends = []
+testsuite_backends = []
+host_backends = []
+
 
 #
 # Now define our origins, where we get the items (hosts, profiles, …) from
@@ -46,50 +46,33 @@ testsuite_origins = {}
 profile_origins = {}
 host_origins = {}
 
-if "files" in enabled_backends:
-    plan_origins["files"] = \
-        files.TestplansOrigin(CONFIG["testplans.path"].split(":"))
+origin_priority = {}
 
-    testsuite_origins["files"] = \
-        files.TestsuitesOrigin(CONFIG["testcases.path"].split(":"))
+def load_backends(hosts, profiles, testsuites, testplans):
+    backendmap = [("host", host_backends, host_origins, hosts),
+                  ("profile", profile_backends, profile_origins, profiles),
+                  ("testsuite", testsuite_backends, testsuite_origins,
+                   testsuites),
+                  ("testplan", plan_backends, plan_origins, testplans)]
 
-    host_origins["files"] = \
-        files.HostsOrigin(CONFIG["hosts.path"].split(":"))
+    origin_priority = {x[0]: [] for x in backendmap}
 
-if "cobbler" in enabled_backends:
-    __cobbler_origin_args = (CONFIG["cobbler.url"],
-                             CONFIG["cobbler.username"],
-                             CONFIG["cobbler.password"],
-                             CONFIG["cobbler.ssh_uri"])
-    __cb_kwargs = {"remote_path_prefix":
-                   CONFIG.get("cobbler.remote_path_prefix", "/tmp")}
-    c_profiles = cobbler.ProfileOrigin(*__cobbler_origin_args,
-                                       **__cb_kwargs)
-    profile_origins["cobbler"] = c_profiles
+    for category, dst, origin, srcs in backendmap:
+        logger.info("Loading %s backends from %s" % (category, srcs))
+        for modulename in srcs:
+            m = importlib.import_module(modulename)
+            module_origins = m.initialize_origins(category, CONFIG)
+            origin_priority[category].extend(x[0] for x in module_origins)
+            origin.update(dict(module_origins))
+            dst.append(m)
+        logger.info("Origins for %s: %s" % (category, origin))
+    logger.info("Priority: %s" % (origin_priority))
 
-    # Just systems with igor- prefix
-    __cb_kwargs = {"expression":
-                   CONFIG["cobbler.hosts.identification_expression"],
-                   "whitelist": CONFIG["cobbler.hosts.whitelist"]}
-    c_hosts = cobbler.HostsOrigin(*__cobbler_origin_args,
-                                  **__cb_kwargs)
-    host_origins["cobbler"] = c_hosts
+load_backends(CONFIG["backends.hosts"].split(),
+              CONFIG["backends.profiles"].split(),
+              CONFIG["backends.testsuites"].split(),
+              CONFIG["backends.testplans"].split())
 
-if "libvirt" in enabled_backends:
-    __con_args = (CONFIG["libvirtd.connection_uri"],
-                  CONFIG["libvirtd.virt-install.storage_pool"],
-                  CONFIG["libvirtd.virt-install.network_configuration"])
-
-    l_hosts = {"libvirt-create":
-               libvirt.CreateDomainHostOrigin(*__con_args),
-               "libvirt-existing":
-               libvirt.ExistingDomainHostOrigin(*__con_args)
-               }
-    host_origins.update(l_hosts)
-
-    l_profiles = {"libvirt":
-                  libvirt.ProfileOrigin(*__con_args)}
-    profile_origins.update(l_profiles)
 
 #
 # Now prepare the essential objects
@@ -522,7 +505,8 @@ def profile_from_vmlinuz_put(pname):
         print written_files
         if not all([r in written_files.keys() for r in reqfiles]):
             bottle.abort(412, "Expecting %s files" % str(reqfiles))
-        inventory.create_profile(oname=primary_profile_backend, pname=pname,
+        inventory.create_profile(oname=origin_priority["profile"][0],
+                                 pname=pname,
                                  **written_files)
     _tmpdir.clean()
 

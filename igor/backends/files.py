@@ -24,10 +24,37 @@ import igor.main
 import igor.utils
 import logging
 import os
+import shutil
+import tarfile
+import tempfile
 import yaml
 
 
 logger = logging.getLogger(__name__)
+
+
+def initialize_origins(category, CONFIG):
+    origins = []
+
+    superorigin = TestDraftSuperOrigin(tempfile.mkdtemp())
+
+    if category == "testplan":
+        origins += [("draft-files",
+                     superorigin.get_testplans_origin()),
+                     ("files",
+                     TestplansOrigin(CONFIG["testplans.path"].split(":")))]
+
+    if category == "testsuite":
+        origins += [("draft-files",
+                     superorigin.get_testsuites_origin()),
+                     ("files",
+                     TestsuitesOrigin(CONFIG["testcases.path"].split(":")))]
+
+    if category == "host":
+        origins += [("files",
+                     HostsOrigin(CONFIG["hosts.path"].split(":")))]
+
+    return origins
 
 
 class Host(igor.main.Host):
@@ -112,6 +139,58 @@ class TestplansOrigin(igor.main.Origin):
     def items(self):
         plans = Factory.testplans_from_paths(self.paths)
         return plans
+
+
+class TestDraftSuperOrigin(object):
+    __temporary_path = None
+
+    def __init__(self, temporary_path):
+        self.__temporary_path = tempfile.mkdtemp()
+        self.paths = []
+
+    def create_item(self, dname, testplan_archive_file):
+        with tarfile.open(testplan_archive_file) as archive:
+            names = archive.getnames()
+            subdirs = set(n.split("/")[0] for n in names)
+            if subdirs != set("plans", "suites"):
+                raise RuntimeError("There must be two top-level dir")
+
+            archive.extractall(path=self.__temporary_path)
+
+            tdir= os.path.join(self.__temporary_path, dname)
+            self.paths.append(tdir)
+
+    def get_testplans_origin(self):
+        def draft_testplans():
+            paths = [os.path.join(self.__temporary_path, s, "plans")
+                     for s in os.listdir(self.__temporary_path)]
+            return Factory.testplans_from_paths(paths)
+
+        return TestDraftSuperOrigin.TestDraftSubOrigin(self,
+                                                       "DraftTestplans",
+                                                       draft_testplans)
+
+    def get_testsuites_origin(self):
+        def draft_testsuites():
+            paths = [os.path.join(self.__temporary_path, s, "suites")
+                     for s in os.listdir(self.__temporary_path)]
+            return Factory.testsuites_from_paths(paths)
+
+        return TestDraftSuperOrigin.TestDraftSubOrigin(self,
+                                                       "DraftTestsuites",
+                                                       draft_testsuites)
+
+    class TestDraftSubOrigin(TestplansOrigin):
+        def __init__(self, superorigin, name, items_func):
+            self.superorigin = superorigin
+            self.name = name
+            self.items_func = items_func
+
+        def items(self):
+            return self.items_func()
+
+        def create_item(self, dname, archive):
+            self.superorigin.create_item(dname, archive)
 
 
 class Factory(igor.utils.Factory):

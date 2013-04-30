@@ -34,6 +34,26 @@ import tempfile
 logger = logging.getLogger(__name__)
 
 
+def initialize_origins(category, CONFIG):
+    origins = []
+
+    __con_args = (CONFIG["libvirtd.connection_uri"],
+                  CONFIG["libvirtd.virt-install.storage_pool"],
+                  CONFIG["libvirtd.virt-install.network_configuration"])
+
+    if category == "host":
+        origins += [("libvirt-create",
+                      CreateDomainHostOrigin(*__con_args)),
+                     ("libvirt-existing",
+                      ExistingDomainHostOrigin(*__con_args))]
+
+    if category == "profile":
+        origins += [("libvirt",
+                     ProfileOrigin(*__con_args))]
+
+    return origins
+
+
 class VMImage(igor.partition.Layout):
     def compress(self, dst_fmt="qcow2"):
         '''Convert the raw image into a qemu image.
