@@ -1,67 +1,99 @@
+#
+# This is the igord configuration file
+#
+# In some places references [0] are used, they look like
+# foo: &marker
+# bar: *marker (ref to marker)
+# This is used to provide alternative configurations in some places.
+# [0] http://en.wikipedia.org/wiki/YAML#References
+#
 
-[Testcases]
-# Path of testcases relative to runpath
-# Separate multiple paths by ":"
-path = /usr/lib/igord/testcases/
+daemon:
+    # Example for libvirt only (dev-workstation setup)
+    backends-for-libvirt-only: &backends-for-libvirt-only
+        testsuites:
+            - igor.backends.files
+        testplans:
+            - igor.backends.files
+        profiles:
+            - igor.backends.libvirt
+            - igor.backends.files
+        hosts:
+            - igor.backends.libvirt
 
+    # Example for testing with bare metal hosts
+    backends-for-bare-metal-and-cobbler: &backends-for-bare-metal-and-cobbler
+        testsuites:
+            - igor.backends.files
+        testplans:
+            - igor.backends.files
+        profiles:
+            - igor.backends.files
+            - igor.backends.cobbler
+            - igor.backends.libvirt
+        hosts:
+            - igor.backends.cobbler
+            - igor.backends.libvirt
 
-[Testplans]
-# Path of testplans relative to runpath
-#path = /home/fdeutsch/dev/ovirt/igor/testsuites/plans
-path = /home/fdeutsch/dev/ovirt/gerrit/ovirt-node/tests/igor/plans/
+    # Default: Use libvirt-only backend configuration
+    enable-backends: *backends-for-libvirt-only
 
+    hooks:
+        # Hooks are scripts which are called on a variety of events.
+        # The scripts must be executable and reside in the path below.
+        # The script is called with two params:
+        # hook-name: The name of the hook
+        # sessionid: The id referenceing the job where the event happened
+        # Example:
+        # <script> pre-job HF765n8
+        path: /etc/igord/hook.d/
 
-[Hooks]
-# Hooks can be (pre-job and post-job) and need to be executable scripts
-# residing in the path below. {hook} is replaced by the hook name.
-# pre-job hook scripts would reside in /etc/igord/pre-job.d/, each one
-# would be run
-path = /etc/igord/hook.d/
-
-
-[Hosts]
-# Path to .hosts files
-# Separate multiple paths by ":"
-path = /etc/igor.d/
-
-
-[Session]
-# Path to store the sessions in
-path = /var/run/igord/
-
-
-[Cobbler]
-# The URL of Cobblers API
-url = http://cobbler.example.com/cobbler_api
-username = cobbler
-password = cobbler
-
-# SSH URI (passwordless authentication) to import profiles
-ssh_uri  = cobbler.example.com
-
-# Where - on the remote server - should files (vmlinuz, ...) be placed
-remote_path_prefix = /var/cache/igord
-
-
-[Cobbler.Hosts]
-# This expression needs to be in the hostname, so igor manages it
-identification_expression = igor-
-
-# Or the hostname needs to be in the whitelist
-whitelist = data/cobbler.whitelist
-
-
-[libvirtd]
-connection_uri = qemu://libvirt.example.com/system
+    session:
+        # Path to store the sessions in
+        path: /var/run/igord/
 
 
-[libvirtd.virt-install]
-storage_pool = default
-# As described in man virt-install
-network_configuration  = network=default
+igor.backends.files:
+    testcases:
+        # Path of testcases relative to runpath
+        paths:
+            - /home/homer/dev/ovirt/tests/igor/suites/
+
+    testplans:
+        # Path of testplans relative to runpath
+        paths:
+            - /home/homer/dev/ovirt/tests/igor/plans/
+
+    hosts:
+        # Path to .hosts files
+        # Separate multiple paths by ":"
+        paths:
+            - data
+
+igor.backends.cobbler:
+    # The URL of Cobblers API
+    url: http://cobbler.example.com/cobbler_api
+    username: testing
+    password: testing
+
+    # SSH URI (passwordless authentication) to import profiles
+    ssh_uri: root@cobbler.example.com
+
+    remote_path_prefix: /var/cache/igord
+
+    hosts:
+        # This expression needs to be in the hostname, so igor manages it
+        identification_expression: igor-
+
+        # Or the hostname needs to be in the whitelist
+        whitelist: my.cobbler.whitelist
 
 
-[Backends]
-# A space separated list of enabled backends
-enabled = files libvirt cobbler
-primary_profile = cobbler
+igor.backends.libvirt:
+    connection_uri: qemu:///system
+    # connection_uri: qemu://libvirt.example.com/system
+
+    virt-install:
+        storage_pool: default
+        # As described in man virt-install
+        network_configuration: network=default
