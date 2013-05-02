@@ -52,6 +52,7 @@ log_config = {
     }
 }
 
+
 def configure():
     logging.config.dictConfig(log_config)
     logger = logging.getLogger("")

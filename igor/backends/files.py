@@ -24,7 +24,6 @@ import igor.main
 import igor.utils
 import logging
 import os
-import shutil
 import tarfile
 import tempfile
 import yaml
@@ -40,13 +39,13 @@ def initialize_origins(category, CONFIG):
     if category == "testplan":
         origins += [("draft-files",
                      superorigin.get_testplans_origin()),
-                     ("files",
+                    ("files",
                      TestplansOrigin(CONFIG["testplans"]["paths"]))]
 
     if category == "testsuite":
         origins += [("draft-files",
                      superorigin.get_testsuites_origin()),
-                     ("files",
+                    ("files",
                      TestsuitesOrigin(CONFIG["testcases"]["paths"]))]
 
     if category == "host":
@@ -156,7 +155,7 @@ class TestDraftSuperOrigin(object):
 
             archive.extractall(path=self.__temporary_path)
 
-            tdir= os.path.join(self.__temporary_path, dname)
+            tdir = os.path.join(self.__temporary_path, dname)
             self.paths.append(tdir)
 
     def get_testplans_origin(self):

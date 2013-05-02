@@ -43,6 +43,7 @@ def locate_config_file(fn="igord.cfg"):
 
     return filename
 
+
 def parse_config(fn="igord.cfg"):
     filename = locate_config_file(fn)
     logger.info("Loading config from: %s" % filename)

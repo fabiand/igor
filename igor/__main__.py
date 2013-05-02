@@ -18,7 +18,6 @@ import tarfile
 import yaml
 
 
-
 #logging.basicConfig(level=logging.DEBUG)
 
 logger = log.configure()
@@ -51,6 +50,7 @@ profile_origins = {}
 host_origins = {}
 
 origin_priority = {}
+
 
 def load_backends(hosts, profiles, testsuites, testplans):
     backendmap = [("host", host_backends, host_origins, hosts),

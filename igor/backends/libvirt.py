@@ -43,9 +43,9 @@ def initialize_origins(category, CONFIG):
 
     if category == "host":
         origins += [("libvirt-create",
-                      CreateDomainHostOrigin(*__con_args)),
-                     ("libvirt-existing",
-                      ExistingDomainHostOrigin(*__con_args))]
+                     CreateDomainHostOrigin(*__con_args)),
+                    ("libvirt-existing",
+                     ExistingDomainHostOrigin(*__con_args))]
 
     if category == "profile":
         origins += [("libvirt",
