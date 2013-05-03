@@ -30,6 +30,7 @@ from lxml import etree
 import sys
 import datetime
 import re
+import fabulous.color as c
 
 
 def clearscreen():
@@ -42,24 +43,24 @@ class ansi(unicode):
         self.with_markup = with_markup
 
     @property
+    def plain(self):
+        return ansi(c.plain(self.txt))
+
+    @property
     def bold(self):
-        return ansi(u'\033[1m%s\033[0m' % self.txt)
+        return ansi(c.bold(self.txt))
+
+    @property
+    def italic(self):
+        return ansi(c.italic(self.txt))
 
     @property
     def underline(self):
-        return ansi(u'\033[4m%s\033[0m' % self.txt)
+        return ansi(c.underline(self.txt))
 
     @property
     def inverse(self):
-        return ansi(u'\033[7m%s\033[0m' % self.txt)
-
-    def _color(self, color):
-        c = '38;05;%d' % int(color)
-        return ansi(u'\033[%sm%s\033[0m' % (c, self.txt))
-
-    def _background_color(self, color):
-        c = '48;05;%d' % int(color)
-        return ansi(u'\033[%sm%s\033[0m' % (c, self.txt))
+        return ansi(c.flip(self.txt))
 
     @property
     def markup(self):
@@ -76,44 +77,37 @@ class ansi(unicode):
                      txt)
         return ansi(txt)
 
-    @staticmethod
-    def all_colors():
-        colors = []
-        for i in range(256):
-            colors.append(ansi('color %s' % i)._color(i))
-        return "\n".join(colors)
-
     @property
     def black(self):
-        return self._color(0)
+        return ansi(c.black(self.txt))
 
     @property
     def red(self):
-        return self._color(1)
+        return ansi(c.red(self.txt))
 
     @property
     def green(self):
-        return self._color(2)
+        return ansi(c.green(self.txt))
 
     @property
     def yellow(self):
-        return self._color(3)
+        return ansi(c.yellow(self.txt))
 
     @property
     def blue(self):
-        return self._color(4)
+        return ansi(c.blue(self.txt))
 
     @property
     def magenta(self):
-        return self._color(5)
+        return ansi(c.magenta(self.txt))
 
     @property
     def cyan(self):
-        return self._color(6)
+        return ansi(c.cyan(self.txt))
 
     @property
     def white(self):
-        return self._color(7)
+        return ansi(c.white(self.txt))
 
 
 class Log(object):
