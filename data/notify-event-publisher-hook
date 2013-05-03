@@ -8,7 +8,7 @@ COOKIE=$2
 
 EVENTFILE=/tmp/igord-events
 
-if [[ -z "$HOOKNAME" -o -z "$COOKIE" ]];
+if [[ -z "$HOOKNAME" || -z "$COOKIE" ]];
 then
     echo "Hookname or cookie missing: $@" >&2
 else

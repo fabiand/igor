@@ -328,7 +328,7 @@ if __name__ == "__main__":
     if namespace.command:
         for command in namespace.command:
             if command.strip():
-                print("# Running:\n# %s" % command)
+                print("<!-- Running:\n %s -->" % command)
                 client.onecmd(command)
     else:
         client.cmdloop()

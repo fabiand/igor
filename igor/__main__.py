@@ -59,7 +59,8 @@ def load_backends(hosts, profiles, testsuites, testplans):
                    testsuites),
                   ("testplan", plan_backends, plan_origins, testplans)]
 
-    origin_priority = {x[0]: [] for x in backendmap}
+    for x in backendmap:
+        origin_priority[x[0]] = []
 
     for category, dst, origin, srcs in backendmap:
         logger.info("Loading %s backends from %s" % (category, srcs))
@@ -510,7 +511,9 @@ def profile_from_vmlinuz_put(pname):
         print written_files
         if not all([r in written_files.keys() for r in reqfiles]):
             bottle.abort(412, "Expecting %s files" % str(reqfiles))
-        inventory.create_profile(oname=origin_priority["profile"][0],
+
+        origin_to_use = origin_priority["profile"][0]
+        inventory.create_profile(oname=origin_to_use,
                                  pname=pname,
                                  **written_files)
     _tmpdir.clean()
