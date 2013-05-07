@@ -18,22 +18,22 @@ import tarfile
 import yaml
 
 
-#logging.basicConfig(level=logging.DEBUG)
-
-logger = log.configure()
-
+logger = log.getLogger(__name__)
 logger.info("Starting igor daemon")
-
 
 BOTTLE_MAX_READ_SIZE = 1024 * 1024 * 512
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config", help="Config file to use",
                     default="igord.cfg")
+parser.add_argument("-s", "--set", help="Override a config entry e.g. " +
+                    "--set igor.backends.files/testcases/paths " +
+                    "/path/to/custom/testcases",
+                    action="append", nargs=2, metavar=("PATH", "VALUE"),
+                    dest="updates")
 ctx = parser.parse_args()
 
-CONFIG = config.parse_config()
-logger.debug("Config: %s" % CONFIG)
+CONFIG = config.parse_config(updates=ctx.updates)
 
 plan_backends = []
 profile_backends = []

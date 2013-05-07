@@ -53,11 +53,9 @@ log_config = {
 }
 
 
-def configure():
-    logging.config.dictConfig(log_config)
-    logger = logging.getLogger("")
-    logger.debug("Configured logging")
-    return logger
+logging.config.dictConfig(log_config)
+__logger = logging.getLogger("")
+__logger.debug("Configured logging")
 
 
 def backlog():
@@ -65,3 +63,6 @@ def backlog():
     with open(fs_fileobj.name, "r") as f:
         r = f.read()
     return r
+
+def getLogger(name):
+    return __logger.getChild(name)

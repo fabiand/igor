@@ -18,11 +18,12 @@
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
 
-import logging
+import log
 import os
+import pprint
 import yaml
 
-logger = logging.getLogger(__name__)
+logger = log.getLogger(__name__)
 
 
 search_paths = [".", "~/.igord", "/etc/igord"]
@@ -44,8 +45,41 @@ def locate_config_file(fn="igord.cfg"):
     return filename
 
 
-def parse_config(fn="igord.cfg"):
+def parse_config(fn="igord.cfg", updates=None):
     filename = locate_config_file(fn)
     logger.info("Loading config from: %s" % filename)
     with open(filename) as src:
-        return yaml.load(src.read())
+        config = yaml.load(src.read())
+
+    logger.debug("Config: %s" % pprint.pformat(config))
+
+    if updates:
+        logger.debug("Config updates: %s" % updates)
+        update_by_path(config, updates)
+
+    return config
+
+
+def set_by_path(store, paths, value):
+    """Sets the element path in store to value (or appends it, if a list)
+    """
+    path, paths = paths[0], paths[1:]
+    if paths:
+        return set_by_path(store[path], paths, value)
+    if type(store[path]) is list:
+        store[path].append(value)
+    else:
+        store[path] = value
+    return store[path]
+
+
+def update_by_path(config, paths_n_values):
+    """Update a config dict by paths and value tuples
+    Args:
+        config: A nested dict like parse_config returns
+        paths_n_values: [(path, value), ...]
+            Where path is "/" separated
+    """
+    for path, val in paths_n_values:
+        paths = path.split("/")
+        set_by_path(config, paths, val)
