@@ -18,7 +18,7 @@
 #
 # -*- coding: utf-8 -*-
 
-import logging
+from igor import log
 import main
 import os
 import threading
@@ -27,7 +27,7 @@ import utils
 import yaml
 
 
-logger = logging.getLogger(__name__)
+logger = log.getLogger(__name__)
 
 s_open = utils.State("open")
 s_preparing = utils.State("preparing")

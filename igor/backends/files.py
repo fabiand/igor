@@ -18,17 +18,17 @@
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
 
-from igor import utils
+from igor import log, utils
 import glob
 import igor.main
 import igor.utils
-import logging
 import os
 import tarfile
 import tempfile
 import yaml
 
-logger = logging.getLogger(__name__)
+
+logger = log.getLogger(__name__)
 
 
 def initialize_origins(category, CONFIG):

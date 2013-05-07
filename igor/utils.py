@@ -18,17 +18,17 @@
 #
 # -*- coding: utf-8 -*-
 
-import os
-import logging
-import urllib
-import re
-import tempfile
-import shlex
-import threading
-import yaml
+from igor import log
 from lxml import etree
+import os
+import re
+import shlex
+import tempfile
+import threading
+import urllib
+import yaml
 
-logger = logging.getLogger(__name__)
+logger = log.getLogger(__name__)
 
 
 def run(cmd, with_retval=False):

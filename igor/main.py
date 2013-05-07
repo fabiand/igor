@@ -22,17 +22,17 @@
 The main module of igor, specifying the model.
 """
 
-import os
-import time
-import logging
-import tempfile
-import tarfile
-import io
-import random
-
+from igor import log
 from igor.utils import run, update_properties_only
+import io
+import os
+import random
+import tarfile
+import tempfile
+import time
 
-logger = logging.getLogger(__name__)
+
+logger = log.getLogger(__name__)
 
 
 class UpdateableObject(object):

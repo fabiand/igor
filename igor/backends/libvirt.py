@@ -18,12 +18,12 @@
 #
 # -*- coding: utf-8 -*-
 
+from igor import log
 from igor.partition import DiskImage, Partition
 from igor.utils import run, dict_to_args
 from lxml import etree
 import igor.main
 import igor.partition
-import logging
 import os
 import re
 import shutil
@@ -31,7 +31,8 @@ import subprocess
 import tempfile
 
 
-logger = logging.getLogger(__name__)
+
+logger = log.getLogger(__name__)
 
 
 def initialize_origins(category, CONFIG):

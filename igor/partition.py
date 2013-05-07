@@ -19,13 +19,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-import logging
-
+from igor import log
 import igor.main
 import igor.partition
 from igor.utils import run
 
-logger = logging.getLogger(__name__)
+logger = log.getLogger(__name__)
 
 
 class DiskImage(igor.main.UpdateableObject):

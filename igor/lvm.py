@@ -18,12 +18,12 @@
 #
 # -*- coding: utf-8 -*-
 
-import logging
+from igor import log
+from utils import run
 import os
 
-from utils import run
 
-logger = logging.getLogger(__name__)
+logger = log.getLogger(__name__)
 
 
 class PhysicalVolume(object):

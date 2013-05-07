@@ -18,16 +18,16 @@
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
 
-import logging
-import xmlrpclib
+from igor import log
 import httplib
-import os
-
-import igor.main
 import igor.backends.files
+import igor.main
 import igor.utils
+import os
+import xmlrpclib
 
-logger = logging.getLogger(__name__)
+
+logger = log.getLogger(__name__)
 
 
 identification_tag = "managed-by-igor"
