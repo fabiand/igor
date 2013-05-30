@@ -33,7 +33,10 @@ event_stream()
   debug "Cleaning $EVENTFILE"
   :> "$EVENTFILE"
   debug "Following $EVENTFILE"
-  tail -f "$EVENTFILE"
+  while inotifywait -qq $EVENTFILE;
+  do
+    cat "$EVENTFILE"
+  done
 }
 
 publish()
