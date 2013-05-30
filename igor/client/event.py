@@ -24,6 +24,7 @@
 
 from igor import reports
 from lxml import etree
+import logging
 import socket
 import sys
 
@@ -36,9 +37,12 @@ def follow_events(server, port):
     sock.connect((server, int(port)))
     sf = sock.makefile()
     for line in sf:
-        event = etree.XML(line)
-        if event.attrib:
-            yield event.attrib
+        try:
+            event = etree.XML(line)
+            if event.attrib:
+                yield event.attrib
+        except:
+            logging.warning("Failed to parse: %s" % line)
     sf.close()
 
 

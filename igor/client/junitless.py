@@ -239,14 +239,22 @@ class LogBuilder(object):
             for testcase in node.iter("testcase"):
                 self.build(testcase)
 
-        attrs = {"Time": "%.2fs" % float(node.attrib["time"]),
-                 "Tests": "%s" % node.attrib["tests"],
-                 "Failures": "%s" % node.attrib["failures"]
+        # Build the summary line
+        # SUMMARY: total: 241 passed: 239 skipped: 2 failed: 0
+        tests_total = int(node.attrib["tests"])
+        tests_failed = int(node.attrib["failures"])
+        tests_passed = tests_total - tests_failed
+        attrs = {"SUMMARY:": "",
+                 "total": "%s" % tests_total,
+                 "passed": "%s" % tests_passed,
+                 #"skipped": "%s" % node.attrib["tests"],
+                 "failed": "%s" % tests_failed,
+                 "time": "%.2fs" % float(node.attrib["time"]),
                  }
 
         self.log.writeln("")
-        txt = ", ".join("%s: %s" % (f, v) for f, v in attrs.items())
-        if int(node.attrib["failures"]):
+        txt = " ".join("%s: %s" % (f, v) for f, v in attrs.items())
+        if int(node.attrib["failures"]) > 0:
             self.log.error(txt)
         else:
             self.log.ok(txt)

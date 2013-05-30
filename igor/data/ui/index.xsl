@@ -89,12 +89,20 @@
             </span>
         </span>
         </xsl:if>
-        <a style="float: right">
+        <span style="float: right">
+        <a>
             <xsl:attribute name="href">
                 <xsl:text>/jobs/</xsl:text><xsl:value-of select ="./id"/>/report
             </xsl:attribute>
             Report
+        </a>, 
+        <a>
+            <xsl:attribute name="href">
+                <xsl:text>/jobs/</xsl:text><xsl:value-of select ="./id"/>/abort
+            </xsl:attribute>
+            Abort
         </a>
+        </span>
     </td>
 </tr>
 <tr>

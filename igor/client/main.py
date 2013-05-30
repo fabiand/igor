@@ -205,7 +205,9 @@ class ProfileAPI(IgordAPI):
             self.logger.debug("Temporary archive for profile upload: %s" %
                               tmpfile.name)
             with tarfile.open(fileobj=tmpfile, mode="w") as archive:
+                self.logger.debug("Adding files: %s" % filemap)
                 for arcname, filename in filemap.items():
+                    self.logger.debug("Adding %s" % filename)
                     if type(filename) is io.BytesIO:
                         srcobj = filename
                     else:
@@ -215,7 +217,8 @@ class ProfileAPI(IgordAPI):
                     info.size = len(srcobj.getvalue())
                     info.mtime = time.time()
                     archive.addfile(tarinfo=info, fileobj=srcobj)
-            self.logger.debug("Archive contents: %s" %
+            tmpfile.flush()
+            self.logger.debug("Archive contents: \n%s" %
                               subprocess.check_output(["tar", "tvf",
                                                        tmpfile.name]))
 

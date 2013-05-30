@@ -33,7 +33,7 @@ event_stream()
   debug "Cleaning $EVENTFILE"
   :> "$EVENTFILE"
   debug "Following $EVENTFILE"
-  tailf "$EVENTFILE"
+  tail -f "$EVENTFILE"
 }
 
 publish()
