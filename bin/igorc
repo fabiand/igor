@@ -18,4 +18,4 @@
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
 
-python -m igor.client "$@"
+python -m igor.client.__main__ "$@"

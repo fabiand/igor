@@ -84,7 +84,8 @@ class IgorClient(cmd.Cmd):
     def _parse_do_args(self, prog, line, arguments):
         parser = argparse.ArgumentParser(prog=prog)
         for args, kwargs in arguments:
-            parser.add_argument(args, **kwargs)
+            args = (args,) if type(args) in [str, unicode] else args
+            parser.add_argument(*args, **kwargs)
         return parser.parse_args(shlex.split(line))
 
     def do_set(self, line):
@@ -177,19 +178,30 @@ class IgorClient(cmd.Cmd):
 
     def do_testplan_on_iso(self, line):
         """testplan_on_iso <testplan> <isoname> [<additional_kargs>]
+                           [-s <substitutions>]
         """
         pargs = [("testplanname", {}),
                  ("isoname", {}),
-                 ("additional_kargs", {"nargs": "?", "default": ""})]
+                 ("additional_kargs", {"nargs": "?", "default": ""}),
+                 ("-s", {"dest": "substitutions",
+                         "metavar": "substitutions",
+                         "help": "Variables to be replaced in the testplan" +
+                         ". {varname} can be used in the testplan."})]
         _args = self._parse_do_args("testplan_on_iso", line, pargs)
-
         igor = self.__igorapi()
 
         profilename = os.path.basename(_args.isoname)
+
+        substitutions = {"tbd_profile": profilename}
+        if _args.substitutions:
+            parsed_substs = dict(pair.split("=", 1) for pair in
+                                 _args.substitutions.split(","))
+            substitutions.update(parsed_substs)
+        print substitutions
         profile = igor.profile(profilename)
         profile.new_from_livecd(_args.isoname, _args.additional_kargs)
         testplan = igor.testplan(_args.testplanname)
-        testplan.start(substitutions={"tbd_profile": profilename})
+        testplan.start(substitutions=substitutions)
         self.do_watch_testplan(_args.testplanname)
         profile.delete()
 
