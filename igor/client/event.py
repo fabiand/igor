@@ -37,12 +37,13 @@ def follow_events(server, port):
     sock.connect((server, int(port)))
     sf = sock.makefile()
     for line in sf:
+        event = None
         try:
             event = etree.XML(line)
-            if event.attrib:
-                yield event.attrib
         except:
-            logging.warning("Failed to parse: %s" % line)
+            logging.exception("Failed to parse: %s" % line)
+        if event is not None and event.attrib:
+            yield event.attrib
     sf.close()
 
 

@@ -243,17 +243,18 @@ class LogBuilder(object):
         # SUMMARY: total: 241 passed: 239 skipped: 2 failed: 0
         tests_total = int(node.attrib["tests"])
         tests_failed = int(node.attrib["failures"])
-        tests_passed = tests_total - tests_failed
-        attrs = {"SUMMARY:": "",
-                 "total": "%s" % tests_total,
-                 "passed": "%s" % tests_passed,
-                 #"skipped": "%s" % node.attrib["tests"],
-                 "failed": "%s" % tests_failed,
-                 "time": "%.2fs" % float(node.attrib["time"]),
-                 }
+        tests_skipped = int(node.attrib["skipped"])
+        tests_passed = tests_total - tests_failed - tests_skipped
+        attrs = [("SUMMARY", ""),
+                 ("total", "%s" % tests_total),
+                 ("passed", "%s" % tests_passed),
+                 ("skipped", "%s" % tests_skipped),
+                 ("failed", "%s" % tests_failed),
+                 ("time", "%.2fs" % float(node.attrib["time"])),
+                 ]
 
         self.log.writeln("")
-        txt = " ".join("%s: %s" % (f, v) for f, v in attrs.items())
+        txt = " ".join("%s: %s" % (f, v) for f, v in attrs)
         if int(node.attrib["failures"]) > 0:
             self.log.error(txt)
         else:

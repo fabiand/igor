@@ -310,7 +310,8 @@ class Notify(object):
 
 if __name__ == "__main__":
     # Parse args
-    parser = argparse.ArgumentParser(description="Communicate with igord")
+    parser = argparse.ArgumentParser(prog="igorc",
+                                     description="Communicate with igord")
     parser.add_argument("-c", "--connect", metavar="URI",
                         help="URL of the igor server. Default: localhost:8080",
                         default="http://127.0.0.1:8080")

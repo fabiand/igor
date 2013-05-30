@@ -33,6 +33,9 @@
   <xsl:attribute name="failures">
     <xsl:value-of select="count(//results/is_passed[text()='False'])"/>
   </xsl:attribute>
+  <xsl:attribute name="skipped">
+    <xsl:value-of select="count(//results/is_skipped[text()='True'])"/>
+  </xsl:attribute>
   <xsl:attribute name="errors">FIXME</xsl:attribute>
 
   <properties>
