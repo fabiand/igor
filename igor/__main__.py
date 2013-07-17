@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from igor import common, log
+
+log.configure("/tmp/igord.log")
+
 from igor.hacks import IgordJSONEncoder
 from string import Template
 import argparse
@@ -16,7 +19,6 @@ import json
 import os
 import tarfile
 import yaml
-
 
 logger = log.getLogger(__name__)
 logger.info("Starting igor daemon")

@@ -20,42 +20,47 @@
 import logging
 import logging.config
 
-fs_fileobj = open("/tmp/igord.log", "a+")
 
-log_config = {
-    "version": 1,
+fs_fileobj = None
+__logger = logging.getLogger("")
 
-    "formatters": {
-        "default": {
-            "format": '%(levelname)-8s - %(asctime)s - ' +
-                      '%(name)-15s - %(message)s'
-        }
-    },
 
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "default",
+def configure(fn):
+    fs_fileobj = open(fn, "a+")
+
+    log_config = {
+        "version": 1,
+
+        "formatters": {
+            "default": {
+                "format": '%(levelname)-8s - %(asctime)s - ' +
+                          '%(name)-15s - %(message)s'
+            }
         },
-        "filesystem": {
-            "class": "logging.StreamHandler",
-            "formatter": "default",
-            "stream": fs_fileobj
-        }
-    },
 
-    "loggers": {
-        "": {
-            "handlers": ["console", "filesystem"],
-            "level": "DEBUG"
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "formatter": "default",
+            },
+            "filesystem": {
+                "class": "logging.StreamHandler",
+                "formatter": "default",
+                "stream": fs_fileobj
+            }
+        },
+
+        "loggers": {
+            "": {
+                "handlers": ["console", "filesystem"],
+                "level": "DEBUG"
+            }
         }
     }
-}
 
-
-logging.config.dictConfig(log_config)
-__logger = logging.getLogger("")
-__logger.debug("Configured logging")
+    logging.config.dictConfig(log_config)
+    __logger = logging.getLogger("")
+    __logger.debug("Configured logging")
 
 
 def backlog():

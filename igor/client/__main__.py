@@ -19,6 +19,7 @@
 # MA  02110-1301, USA.  A copy of the GNU General Public License is
 # also available at http://www.gnu.org/copyleft/gpl.html.
 
+from igor import log
 from igor.client import junitless, event
 from igor.client.main import IgordAPI
 from lxml import etree
@@ -328,6 +329,7 @@ if __name__ == "__main__":
     url = urlparse.urlparse(namespace.connect)
 
     # Configure logging
+    log.configure("/tmp/igorc.log")
     lvl = logging.INFO if namespace.verbose else logging.WARNING
     lvl = logging.DEBUG if namespace.debug else lvl
     logging.basicConfig(level=lvl)

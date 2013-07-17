@@ -234,7 +234,7 @@ class ProfileAPI(IgordAPI):
         """Creates a profile from a livecd
         """
         self.logger.debug("Creating profile from ISO: %s" % isoname)
-        self.logger.debug("  Kargs: %s" % additional_kargs)
+        self.logger.debug("  Additional kargs: %s" % additional_kargs)
         check_isfile(isoname)
 
         subprocess.check_call(["sudo", "livecd-iso-to-pxeboot", isoname])
