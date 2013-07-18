@@ -291,6 +291,8 @@ class IgorClient(cmd.Cmd):
         return self.watch_events(job_reportxml_cb)
 
     def watch_events(self, reportxml_cb):
+        is_passed = False
+
         remote = self.ctx.remote
         event_port = self.ctx.event_port
 
@@ -326,10 +328,12 @@ class IgorClient(cmd.Cmd):
                     builder.log.writeln("Waiting ...")
                     builder.log.writeln("(Press Ctrl+C to stop watching)")
 
+            is_passed = all(state == "passed" for state in states)
+
         except KeyboardInterrupt:
             self.logger.debug("event watcher got interrupted.")
 
-        return all(state == "passed" for state in states)
+        return is_passed
 
     def do_firewall_check(self, args):
         """firewall_check
