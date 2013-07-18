@@ -147,6 +147,42 @@ def static_data(filename):
     return bottle.static_file(filename, root=config.DATA_DIR)
 
 
+def _datastore_filename(fn=""):
+    if not os.path.isdir(config.DATASTORE_DIR):
+        os.mkdir(config.DATASTORE_DIR)
+    return os.path.join(config.DATASTORE_DIR, os.path.basename(fn))
+
+@app.route(common.routes.datastore)
+def dav_get():
+    return to_json(os.listdir(_datastore_filename()))
+
+
+@app.route(common.routes.datastore_file)
+def dav_file_get(filename):
+    path = _datastore_filename(filename)
+    with open(path, "rb") as src:
+        return src.read()
+
+
+@app.route(common.routes.datastore_file, method='PUT')
+def dav_file_put(filename):
+    length = bottle.request.headers["Content-Length"]
+    length = int(length) if length else None
+    path = _datastore_filename(filename)
+    with open(path, "w") as dst:
+        data = bottle.request.body.read(length)  # @UndefinedVariable
+        logger.debug("Wrote '%s'" % path)
+        dst.write(data)
+
+
+@app.route(common.routes.datastore_file, method='DELETE')
+def dav_file_delete(filename):
+    path = _datastore_filename(filename)
+    if os.path.exists(path):
+        logger.debug("Deleted '%s'" % path)
+        os.unlink(path)
+
+
 @app.route('/jobs/submit/<tname>/with/<pname>/on/<hname>')
 @app.route('/jobs/submit/<tname>/with/<pname>/on/<hname>/<cookiereq>')  # FIXME
 def submit_testsuite(tname, pname, hname, cookiereq=None):

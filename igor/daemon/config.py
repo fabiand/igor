@@ -29,6 +29,8 @@ logger = log.getLogger(__name__)
 search_paths = [".", "~/.igord", "/etc/igord"]
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+TMP_DIR = "/var/tmp/"
+DATASTORE_DIR = os.path.join(TMP_DIR, "igor-datastore")
 
 
 def locate_config_file(fn="igord.cfg"):

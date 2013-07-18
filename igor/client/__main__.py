@@ -19,7 +19,6 @@
 # MA  02110-1301, USA.  A copy of the GNU General Public License is
 # also available at http://www.gnu.org/copyleft/gpl.html.
 
-from igor import log
 from igor.client import junitless, event
 from igor.client.main import IgordAPI
 from lxml import etree
@@ -33,7 +32,7 @@ import urlparse
 
 
 def prettyxml(xmltree):
-    return etree.tostring(xmltree, pretty_print=True)
+    return etree.tostring(xmltree, pretty_print=True).strip()
 
 
 class Firewall(object):
@@ -358,6 +357,35 @@ class IgorClient(cmd.Cmd):
         for port in ports:
             firewall.open_port(port)
 
+    def do_files(self, line):
+        """file_upload
+        List remote files
+        """#
+        print prettyxml(self.__igorapi().datastore().list())
+
+    def do_file_upload(self, line):
+        """file_upload
+        Upload a file
+        """#
+        filename = line
+        with open(filename, "rb") as src:
+            data = src.read()
+        self.__igorapi().datastore().upload(filename, data)
+
+    def do_file_download(self, line):
+        """file_download
+        Download a file
+        """
+        filename = line
+        print(self.__igorapi().datastore().download(filename))
+
+    def do_file_delete(self, line):
+        """file_delete
+        Delete a file
+        """
+        filename = line
+        self.__igorapi().datastore().delete(filename)
+
 
 if __name__ == "__main__":
     # Parse args
@@ -379,7 +407,6 @@ if __name__ == "__main__":
     url = urlparse.urlparse(namespace.connect)
 
     # Configure logging
-    log.configure("/tmp/igorc.log")
     lvl = logging.INFO if namespace.verbose else logging.WARNING
     lvl = logging.DEBUG if namespace.debug else lvl
     logging.basicConfig(level=lvl)
@@ -395,7 +422,7 @@ if __name__ == "__main__":
 
     if namespace.command:
         command = " ".join(namespace.command)
-        print("<!-- Running:\n %s -->" % command)
+        logging.debug("<!-- Running:\n %s -->" % command)
         client.onecmd(command)
     else:
         client.cmdloop()

@@ -75,3 +75,6 @@ class routes(object):
     testcase_source = '/testcases/<suitename>/<setname>/<casename>/source'
 
     server_log = '/server/log'
+
+    datastore = '/store'
+    datastore_file = '/store/<filename>'

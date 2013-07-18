@@ -36,12 +36,55 @@ def check_isfile(filename):
         raise RuntimeError("File '%s' does not exist." % filename)
 
 
+class HTTPHelper(object):
+    logger = None
+
+    def __init__(self):
+        self.logger = logging.getLogger(self.__module__)
+
+    def request(self, url, method="GET", data=None, headers={}):
+        """Request a page from a URL
+
+        Args:
+            url: URL to request page from
+
+        Return:
+            Returns the page contents as a str
+        """
+        reply = None
+        self.logger.debug("Requesting %s: %s" % (method, url))
+        if method in ["PUT", "DELETE"]:
+            opener = urllib2.build_opener(urllib2.HTTPHandler)
+            request = urllib2.Request(url, data=data, headers=headers)
+            request.get_method = lambda: method
+            reply = opener.open(request)
+        else:
+            reply = urllib2.urlopen(url).read()
+        return reply
+
+    def put(self, url, data, headers={}):
+        self.request(url, "PUT", data, headers)
+
+    def put_binary(self, url, data, headers={}):
+        return self.put(url, data,
+                        {'Content-Type': 'application/octet-stream'})
+
+    def delete(self, url):
+        self.request(url, "DELETE")
+
+
 class IgordAPI(object):
     """An interface to the basic REST-API of igor
     """
+    _http = None
+    _logger = None
+    host = None
+    port = None
+
     def __init__(self, host="127.0.0.1", port=8080):
         self.host = host
         self.port = port
+        self._http = HTTPHelper()
         self._logger = logging.getLogger(self.__module__)
 
     @property
@@ -68,38 +111,13 @@ class IgordAPI(object):
                                                            route=_route,
                                                            query=_query)
 
-    def request(self, url):
-        """Request a page from a URL
-
-        Args:
-            url: URL to request page from
-
-        Return:
-            Returns the page contents as a str
-        """
-        self.logger.debug("Requesting: %s" % url)
-        return urllib2.urlopen(url).read()
-
     def route_request(self, route, **route_args):
         """Request a route and return an XML tree
         """
         url = self.url(route, {"format": "xml"}, **route_args)
-        pagedata = self.request(url)
+        pagedata = self._http.request(url)
         tree = etree.XML(pagedata) if pagedata else None
         return tree
-
-    def put(self, url, data, headers={}):
-        self.logger.debug("PUT: %s" % url)
-        opener = urllib2.build_opener(urllib2.HTTPHandler)
-        request = urllib2.Request(url, data=data, headers=headers)
-        #request.add_header('Content-Type', 'application/octet-stream')
-        #text/plain')
-        request.get_method = lambda: 'PUT'
-        return opener.open(request)
-
-    def put_binary(self, url, data, headers={}):
-        return self.put(url, data,
-                        {'Content-Type': 'application/octet-stream'})
 
     def jobs(self):
         return self.route_request(routes.jobs)
@@ -127,6 +145,25 @@ class IgordAPI(object):
 
     def testplan(self, name):
         return TestplanAPI(self.host, self.port, name)
+
+    def datastore(self):
+        return DatastoreAPI(self.host, self.port)
+
+
+class DatastoreAPI(IgordAPI):
+    def list(self):
+        return self.route_request(routes.datastore)
+
+    def upload(self, filename, data=None):
+        url = self.url(routes.datastore_file, filename=filename)
+        return self._http.put_binary(url, io.BytesIO(data).getvalue())
+
+    def download(self, filename):
+        url = self.url(routes.datastore_file, filename=filename)
+        return self._http.request(url)
+
+    def delete(self, filename):
+        return self._http.delete(self.url(routes.datastore_file, filename=filename))
 
 
 class JobAPI(IgordAPI):
@@ -225,7 +262,7 @@ class ProfileAPI(IgordAPI):
             tmpfile.seek(0)
             data = io.BytesIO(tmpfile.read())
             url = self.url(routes.profile, pname=self.name)
-            self.put_binary(url, data.getvalue(), headers)
+            self._http.put_binary(url, data.getvalue(), headers)
 
     def delete(self):
         return self.route_request(routes.profile_delete, pname=self.name)
