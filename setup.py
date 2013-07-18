@@ -38,5 +38,5 @@ setup(
     url='http://www.github.com/fabiand/igor',
     license='LGPLv2',
     description='Testing a Linux distribution',
-    long_description=open('README.txt').read(),
+    long_description=open('README.md').read(),
 )
