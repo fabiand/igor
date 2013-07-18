@@ -43,7 +43,7 @@ class Firewall(object):
         _port = "%s/%s" % (port, protocol)
         return subprocess.call(["sudo",
                                 "firewall-cmd",
-                                "--query-port=%s" % _port],
+                                "--query-port", _port],
                                close_fds=True) == 0
 
     def open_port(self, port, protocol="tcp"):
@@ -52,8 +52,8 @@ class Firewall(object):
         _port = "%s/%s" % (port, protocol)
         print("Opening %s" % _port)
         print(subprocess.check_output(["sudo", "firewall-cmd",
-                                       "--add-port=%s" % _port],
-                                       close_fds=True))
+                                       "--add-port", _port],
+                                      close_fds=True))
 
 
 class Notify(object):

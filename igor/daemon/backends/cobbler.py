@@ -19,7 +19,8 @@
 #
 
 from igor import log, utils
-from igor.daemon import main, backends
+from igor.daemon import main
+from igor.daemon.backends import files
 import httplib
 import os
 import xmlrpclib
@@ -148,7 +149,7 @@ class HostsOrigin(main.Origin):
         return whitelist
 
 
-class Host(backends.files.Host):
+class Host(files.Host):
     """Implemets the methods required by main.Host
     """
     remote = None

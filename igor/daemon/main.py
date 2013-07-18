@@ -181,8 +181,8 @@ class Inventory(object):
         {'item-a': 'a', 'item-b': 'b', 'item-c': 'c', 'item-d': 'd'}
 
         Or even use a factory to populate the inventory:
-        >>> import igor.backends.files
-        >>> f = igor.backends.files.TestsuitesOrigin(["testcases/suites/"])
+        >>> from igor.daemon.backends import files
+        >>> f = files.TestsuitesOrigin(["testcases/suites/"])
         >>> i = Inventory(testsuites={"fs": f})
         >>> "examplesuite" in i.testsuites()
         True
@@ -483,8 +483,8 @@ class Testsuite(object):
         0-complexexample.sh.d/mybin
         1-examplecase.sh
 
-        >>> import igor.backends.files
-        >>> suites = igor.backends.files.Factory.testsuites_from_path( \
+        >>> from igor.daemon.backends import files
+        >>> suites = files.Factory.testsuites_from_path( \
                                                            "testcases/suites/")
         >>> suite = suites["examplesuite"]
         >>> archive = io.BytesIO(suite.get_archive().getvalue())

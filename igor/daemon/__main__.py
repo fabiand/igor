@@ -94,29 +94,29 @@ inventory.check()
 
 
 def to_json(obj):
-    format = "json"
+    typ = "json"
     root_tag = "result"
 
     r = json.dumps(obj, cls=IgordJSONEncoder, sort_keys=True, indent=2)
 
     if "format" in bottle.request.query:
-        format = bottle.request.query["format"]
+        typ = bottle.request.query["format"]
     if "root" in bottle.request.query:
         root_tag = bottle.request.query["root"]
 
     if "x-igor-format-xml" in bottle.request.headers:
-        format = "xml"
+        typ = "xml"
 
-    if format == "xml":
+    if typ == "xml":
         j = json.loads(r)
         r = "<?xml-stylesheet type='text/xsl' href='/ui/index.xsl' ?>\n"
         r += utils.obj2xml(root_tag, j, as_string=True)
 
-    if format == "yaml":
+    if typ == "yaml":
         j = json.loads(r)
         r = yaml.dump_all(j)
 
-    bottle.response.content_type = "application/%s" % format
+    bottle.response.content_type = "application/%s" % typ
     return r
 
 

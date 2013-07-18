@@ -30,7 +30,6 @@ import subprocess
 import tempfile
 
 
-
 logger = log.getLogger(__name__)
 
 
