@@ -339,7 +339,7 @@ class IgorClient(cmd.Cmd):
             if not Firewall().is_port_open(port):
                 msg = ("Please open port %s or jobs can fail, because " +
                        "the testrunner might not be able to reach the " +
-                       "daemon.\n" +
+                       "daemon. " +
                        "You can use 'igorc firewall_open' to open the " +
                        "ports on the host where igorc is called.")
                 logging.warning(msg % port)
@@ -390,9 +390,8 @@ if __name__ == "__main__":
     client.do_firewall_check(None)
 
     if namespace.command:
-        for command in namespace.command:
-            if command.strip():
-                print("<!-- Running:\n %s -->" % command)
-                client.onecmd(command)
+        command = " ".join(namespace.command)
+        print("<!-- Running:\n %s -->" % command)
+        client.onecmd(command)
     else:
         client.cmdloop()
