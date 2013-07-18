@@ -1,0 +1,77 @@
+#!/bin/bash
+
+#
+# A generic igor client
+#
+
+prog=$0
+
+TRIALS=10
+TRIAL_SLEEP=10
+
+_log()
+{
+    echo $@ >&2
+}
+
+run()
+{
+    _log "Starting $prog (`rpm -qf $0`)"
+
+    CMDLINE=$(cat /proc/cmdline)
+    TESTJOB=$(echo "$CMDLINE" | egrep -o '[^[:space:]=]+/testjob/[^[:space:]]+')
+
+    if [[ "x$TESTJOB" = "x" ]];
+    then
+        _log "No testsuite found in cmdline."
+    else
+        _log "Testjob found in kernelargs: $TESTJOB"
+
+        _log "Network link configuration:"
+        ip link show
+        _log "Network addr configuration:"
+        ip addr show
+
+        _log "Network setup is up, fetching testsuite ..."
+
+        TESTJOBURL="http://${TESTJOB#http://}"
+        APIURL=${TESTJOBURL/testjob*/}
+
+        SESSIONDIR=$(mktemp -d)
+
+        TESTJOBSCRIPT="${SESSIONDIR}/${prog}-bootstrap.sh"
+
+        rm -f $TESTJOBSCRIPT
+
+        while [[ ! -e "$TESTJOBSCRIPT" && $TRIALS -gt 0 ]]
+        do
+            _log "Trying to fetch ($TRIALS) testjob from $TESTJOBURL to $TESTJOBSCRIPT"
+            curl --output "$TESTJOBSCRIPT" "$TESTJOBURL"
+            TRIALS=$(($TRIALS - 1))
+            sleep $TRIAL_SLEEP
+        done
+
+        if [[ -e "$TESTJOBSCRIPT" ]]
+        then
+            _log "Running testjob $TESTJOBSCRIPT"
+            export TESTJOB APIURL
+            chmod a+x "$TESTJOBSCRIPT"
+            $TESTJOBSCRIPT $@
+        else
+            _log "Fetching testjob script failed."
+        fi
+    fi
+
+    _log "Completed $prog"
+
+    exit 0
+}
+
+case $1 in
+run) run;;
+*)
+    echo "Usage: $0 run" >&2:
+    ::
+esac
+
+exit 0

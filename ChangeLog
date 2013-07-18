@@ -4,6 +4,7 @@ igor-0.4.0
 - Use libvirt-only be default
 - Switch cfg file syntax to yaml
 - Reorganize files
+- Add igor-slave
 
 igor-0.3.0
 - Switch files syntax to yaml

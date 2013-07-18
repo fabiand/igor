@@ -1,0 +1,12 @@
+[Unit]
+Description=automated testing on the node using Igor
+Wants=basic.target network.target
+After=basic.target network-online.target
+DefaultDependencies=no
+
+[Service]
+RemainAfterExit=no
+ExecStart=/usr/bin/igor-slave run
+
+[Install]
+WantedBy=default.target

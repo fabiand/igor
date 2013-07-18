@@ -28,11 +28,13 @@ setup(
                   'igor.daemon': ['data/*.sh']},
     scripts=['bin/igord',
              'bin/igorc'],
-    data_files=[('lib/systemd/system', ['data/igord.service']),
-                ('/etc/igord',         ['data/igord.cfg.example']),
-                ('/etc/igord/hook.d',  ['data/redis-event-publisher-hook']),
-                ('/var/run/igord',     []),
-                ('lib/igord/testcases', [])], # FIXME testcases are missing
+    data_files=[('lib/systemd/system',  ['data/igord.service',
+                                         'slave/igor-slave.service']),
+                ('/etc/igord',          ['data/igord.cfg.example']),
+                ('/etc/igord/hook.d',   ['data/redis-event-publisher-hook']),
+                ('bin',                 ['slave/igor-slave']),
+                ('/var/run/igord',      []),
+                ('lib/igord/testcases', []),], # FIXME testcases are missing
     url='http://www.github.com/fabiand/igor',
     license='LGPLv2',
     description='Testing a Linux distribution',

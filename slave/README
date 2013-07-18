@@ -1,0 +1,35 @@
+This are a handful of scripts to run Igor testsuites on oVirt Node.
+
+= Building the RPM =
+Should be:
+
+ $ sudo yum groupinstall fedora-packager
+ $ make rpm
+
+The RPM will be placed in the default ~/rpmbuild/RPMS/noarch dir
+
+
+= Exporting the RPMs =
+This is needed to edit-node can pick it up (see next section).
+Should be:
+ $ cd ~/rpmbuild/RPMS/noarch
+ $ createrepo .
+ $ <open firewall port 8081>
+ $ python -m SimpleHTTPServer 8081
+
+
+= Editing an existing oVirt Node image with edit-node =
+Should be along the lines:
+
+Assumptions:
+- Latest upstream ovirt-node release
+
+ $ cat autotesting.repo
+ [autotesting]
+ name=Autotesting (Igor)
+ baseurl=http://127.0.0.1:8081
+ enabled=1
+ metadata_expire=1m
+ gpgcheck=0
+ 
+ $ sudo ./edit-node --verbose --debug --repo=autotesting.repo --install=ovirt-autotesting-systemd ovirt-node-iso-2.6.0-20130212.fc18.iso
