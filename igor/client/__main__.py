@@ -36,6 +36,50 @@ def prettyxml(xmltree):
     return etree.tostring(xmltree, pretty_print=True)
 
 
+class Firewall(object):
+    def is_port_open(self, port, protocol="tcp"):
+        """Check if a port is open
+        """
+        _port = "%s/%s" % (port, protocol)
+        return subprocess.call(["sudo",
+                                "firewall-cmd",
+                                "--query-port=%s" % _port],
+                               close_fds=True) == 0
+
+    def open_port(self, port, protocol="tcp"):
+        """Open the given port
+        """
+        _port = "%s/%s" % (port, protocol)
+        print("Opening %s" % _port)
+        print(subprocess.check_output(["sudo", "firewall-cmd",
+                                       "--add-port=%s" % _port],
+                                       close_fds=True))
+
+
+class Notify(object):
+    LOW_URGENCY = "low"
+    NORMAL_URGENCY = "normal"
+    CRITICAL_URGENCY = "critical"
+
+    def notify(self, summary, body=None, urgency=NORMAL_URGENCY,
+               icon=None, expiretime=2000):
+        cmd = ["notify-send",
+               "--expire-time", str(expiretime),
+               "--urgency", urgency]
+        if icon:
+            cmd += ["--icon", icon]
+        if body:
+            cmd += ["--body", body]
+        cmd += [summary]
+        subprocess.check_call(cmd)
+
+    def ok(self, summary, body=None):
+        self.notify(summary, body, self.LOW_URGENCY, "weather-clear")
+
+    def failure(self, summary, body=None):
+        self.notify(summary, body, self.CRITICAL_URGENCY, "weather-showers")
+
+
 class Context(object):
     def __init__(self):
         self.remote = "127.0.0.1"
@@ -203,8 +247,17 @@ class IgorClient(cmd.Cmd):
         profile.new_from_livecd(_args.isoname, _args.additional_kargs)
         testplan = igor.testplan(_args.testplanname)
         testplan.start(substitutions=substitutions)
-        self.do_watch_testplan(_args.testplanname)
+        is_passed = self.do_watch_testplan(_args.testplanname)
         profile.delete()
+
+        if self.ctx.notify:
+            notify = Notify()
+            if is_passed:
+                notify.ok("PASSED %s" % line)
+            else:
+                notify.failure("FAILED %s" % line)
+
+        return is_passed
 
     def do_watch_job(self, line):
         """watch_job [<sessionid>]
@@ -221,7 +274,7 @@ class IgorClient(cmd.Cmd):
                 return job.report_junit()
             return None
 
-        self.watch_events(job_reportxml_cb)
+        return self.watch_events(job_reportxml_cb)
 
     def do_watch_testplan(self, line):
         """watch_testplan <testplanname>
@@ -235,7 +288,7 @@ class IgorClient(cmd.Cmd):
         def job_reportxml_cb(updated_sessiondid):
             return testplan.report_junit()
 
-        self.watch_events(job_reportxml_cb)
+        return self.watch_events(job_reportxml_cb)
 
     def watch_events(self, reportxml_cb):
         remote = self.ctx.remote
@@ -276,37 +329,30 @@ class IgorClient(cmd.Cmd):
         except KeyboardInterrupt:
             self.logger.debug("event watcher got interrupted.")
 
+        return all(state == "passed" for state in states)
+
+    def do_firewall_check(self, args):
+        """firewall_check
+        Check that all relevant ports are open
+        """
+        for port in [self.ctx.port, self.ctx.event_port]:
+            if not Firewall().is_port_open(port):
+                msg = ("Please open port %s or jobs can fail, because " +
+                       "the testrunner might not be able to reach the " +
+                       "daemon.\n" +
+                       "You can use 'igorc firewall_open' to open the " +
+                       "ports on the host where igorc is called.")
+                logging.warning(msg % port)
+
     def do_firewall_open(self, args):
         """firewall_open
         Open relevant ports
         """
         ports = [self.ctx.port, self.ctx.event_port]
         self.logger.debug("About to open the relevant TCP ports: %s" % ports)
+        firewall = Firewall()
         for port in ports:
-            print("Opening %s/tcp" % port)
-            print(subprocess.check_output(["sudo", "firewall-cmd",
-                                           "--add-port=%s/tcp" % port]))
-
-
-class Notify(object):
-    def notify(self, summary, body="", urgency="low", icon=None,
-               expiretime=2000):
-        cmd = ["notify-send",
-               "--expire-time", expiretime,
-               "--urgency", urgency,
-               "--summary", summary
-               ]
-        if icon:
-            cmd += ["--icon", icon]
-        if body:
-            cmd += ["--body", body]
-        subprocess.check_call(cmd)
-
-    def ok(self, summary, body=None):
-        self.notify(summary, body, "low", "weather-clear")
-
-    def failure(self, summary, body=None):
-        self.notify(summary, body, "urgent", "weather-showers")
+            firewall.open_port(port)
 
 
 if __name__ == "__main__":
@@ -339,6 +385,9 @@ if __name__ == "__main__":
     client.ctx.remote = url.hostname
     client.ctx.port = url.port
     client.ctx.notify = namespace.notify
+
+    # Check if common ports are open
+    client.do_firewall_check(None)
 
     if namespace.command:
         for command in namespace.command:

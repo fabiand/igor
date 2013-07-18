@@ -254,7 +254,7 @@ class LogBuilder(object):
                  ]
 
         self.log.writeln("")
-        txt = " ".join("%s: %s" % (f, v) for f, v in attrs)
+        txt = "  ".join("%s: %s" % (f, v) for f, v in attrs)
         if int(node.attrib["failures"]) > 0:
             self.log.error(txt)
         else:
