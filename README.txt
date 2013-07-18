@@ -69,19 +69,23 @@ want to tunnel the daemons calls:
 $ ssh $COBBLERSERVER -L25151:127.0.0.1:25151
 
 
-Simple client
--------------
-If the daemon is running you can use a small tool which can be found in data/ 
-to submit new jobs::
+The client
+----------
+If the daemon is running you can use `igorc` to run jobs::
 
-    $ ./igorclient.sh help
-    $ ./igorclient.sh submit a_testsuite a_profile some_host    # Aquires a cookie, wihch is used in subsequent calls until "uncookie"
-    $ ./igorclient.sh cookie    # Show the cookie
-    $ ./igorclient.sh status    # Show the job status(open)
-    $ ./igorclient.sh start     # Start the job
-    $ ./igorclient.sh status    # Show the job status (running)
-    $ ./igorclient.sh abort     # Eventually
-    $ ./igorclient.sh uncookie  # To remove the cookie aquired with "submit"
+    $ PYTHONPATH=. bin/igorc -h
+
+    # Get a list of available commands:
+    $ PYTHONPATH=. bin/igorc help
+
+    # Most high-level one is testplan_on_iso:
+    # Get some help on the command
+    $ PYTHONPATH=. bin/igorc testplan_on_iso
+    # And how to use it:
+    $ PYTHONPATH=. bin/igorc -n testplan_on_iso \
+        ai_extended
+        ovirt-node-iso-3.0.0-5.0.1.igor-slave.fc18.iso
+        'local_boot_trigger=192.168.122.1:8080/testjob/{igor_cookie}'
 
 
                                 ~ To be continued ~
