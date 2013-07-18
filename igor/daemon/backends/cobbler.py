@@ -18,11 +18,9 @@
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
 
-from igor import log
+from igor import log, utils
+from igor.daemon import main, backends
 import httplib
-import igor.backends.files
-import igor.main
-import igor.utils
 import os
 import xmlrpclib
 
@@ -59,7 +57,7 @@ def initialize_origins(category, CONFIG):
     return origins
 
 
-class ProfileOrigin(igor.main.Origin):
+class ProfileOrigin(main.Origin):
     """This is the source where igor retrieves cobbler profiles
     """
     cobbler = None
@@ -86,7 +84,7 @@ class ProfileOrigin(igor.main.Origin):
         profile.populate_with(kernel_file, initrd_file, kargs_file)
 
 
-class HostsOrigin(igor.main.Origin):
+class HostsOrigin(main.Origin):
     """This is the source where igor retrieves cobbler systems as hosts
     """
     cobbler = None
@@ -150,7 +148,7 @@ class HostsOrigin(igor.main.Origin):
         return whitelist
 
 
-class Host(igor.backends.files.Host):
+class Host(backends.files.Host):
     """Implemets the methods required by main.Host
     """
     remote = None
@@ -172,7 +170,7 @@ class Host(igor.backends.files.Host):
         return r
 
 
-class Profile(igor.main.Profile):
+class Profile(main.Profile):
     remote = None
     name = None
     additional_args = None
@@ -294,7 +292,7 @@ class Profile(igor.main.Profile):
                    vmlinuz=vmlinuz,
                    initrd=initrd,
                    kargs=kargs)
-        igor.utils.run(cmd)
+        utils.run(cmd)
 
     def __ssh_create_remote_distro_and_profile(self, remote_path, vmlinuz,
                                                initrd, kargs):
@@ -328,7 +326,7 @@ class Profile(igor.main.Profile):
                    #kargs=open(kargs).read().strip(),
                    arch="x86_64",
                    identification_tag=identification_tag)
-        igor.utils.run(cmd)
+        utils.run(cmd)
 
     def __ssh_remove_remote_distro_profile_and_files(self, remote_path):
         profile_comment = self.remote.profile(self.get_name())["comment"]
@@ -345,7 +343,7 @@ class Profile(igor.main.Profile):
         """.format(remote_url=self.remote.ssh_uri,
                    remote_path=remote_path,
                    profilename=self.get_name())
-        igor.utils.run(cmd)
+        utils.run(cmd)
 
 
 #pydoc cobbler.remote

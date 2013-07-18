@@ -18,7 +18,7 @@
 # Author: Fabian Deutsch <fabiand@fedoraproject.org>
 #
 
-import log
+from igor import log
 import os
 import pprint
 import yaml

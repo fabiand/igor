@@ -19,9 +19,8 @@
 #
 
 from igor import log, utils
+from igor.daemon import main
 import glob
-import igor.main
-import igor.utils
 import os
 import tarfile
 import tempfile
@@ -55,7 +54,7 @@ def initialize_origins(category, CONFIG):
     return origins
 
 
-class Host(igor.main.Host):
+class Host(main.Host):
     """Represents a real server.
     Wich is currently just specified by a name and it's MAC address.
     """
@@ -91,7 +90,7 @@ class Host(igor.main.Host):
         return hash(str(self))
 
 
-class HostsOrigin(igor.main.Origin):
+class HostsOrigin(main.Origin):
     paths = None
 
     def __init__(self, paths):
@@ -107,7 +106,7 @@ class HostsOrigin(igor.main.Origin):
         return hosts
 
 
-class TestsuitesOrigin(igor.main.Origin):
+class TestsuitesOrigin(main.Origin):
     paths = None
 
     def __init__(self, paths):
@@ -123,7 +122,7 @@ class TestsuitesOrigin(igor.main.Origin):
         return testsuites
 
 
-class TestplansOrigin(igor.main.Origin):
+class TestplansOrigin(main.Origin):
     paths = None
 
     def __init__(self, paths):
@@ -191,7 +190,7 @@ class TestDraftSuperOrigin(object):
             self.superorigin.create_item(dname, archive)
 
 
-class Factory(igor.utils.Factory):
+class Factory(utils.Factory):
     """A factory to build testing objects from different structures.
     The current default structure is a file/-system based approach.
     Files provide enough informations to build testsuites.
@@ -224,7 +223,7 @@ class Factory(igor.utils.Factory):
         assert all([set(layout_fields) - set(l.keys()) == set([])
                     for l in layouts])
         name = os.path.basename(filename).replace(suffix, "")
-        plan = igor.main.Testplan(name=name, job_layouts=layouts)
+        plan = main.Testplan(name=name, job_layouts=layouts)
         plan.__dict__.update(properties)
 
         return plan
@@ -341,7 +340,7 @@ class Factory(igor.utils.Factory):
                 sets.append(testset)
 
         name = os.path.basename(filename).replace(suffix, "")
-        suite = igor.main.Testsuite(name=name, testsets=sets)
+        suite = main.Testsuite(name=name, testsets=sets)
         suite.__dict__.update(properties)
 
         return suite
@@ -384,13 +383,13 @@ class Factory(igor.utils.Factory):
         for l in layouts:
             tcasefn = os.path.join(testsetdir, searchpath, l["filename"])
             tcasefn = os.path.relpath(os.path.realpath(tcasefn))
-            testcase = igor.main.Testcase(filename=tcasefn)
+            testcase = main.Testcase(filename=tcasefn)
             del l["filename"]
             testcase.__dict__.update(l)
             cases.append(testcase)
 
         name = os.path.basename(filename).replace(suffix, "")
-        return igor.main.Testset(name=name, testcases=cases, libs=libs)
+        return main.Testset(name=name, testcases=cases, libs=libs)
 
     @staticmethod
     def hosts_from_file(filename, suffix=".hosts"):

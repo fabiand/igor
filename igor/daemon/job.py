@@ -18,12 +18,11 @@
 #
 # -*- coding: utf-8 -*-
 
-from igor import log
+from igor import log, utils
 import main
 import os
 import threading
 import time
-import utils
 import yaml
 
 

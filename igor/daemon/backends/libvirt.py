@@ -19,11 +19,10 @@
 # -*- coding: utf-8 -*-
 
 from igor import log
-from igor.partition import DiskImage, Partition
+from igor.daemon import main, partition
+from igor.daemon.partition import DiskImage, Partition
 from igor.utils import run, dict_to_args
 from lxml import etree
-import igor.main
-import igor.partition
 import os
 import re
 import shutil
@@ -55,7 +54,7 @@ def initialize_origins(category, CONFIG):
     return origins
 
 
-class VMImage(igor.partition.Layout):
+class VMImage(partition.Layout):
     def compress(self, dst_fmt="qcow2"):
         '''Convert the raw image into a qemu image.
         '''
@@ -155,7 +154,7 @@ class LibvirtConnection(object):
                                            vol=volname))
 
 
-class VMHost(igor.main.Host):
+class VMHost(main.Host):
     """Corresponds to a libvirt domain.
     This class can be used to control the domain and wrap it to provide
     the igor Host API.
@@ -400,7 +399,7 @@ class NewVMHost(VMHost):
         super(NewVMHost, self).remove_images()
 
 
-class CommonLibvirtOrigin(igor.main.Origin):
+class CommonLibvirtOrigin(main.Origin):
     connection_uri = None
     storage_pool = None
     network_configuration = None
@@ -477,7 +476,7 @@ class ExistingDomainHostOrigin(CommonLibvirtOrigin):
         return hosts
 
 
-class LibvirtProfile(igor.main.Profile):
+class LibvirtProfile(main.Profile):
     """A kernel, initrd + kargs
     A libvirt profile is actually just a dict with kernel,initrd and kargs
     Assigning happens by populating the domain definition with this values

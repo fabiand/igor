@@ -1,12 +1,9 @@
-igor-0.4.9
-- Use redis (pubsub) (instead of custom) to publish events
-- Reorganize files
-
 igor-0.4.0
-- Event framework to signal job changes
+- Event framework to signal job changes (using redis)
 - New client (igorc)
 - Use libvirt-only be default
 - Switch cfg file syntax to yaml
+- Reorganize files
 
 igor-0.3.0
 - Switch files syntax to yaml

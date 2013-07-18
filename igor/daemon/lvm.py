@@ -19,7 +19,7 @@
 # -*- coding: utf-8 -*-
 
 from igor import log
-from utils import run
+from igor.utils import run
 import os
 
 

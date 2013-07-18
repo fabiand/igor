@@ -5,15 +5,12 @@ from igor import common, log
 
 log.configure("/tmp/igord.log")
 
-from igor.hacks import IgordJSONEncoder
+from igor.daemon.hacks import IgordJSONEncoder
 from string import Template
 import argparse
 import bottle
-import igor.config as config
-import igor.job
-import igor.main
-import igor.reports
-import igor.utils
+from igor.daemon import config, job, main
+from igor import reports, utils
 import importlib
 import json
 import os
@@ -85,10 +82,10 @@ load_backends(CONFIG["daemon"]["enable-backends"]["hosts"],
 #
 # Now prepare the essential objects
 #
-jc = igor.job.JobCenter(session_path=CONFIG["daemon"]["session"]["path"],
-                        hooks_path=CONFIG["daemon"]["hooks"]["path"])
+jc = job.JobCenter(session_path=CONFIG["daemon"]["session"]["path"],
+                   hooks_path=CONFIG["daemon"]["hooks"]["path"])
 
-inventory = igor.main.Inventory(
+inventory = main.Inventory(
     plans=plan_origins,
     testsuites=testsuite_origins,
     profiles=profile_origins,
@@ -113,7 +110,7 @@ def to_json(obj):
     if format == "xml":
         j = json.loads(r)
         r = "<?xml-stylesheet type='text/xsl' href='/ui/index.xsl' ?>\n"
-        r += igor.utils.obj2xml(root_tag, j, as_string=True)
+        r += utils.obj2xml(root_tag, j, as_string=True)
 
     if format == "yaml":
         j = json.loads(r)
@@ -160,10 +157,10 @@ def submit_testsuite(tname, pname, hname, cookiereq=None):
         if item is None:
             bottle.abort(412, "Unknown %s '%s'" % (key, name))
     xkargs = bottle.request.query.additional_kargs
-    spec = igor.main.JobSpec(testsuite=inventory.testsuites()[tname],
-                             profile=inventory.profiles()[pname],
-                             host=inventory.hosts()[hname],
-                             additional_kargs=xkargs or "")
+    spec = main.JobSpec(testsuite=inventory.testsuites()[tname],
+                        profile=inventory.profiles()[pname],
+                        host=inventory.hosts()[hname],
+                        additional_kargs=xkargs or "")
     logger.debug("Submitting with args: %s" % str(spec))
     resp = jc.submit(spec, cookiereq)
 
@@ -197,7 +194,7 @@ def job_report(cookie):
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
     bottle.response.content_type = "text/plain; charset=utf8"
-    return str(igor.reports.job_status_to_report(j.__to_dict__()))
+    return str(reports.job_status_to_report(j.__to_dict__()))
 
 
 @app.route(common.routes.job_report_junit)
@@ -206,7 +203,7 @@ def job_report_junit(cookie):
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
     bottle.response.content_type = "application/xml; charset=utf8"
-    return str(igor.reports.job_status_to_junit(j.__to_dict__()))
+    return str(reports.job_status_to_junit(j.__to_dict__()))
 
 
 @app.route(common.routes.job_step_skip)
@@ -238,7 +235,7 @@ def annotate_step(cookie):
     if cookie not in jc.jobs:
         bottle.abort(404, "Unknown job '%s'" % cookie)
     j = jc.jobs[cookie]
-    data = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
+    data = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)  # @UndefinedVariable
     j.annotate(data)
 
 
@@ -291,7 +288,7 @@ def add_artifact(cookie, name):
     if "/" in name:
         bottle.abort(412, "Name may not contain slashes")
     j = jc.jobs[cookie]
-    data = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)
+    data = bottle.request.body.read(BOTTLE_MAX_READ_SIZE)  # @UndefinedVariable
     j.add_artifact_to_current_step(name, data)
 
 
@@ -432,7 +429,7 @@ def testplan_report(name):
         bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.status_plan(name)
     bottle.response.content_type = "text/plain; charset=utf8"
-    return str(igor.reports.testplan_status_to_report(r))
+    return str(reports.testplan_status_to_report(r))
 
 
 @app.route(common.routes.testplan_report_junit)
@@ -441,8 +438,8 @@ def testplan_junit_report(name):
         bottle.abort(404, "Unknown plan: %s" % name)
     r = jc.status_plan(name)
     bottle.response.content_type = "application/xml; charset=utf8"
-    xml = igor.reports.testplan_status_to_junit_report(r)
-    return igor.reports.to_xml_str(xml)
+    xml = reports.testplan_status_to_junit_report(r)
+    return reports.to_xml_str(xml)
 
 
 @app.route(common.routes.testplan_abort)
@@ -492,7 +489,7 @@ def testcase_source(suitename, setname, casename):
 @app.route(common.routes.profile, method='PUT')
 def profile_from_vmlinuz_put(pname):
     reqfiles = set(["kernel", "initrd", "kargs"])
-    _tmpdir = igor.utils.TemporaryDirectory()
+    _tmpdir = utils.TemporaryDirectory()
     with _tmpdir as tmpdir:
         logger.debug("Using PUT tmpdir %s" % tmpdir)
         with tarfile.open(fileobj=bottle.request.body) as tarball:
@@ -556,7 +553,7 @@ def delete_profile(pname):
 @app.route(common.routes.server_log)
 def get_log():
     bottle.response.content_type = "text/plain; charset=utf8"
-    return igor.log.backlog()
+    return log.backlog()
 
 if __name__ == "__main__":
     try:

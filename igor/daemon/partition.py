@@ -20,14 +20,13 @@
 
 import os
 from igor import log
-import igor.main
-import igor.partition
+from igor.daemon import main
 from igor.utils import run
 
 logger = log.getLogger(__name__)
 
 
-class DiskImage(igor.main.UpdateableObject):
+class DiskImage(main.UpdateableObject):
     filename = None
     size = None
     format = None
@@ -101,7 +100,7 @@ class Layout(DiskImage):
             run("parted '%s' '%s'" % (self.filename, parted_cmd))
 
 
-class Partition(igor.main.UpdateableObject):
+class Partition(main.UpdateableObject):
     '''
     Params
     ------

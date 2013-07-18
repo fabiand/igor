@@ -20,20 +20,25 @@
 
 import json
 
-import igor.main
-import igor.job
+import igor.daemon.main
+import igor.daemon.job
 import igor.utils
 
 class IgordJSONEncoder(json.encoder.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, igor.job.Job) or \
-           isinstance(obj, igor.main.Testsuite) or \
-           isinstance(obj, igor.main.Testset) or \
-           isinstance(obj, igor.main.Testcase) or \
-           isinstance(obj, igor.main.Profile) or \
-           isinstance(obj, igor.main.Origin) or \
-           isinstance(obj, igor.main.Host) or \
-           isinstance(obj, igor.main.Testplan):
+    def __init__(self, *args, **kwargs):
+        # to silence pylint ...
+        kwargs["default"] = self._default
+        super(IgordJSONEncoder, self).__init__(*args, **kwargs)
+
+    def _default(self, obj):
+        if isinstance(obj, igor.daemon.job.Job) or \
+           isinstance(obj, igor.daemon.main.Testsuite) or \
+           isinstance(obj, igor.daemon.main.Testset) or \
+           isinstance(obj, igor.daemon.main.Testcase) or \
+           isinstance(obj, igor.daemon.main.Profile) or \
+           isinstance(obj, igor.daemon.main.Origin) or \
+           isinstance(obj, igor.daemon.main.Host) or \
+           isinstance(obj, igor.daemon.main.Testplan):
             return obj.__to_dict__()
         elif isinstance(obj, igor.utils.State):
             return str(obj)

@@ -21,16 +21,16 @@
 import os
 import simplejson as json
 from lxml import etree
-
 import utils
 
 
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+REPORT_PATH = os.path.join(BASE_PATH, "data")
 TRANSFORM_MAP = {
-    "job-rst": os.path.join(BASE_PATH, "data", "job-report.rst.xsl"),
-    "job-junit": os.path.join(BASE_PATH, "data", "job-report.junit.xsl"),
-    "testplan-rst": os.path.join(BASE_PATH, "data", "testplan-report.rst.xsl"),
-    "testplan-junit-xml": os.path.join(BASE_PATH, "data",
+    "job-rst": os.path.join(REPORT_PATH, "job-report.rst.xsl"),
+    "job-junit": os.path.join(REPORT_PATH, "job-report.junit.xsl"),
+    "testplan-rst": os.path.join(REPORT_PATH, "testplan-report.rst.xsl"),
+    "testplan-junit-xml": os.path.join(REPORT_PATH,
                                        "testplan-report.junit.xsl"),
 }
 

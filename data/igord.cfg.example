@@ -12,28 +12,28 @@ daemon:
     # Example for libvirt only (dev-workstation setup)
     backends-for-libvirt-only: &backends-for-libvirt-only
         testsuites:
-            - igor.backends.files
+            - igor.daemon.backends.files
         testplans:
-            - igor.backends.files
+            - igor.daemon.backends.files
         profiles:
-            - igor.backends.libvirt
-            - igor.backends.files
+            - igor.daemon.backends.libvirt
+            - igor.daemon.backends.files
         hosts:
-            - igor.backends.libvirt
+            - igor.daemon.backends.libvirt
 
     # Example for testing with bare metal hosts
     backends-for-bare-metal-and-cobbler: &backends-for-bare-metal-and-cobbler
         testsuites:
-            - igor.backends.files
+            - igor.daemon.backends.files
         testplans:
-            - igor.backends.files
+            - igor.daemon.backends.files
         profiles:
-            - igor.backends.files
-            - igor.backends.cobbler
-            - igor.backends.libvirt
+            - igor.daemon.backends.files
+            - igor.daemon.backends.cobbler
+            - igor.daemon.backends.libvirt
         hosts:
-            - igor.backends.cobbler
-            - igor.backends.libvirt
+            - igor.daemon.backends.cobbler
+            - igor.daemon.backends.libvirt
 
     # Default: Use libvirt-only backend configuration
     enable-backends: *backends-for-libvirt-only
@@ -53,7 +53,7 @@ daemon:
         path: /var/run/igord/
 
 
-igor.backends.files:
+igor.daemon.backends.files:
     testcases:
         # Path of testcases relative to runpath
         paths:
@@ -70,7 +70,7 @@ igor.backends.files:
         paths:
             - data
 
-igor.backends.cobbler:
+igor.daemon.backends.cobbler:
     # The URL of Cobblers API
     url: http://cobbler.example.com/cobbler_api
     username: testing
@@ -89,7 +89,7 @@ igor.backends.cobbler:
         whitelist: my.cobbler.whitelist
 
 
-igor.backends.libvirt:
+igor.daemon.backends.libvirt:
     connection_uri: qemu:///system
     # connection_uri: qemu://libvirt.example.com/system
 

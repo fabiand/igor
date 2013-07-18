@@ -22,8 +22,7 @@
 # DESCRTIPTION
 #
 
-from igor import reports
-from igor import common
+from igor import reports, common
 from lxml import etree
 import logging
 import sys
