@@ -160,20 +160,22 @@ class VMHost(main.Host):
     """
 
     vm_name = None
-    connection_uri = "qemu:///system"
+    connection_uri = None
     poolname = "default"
 
     remove_afterwards = True
 
     _connection = None
 
-    def __init__(self, name, remove=True):
+    def __init__(self, name, connection_uri=None, remove=True):
         super(VMHost, self).__init__()
         self.vm_name = name
         self.remove_afterwards = remove
+        self.connection_uri = connection_uri
         self._connection = LibvirtConnection(self.connection_uri)
 
     def _virsh(self, cmd):
+        assert self.connection_uri
         return self._connection.virsh(cmd)
 
     def start(self):
@@ -316,7 +318,7 @@ class NewVMHost(VMHost):
     description = "managed-by-igor"
     custom_install_args = None
 
-    def __init__(self, name, image_specs):
+    def __init__(self, name, image_specs, connection_uri):
         """
         Args
             name: The name of the VM, for newly created VMs this can contain
@@ -325,7 +327,7 @@ class NewVMHost(VMHost):
                   conflicts.
             image_specs: A list of ImageSpecs for disks to be created
         """
-        super(NewVMHost, self).__init__(name)
+        super(NewVMHost, self).__init__(name, connection_uri)
         self.custom_install_args = {}
         self.image_specs = image_specs
 
@@ -347,6 +349,8 @@ class NewVMHost(VMHost):
     def prepare_vm(self):
         """Define the VM within libvirt
         """
+        dummyname = "dummyvol"
+
         logger.debug("Preparing vm: %s" % self.vm_name)
 
         # Sane defaults
@@ -359,7 +363,8 @@ class NewVMHost(VMHost):
             "ram": "1024",
             "os-type": "linux",
             "boot": "cdrom,network,hd",
-            "disk": "device=cdrom,bus=ide,format=raw,path=/dev/null",
+            "disk": "device=cdrom,bus=ide,format=raw,vol='%s/%s'" %
+            (self._connection.poolname, dummyname),
             "network": self.network_configuration,
             "graphics": "spice",
             "video": "vga",
@@ -383,7 +388,14 @@ class NewVMHost(VMHost):
             cmd += (" --disk vol=%s,device=disk,bus=%s,format=%s" %
                     (poolvol, self.disk_bus_type, image_spec.format))
 
+        # FIXME this hack is needed because ivrt-install expects the
+        # volume used for disks to exist!
+        self._connection.virsh(("vol-create-as --name '%s' " +
+                                "--capacity '0' --pool '%s'") %
+                               (dummyname, self._connection.poolname))
+        # Now that all vols exist, create the domain
         definition = run(cmd)
+        self._connection.delete_volume(dummyname)
 
         self.define(definition)
 
@@ -416,7 +428,8 @@ class CommonLibvirtOrigin(main.Origin):
     def _create_default_host(self):
         name = "default-{identifier}"
         image_specs = [VMImage("8G", [Partition("pri", "1M", "1G")])]
-        host = NewVMHost(name=name, image_specs=image_specs)
+        host = NewVMHost(name=name, image_specs=image_specs,
+                         connection_uri=self.connection_uri)
         self.__set_host_props(host)
 
         return host
@@ -427,7 +440,7 @@ class CommonLibvirtOrigin(main.Origin):
         Args:
             name: Name of the VM to be used
         """
-        host = VMHost(name=name)
+        host = VMHost(name=name, connection_uri=self.connection_uri)
         self.__set_host_props(host)
         return host
 

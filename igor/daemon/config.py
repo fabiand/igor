@@ -56,6 +56,8 @@ def parse_config(fn="igord.cfg", updates=None):
     if updates:
         logger.debug("Config updates: %s" % updates)
         update_by_path(config, updates)
+        logger.debug("Updated config: %s" % pprint.pformat(config))
+
 
     return config
 
