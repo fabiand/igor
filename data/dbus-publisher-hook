@@ -1,8 +1,0 @@
-#
-# Send a message to DBus when an event occurs
-#
-
-HOOKNAME=$1
-COOKIE=$2
-
-dbus-send /com/github/fabiand/igor/daemon com.github.fabiand.igor.Daemon.Event string:"<event type='$HOOKNAME' session='$COOKIE' />"

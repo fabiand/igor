@@ -20,6 +20,9 @@
 # also available at http://www.gnu.org/copyleft/gpl.html.
 
 
+REDIS_EVENTS_PUBSUB_CHANNEL_NAME = "igor.daemon.events"
+
+
 class routes(object):
     static_ui_data = '/ui/<filename>'
     static_data = '/static/data/<filename>'

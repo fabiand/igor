@@ -40,7 +40,7 @@ class Context(object):
     def __init__(self):
         self.remote = "127.0.0.1"
         self.port = "8080"
-        self.event_port = "8090"
+        self.event_port = "6379"
         self.session = ""
         self.notify = False
 

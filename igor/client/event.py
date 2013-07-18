@@ -23,28 +23,33 @@
 #
 
 from igor import reports
+from igor import common
 from lxml import etree
 import logging
-import socket
 import sys
+import redis
 
 REPORTBASE = "http://{host}:{port}/jobs/{sessionid}/status?format=xml"
 
 
 def follow_events(server, port):
-    family = socket.AF_INET6 if ":" in server else socket.AF_INET
-    sock = socket.socket(family, socket.SOCK_STREAM)
-    sock.connect((server, int(port)))
-    sf = sock.makefile()
-    for line in sf:
+    r = redis.Redis(host=server, port=int(port))
+    p = r.pubsub()
+    p.subscribe(common.REDIS_EVENTS_PUBSUB_CHANNEL_NAME)
+    for obj in p.listen():
         event = None
+        xmlstr = str(obj["data"]).strip()
+        if not xmlstr.startswith("<"):
+            # Sometimes just an int is sent ...
+            continue
         try:
-            event = etree.XML(line)
+            event = etree.XML(xmlstr)
         except:
-            logging.exception("Failed to parse: %s" % line)
+            logging.exception("Failed to parse: %s -> %s" % (obj, xmlstr))
         if event is not None and event.attrib:
             yield event.attrib
-    sf.close()
+    p.unsubscribe(common.REDIS_EVENTS_PUBSUB_CHANNEL_NAME)
+    p.close()
 
 
 def __FIXME_retrieve_report(remote, port, sessionid):

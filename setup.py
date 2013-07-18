@@ -22,11 +22,9 @@ setup(
     packages=['igor', 'igor.backends'],
     package_data={'igor': ['data/*.xsl', 'data/*.sh']},
     scripts=['bin/igord', 'bin/igorc'],
-    data_files=[('lib/systemd/system', ['data/igord.service',
-                                        'data/igord-event-publisher.service']),
+    data_files=[('lib/systemd/system', ['data/igord.service']),
                 ('/etc/igord', ['data/igord.cfg.example']),
-                ('/etc/igord/hook.d', ['data/notify-event-publisher-hook']),
-                ('libexec', ['bin/igord-event-publisher']),
+                ('/etc/igord/hook.d', ['data/redis-event-publisher-hook.py']),
                 ('/var/run/igord', []),
                 ('lib/igord/testcases', [])], # FIXME testcases are missing
     url='http://www.gitorious.org/ovirt/igord',

@@ -1,5 +1,6 @@
 [Unit]
 Description=igor daemon for automated testing
+Wants=redis.service
 
 [Service]
 ExecStart=/usr/bin/igord
