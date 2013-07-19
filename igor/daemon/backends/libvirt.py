@@ -469,7 +469,7 @@ class ExistingDomainHostOrigin(CommonLibvirtOrigin):
     def _list_domains(self):
         domains = []
         cmd = "list --all"
-        domain_pattern = re.compile("\s*(\d+)\s+([\w-]+)\s+(\w+.*$)")
+        domain_pattern = re.compile("\s*(\d+|-)\s+([\w-]+)\s+(\w+.*$)")
         txt = str(LibvirtConnection._virsh(cmd, self.connection_uri))
         for line in txt.split("\n"):
             match = domain_pattern.search(line)
