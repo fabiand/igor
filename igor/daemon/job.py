@@ -148,6 +148,8 @@ class Job(object):
         logger.debug("Preparing host %s" % self.host.get_name())
         self.host.prepare()
         logger.debug("Assigning profile %s" % self.profile.get_name())
+        self.additional_kargs += " %s:8080/testjob/%s" % \
+                                (self.profile.remote.server_url[:-12], self.cookie)
         self.profile.assign_to(self.host, self.additional_kargs)
         self.state(s_prepared)
         self.job_center._run_hook("post-setup", self.cookie)
