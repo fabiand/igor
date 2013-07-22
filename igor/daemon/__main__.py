@@ -6,6 +6,7 @@ from igor import common, log
 log.configure("/tmp/igord.log")
 
 from igor.daemon.hacks import IgordJSONEncoder
+from igor.daemon.backends import database
 from string import Template
 import argparse
 import bottle
@@ -79,11 +80,13 @@ load_backends(CONFIG["daemon"]["enable-backends"]["hosts"],
               CONFIG["daemon"]["enable-backends"]["testplans"])
 
 
+db_conn = database.init_db(CONFIG["daemon"]["enable-database"]["conn_url"])
 #
 # Now prepare the essential objects
 #
 jc = job.JobCenter(session_path=CONFIG["daemon"]["session"]["path"],
-                   hooks_path=CONFIG["daemon"]["hooks"]["path"])
+                   hooks_path=CONFIG["daemon"]["hooks"]["path"],
+                   db_conn=db_conn)
 
 inventory = main.Inventory(
     plans=plan_origins,
