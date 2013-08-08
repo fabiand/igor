@@ -391,7 +391,7 @@ if __name__ == "__main__":
     client.ctx.notify = namespace.notify
 
     # Check if common ports are open
-    client.do_firewall_check(None)
+    #client.do_firewall_check(None)
 
     if namespace.command:
         command = " ".join(namespace.command)
