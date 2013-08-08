@@ -9,6 +9,15 @@ prog=$0
 TRIALS=10
 TRIAL_SLEEP=10
 
+# Look for
+# 1. host:8080/testjob/cookie
+# 2. ig.url=host:8080/cookie
+# in the cmdline
+
+MAGIC_TESTJOB="[^[:space:]=]+/testjob/[^[:space:]]+"
+MAGIC_IGURL="[[:space:]]+ig.url=[^[:space:]]+"
+MAGIC_CMDLINE_EXPRESSION="($MAGIC_TESTJOB|$MAGIC_IGURL)"
+
 _log()
 {
     echo $@ >&2
@@ -18,8 +27,8 @@ run()
 {
     _log "Starting $prog (`rpm -qf $0`)"
 
-    CMDLINE=$(cat /proc/cmdline)
-    TESTJOB=$(echo "$CMDLINE" | egrep -o '[^[:space:]=]+/testjob/[^[:space:]]+')
+    _log "Using cmdline: $(cat /proc/cmdline)"
+    TESTJOB=$(egrep -o "${MAGIC_CMDLINE_EXPRESSION}" /proc/cmdline)
 
     if [[ "x$TESTJOB" = "x" ]];
     then
@@ -37,9 +46,9 @@ run()
         TESTJOBURL="http://${TESTJOB#http://}"
         APIURL=${TESTJOBURL/testjob*/}
 
-        SESSIONDIR=$(mktemp -d)
+        SESSIONDIR=$(mktemp -d -t igor-session-XXXXXX)
 
-        TESTJOBSCRIPT="${SESSIONDIR}/${prog}-bootstrap.sh"
+        TESTJOBSCRIPT="${SESSIONDIR}/bootstrap.sh"
 
         rm -f $TESTJOBSCRIPT
 
