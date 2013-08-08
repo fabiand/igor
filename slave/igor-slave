@@ -70,8 +70,7 @@ run()
 case $1 in
 run) run;;
 *)
-    echo "Usage: $0 run" >&2:
-    ::
+    echo "Usage: $0 run" >&2
 esac
 
 exit 0
