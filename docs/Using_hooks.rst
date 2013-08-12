@@ -8,7 +8,12 @@ How to use hooks
 
 What are hooks?
 ---------------
-Hooks are scripts which are run at specific events (see below)
+Hooks are called on specific events (see below), they then call hook-handlers
+which are scripts in a predefined directory on the filesystem.
+
+The hook-handler scripts is called with two arguments:
+1. The hookname
+2. The session id
 
 
 What events trigger hooks?
@@ -35,11 +40,12 @@ How can I write a hook?
 -----------------------
 A hook is a scripts residing in a specific path (look at ``igord.cfg``).
 The file itself is an executable script (bash, python, ...).
-Two params are passed to each hook:
-1. The hook name
-2. The cookie (or session id)
 
-Example::
+Two params are passed to each hook:
+ 1. The hook name
+ 2. The cookie (or session id)
+
+Example for a hook-handler::
 
   $ HOOKPATH=/etc/igord/hook.d/         # If this is the hook path
   $ mkdir -p $HOOKPATH
@@ -47,7 +53,12 @@ Example::
   $ cat > push-to-redis.sh <<EOF
   HOOKNAME=$1
   SESSION=$2
-  redis publish com.example.events "$HOOKNAME:$SESSION"
+
+  # Only react on post-job events
+  if [[ "$HOOKNAME" == "post-job" ]]
+  then
+    redis publish com.example.events "$HOOKNAME:$SESSION"
+  fi
   EOF
   $ chmod a+x push-to-redis.sh
 
