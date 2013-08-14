@@ -656,13 +656,14 @@ class JobCenter(object):
                          "post-setup", "post-start", "post-annotate",
                          "post-end"]
         cmd_tpl = "{script} {hook} {cookie}"
-        if hook in allowed_hooks and os.path.isdir(self.hooks_path):
-            for scriptfile in os.listdir(self.hooks_path):
-                script = os.path.join(self.hooks_path, scriptfile)
-                cmd = cmd_tpl.format(script=script, hook=hook,
-                                     cookie=cookie)
-                logger.debug("Running hook: %s" % cmd)
-                os.system(cmd)
+        if hook in allowed_hooks and \
+                os.path.isdir(self.hooks_path) and \
+                hook in os.listdir(self.hooks_path):
+            script = os.path.join(self.hooks_path, hook)
+            cmd = cmd_tpl.format(script=script, hook=hook,
+                                 cookie=cookie)
+            logger.debug("Running hook: %s" % cmd)
+            os.system(cmd)
         elif hook not in allowed_hooks:
             logger.warning("Unknown hook: %s" % hook)
 
