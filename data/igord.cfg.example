@@ -35,8 +35,15 @@ daemon:
             - igor.daemon.backends.cobbler
             - igor.daemon.backends.libvirt
 
+    database-for-result-sqlite: &py-sqlite
+        conn_url: 'sqlite:///{path_to_database.sqlite}'
+
+    database-for-result-postgresql: &py-postgresql
+        conn_url: 'postgresql://{user}:{pass}@localhost/'
+
     # Default: Use libvirt-only backend configuration
     enable-backends: *backends-for-libvirt-only
+    enable-database: *py-sqlite
 
     hooks:
         # Hooks are scripts which are called on a variety of events.

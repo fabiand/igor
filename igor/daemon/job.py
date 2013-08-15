@@ -24,6 +24,7 @@ import os
 import threading
 import time
 import yaml
+from igor.daemon.backends.database import Results, EnvList
 
 
 logger = log.getLogger(__name__)
@@ -75,11 +76,13 @@ class Job(object):
 
     _watchdog = None
 
-    def __init__(self, job_center, cookie, jobspec, session_path="/tmp"):
+    def __init__(self, job_center, cookie, jobspec, session_path="/tmp", db_conn=None):
         """Create a new job to run the testsuite on host prepared with profile
         """
         self.job_center = job_center
         self.session_path = session_path
+        self.db_conn = db_conn
+        self.env_id = None
 
         assert cookie is not None, "Cookie can not be None"
         self.cookie = cookie
@@ -110,6 +113,10 @@ class Job(object):
         self.watchdog = self.__init_watchdog()
 
         self._created_at = time.time()
+        self.env_id = self.add_env_list_to_db(self.host.get_name(),
+                                              self.testsuite,
+                                              str(self.profile),
+                                              str(self.additional_kargs))
 
     def __init_watchdog(self):
         class JobTimeoutWatchdog(utils.PollingWorkerDaemon):
@@ -148,6 +155,8 @@ class Job(object):
         logger.debug("Preparing host %s" % self.host.get_name())
         self.host.prepare()
         logger.debug("Assigning profile %s" % self.profile.get_name())
+        self.additional_kargs += " %s:8080/testjob/%s" % \
+                                (self.profile.remote.server_url[:-12], self.cookie)
         self.profile.assign_to(self.host, self.additional_kargs)
         self.state(s_prepared)
         self.job_center._run_hook("post-setup", self.cookie)
@@ -241,10 +250,45 @@ class Job(object):
             logger.debug("Awaiting results for step %s: %s" %
                          (n + 1, self.testsuite.testcases()[n + 1]))
 
+        self.add_results_to_db(self.cookie, self.results[-1])
+
         self.job_center._run_hook("post-testcase", self.cookie)
 
         self.current_step += 1
         return self.current_step
+
+    def add_results_to_db(self, cookie, result):
+        flat_dict = lambda x : [(str(k), str(v)) for k, v in x.items()]
+        assert type(result) is dict
+        tmp_list = flat_dict(result)
+        assert tmp_list is not None
+        tmp_list.append(("session_id", cookie))
+        tmp_list.append(("env_id", self.env_id))
+        try:
+            self.db_conn.add(Results(tmp_list))
+            self.db_conn.commit()
+        except Exception, e:
+            logger.debug('Push to database is fail because: %s' % e)
+        finally:
+            self.db_conn.close()
+
+    def add_env_list_to_db(self, *args):
+        assert args is not None
+        tmp_list = [('host', str(args[0])),
+                    ('testsuite', str(args[1])),
+                    ('profile', str(args[2])),
+                    ('additional_kargs', str(args[3]))]
+        t = EnvList(tmp_list)
+        r = None
+        try:
+            self.db_conn.add(t)
+            self.db_conn.commit()
+            r = self.db_conn.query(EnvList.uid).order_by(EnvList.uid.desc()).first()[0]
+        except Exception, e:
+            logger.debug('Push to database is fail because: %s' % e)
+        finally:
+            self.db_conn.close()
+        return r
 
     def annotate(self, note, step="current", is_append=True):
         """Annotate - by default - the current step.
@@ -520,9 +564,10 @@ class JobCenter(object):
 
     _worker = None
 
-    def __init__(self, session_path, hooks_path=None):
+    def __init__(self, session_path, hooks_path=None, db_conn=None):
         self.session_path = session_path
         self.hooks_path = hooks_path
+        self.db_conn = db_conn
         if not os.path.exists(self.session_path):
             os.makedirs(self.session_path)
 
@@ -559,7 +604,7 @@ class JobCenter(object):
         """
         cookie = self._generate_cookie(cookie_req)
 
-        j = Job(self, cookie, jobspec, session_path=self.session_path)
+        j = Job(self, cookie, jobspec, session_path=self.session_path, db_conn=self.db_conn)
         j.created_at = time.time()
 
         self.jobs[cookie] = j
