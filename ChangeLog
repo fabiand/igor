@@ -1,3 +1,7 @@
+igor-0.4.2
+- Add simple datatstore to store files
+- Add simple server side triggers (being able to call stored files)
+
 igor-0.4.1
 - Minor igor-slave fixes which broke the slave
 
