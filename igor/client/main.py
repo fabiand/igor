@@ -165,6 +165,10 @@ class DatastoreAPI(IgordAPI):
     def delete(self, filename):
         return self._http.delete(self.url(routes.datastore_file, filename=filename))
 
+    def trigger(self, filename):
+        return self.route_request(routes.datastore_file_trigger,
+                                  filename=filename)
+
 
 class JobAPI(IgordAPI):
     """An interface to the job related REST-API

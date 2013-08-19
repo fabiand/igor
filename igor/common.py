@@ -78,3 +78,4 @@ class routes(object):
 
     datastore = '/store'
     datastore_file = '/store/<filename>'
+    datastore_file_trigger = '/store/<filename>/trigger'

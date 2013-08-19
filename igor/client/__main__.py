@@ -32,7 +32,7 @@ import urlparse
 
 
 def prettyxml(xmltree):
-    return etree.tostring(xmltree, pretty_print=True).strip()
+    return etree.tostring(xmltree, pretty_print=True)
 
 
 class Firewall(object):
@@ -384,7 +384,14 @@ class IgorClient(cmd.Cmd):
         Delete a file
         """
         filename = line
-        self.__igorapi().datastore().delete(filename)
+        print(self.__igorapi().datastore().delete(filename))
+
+    def do_file_trigger(self, line):
+        """file_trigger
+        Trigger/Execute file
+        """
+        filename = line
+        print prettyxml(self.__igorapi().datastore().trigger(filename))
 
 
 if __name__ == "__main__":

@@ -1,21 +1,22 @@
 #!/bin/env python
 # -*- coding: utf-8 -*-
 
-from igor import common, log
-
-log.configure("/tmp/igord.log")
-
+from igor import common, log, reports, utils
+from igor.daemon import config, job, main
 from igor.daemon.hacks import IgordJSONEncoder
 from string import Template
+import StringIO
 import argparse
 import bottle
-from igor.daemon import config, job, main
-from igor import reports, utils
 import importlib
 import json
 import os
+import subprocess
 import tarfile
 import yaml
+
+log.configure("/tmp/igord.log")
+
 
 logger = log.getLogger(__name__)
 logger.info("Starting igor daemon")
@@ -181,6 +182,18 @@ def dav_file_delete(filename):
     if os.path.exists(path):
         logger.debug("Deleted '%s'" % path)
         os.unlink(path)
+
+
+@app.route(common.routes.datastore_file_trigger)
+def dav_file_trigger(filename):
+    path = _datastore_filename(filename)
+    if os.path.exists(path):
+        logger.debug("Executing '%s'" % path)
+        proc = subprocess.Popen(["bash", filename], stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE, close_fds=True)
+        out = proc.communicate()
+        print(out)
+        return to_json(out)
 
 
 @app.route('/jobs/submit/<tname>/with/<pname>/on/<hname>')
