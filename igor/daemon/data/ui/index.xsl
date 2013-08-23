@@ -43,7 +43,7 @@
     </div>
     <div id="footer">
         <a href="/server/log">Log</a> |
-        <a href="http://gitorious.org/ovirt/igord">More about igor</a>
+        <a href="http://github.com/fabiand/igor">More about igor</a>
     </div>
   </body>
   </html>
