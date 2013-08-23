@@ -5,7 +5,7 @@ body
 {
   margin: 0;
   padding: 0;
-  font-family: "Basic";
+  font-family: "Basic", sans-serif;
 }
 
 div#header
@@ -291,4 +291,18 @@ div#footer
   display: block;
   background-color: gray;
   border-radius: 0;
+}
+
+.action
+{
+  border-radius: 3px;
+  background: #3a3;
+  color: white;
+  padding: .3em .6em;
+  font-size: 80%;
+  font-family: sans-serif;
+}
+.action:hover
+{
+  background: #5c5;
 }
