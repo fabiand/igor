@@ -188,7 +188,7 @@ class JobAPI(IgordAPI):
 
     def report(self):
         url = self.url(routes.job_report, cookie=self.sessionid)
-        return self.request(url)
+        return self._http.request(url)
 
     def report_junit(self):
         return self.route_request(routes.job_report_junit,
@@ -307,7 +307,7 @@ class TestplanAPI(IgordAPI):
     def start(self, substitutions={}):
         url = self.url(routes.testplan_start, query=substitutions,
                        name=self.name)
-        return self.request(url)
+        return self._http.request(url)
 
     def abort(self):
         return self.route_request(routes.testplan_abort, name=self.name)
