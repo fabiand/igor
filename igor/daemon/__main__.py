@@ -188,8 +188,13 @@ def dav_file_delete(filename):
 def dav_file_trigger(filename):
     path = _datastore_filename(filename)
     if os.path.exists(path):
-        logger.debug("Executing '%s'" % path)
-        proc = subprocess.Popen(["bash", filename], stdout=subprocess.PIPE,
+        logger.debug("Executing '%s' in a sandbox" % path)
+        cmd = ["virt-sandbox", "-dv",
+               "-c", "lxc:///",
+               "-N", "dhcp",
+               "--",
+               "/usr/bin/bash -c", path]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE, close_fds=True)
         out = proc.communicate()
         print(out)
