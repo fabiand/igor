@@ -271,14 +271,7 @@
         </td>
         <td>
             <a>
-                <xsl:attribute name="href">
-/testcases
-/<xsl:value-of select ="../../name"/>
-/<xsl:value-of select ="../name"/>
-/<xsl:value-of select ="./name"/>
-/source
-                </xsl:attribute>
-                Source
+                <xsl:attribute name="href">/testcases/<xsl:value-of select ="../../name"/>/<xsl:value-of select ="../name"/>/<xsl:value-of select ="./name"/>/source</xsl:attribute>Source
             </a>
         </td>
         <td>
